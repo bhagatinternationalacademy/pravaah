@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+  <h1 class="mt-4">Dashboard</h1>
+  <div class="row g-3">
+    <div class="col-md-3"><div class="card p-3">Total Trainers<br><h3>{{ total_trainers }}</h3></div></div>
+    <div class="col-md-3"><div class="card p-3">Active Trainers<br><h3>{{ active_trainers }}</h3></div></div>
+    <div class="col-md-3"><div class="card p-3">Available Trainers<br><h3>{{ available_trainers }}</h3></div></div>
+    <div class="col-md-3"><div class="card p-3">Total Skills<br><h3>{{ total_skills }}</h3></div></div>
+  </div>
+
+  <div class="row mt-4">
+    <div class="col-md-6">
+      <div class="card p-3">
+        <h5>Skills Distribution</h5>
+        <canvas id="skillsChart"></canvas>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card p-3">
+        <h5>Quick Stats</h5>
+        <p>Total Certifications: {{ total_certifications }}</p>
+        <p>Expiring Soon: {{ expiring_soon }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-4">
+    <div class="col-md-6">
+      <h5>Recently Added Trainers</h5>
+      <ul class="list-group">
+        {% for t in recent_trainers %}
+        <li class="list-group-item">{{ t.first_name }} {{ t.last_name }} ({{ t.trainer_code }})</li>
+        {% empty %}
+        <li class="list-group-item">No recent trainers</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="col-md-6">
+      <h5>Latest Certifications</h5>
+      <ul class="list-group">
+        {% for c in latest_certifications %}
+        <li class="list-group-item">{{ c.certification_name }} - {{ c.trainer }}</li>
+        {% empty %}
+        <li class="list-group-item">No certifications</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const skills = {{ skills_distribution|safe }};
+const counts = skills.map(_ => 1);
+const ctx = document.getElementById('skillsChart');
+if (ctx) {
+  new Chart(ctx, {
+    type: 'pie',
+    data: { labels: skills, datasets: [{ data: counts, backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'] }] },
+  });
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+  <h2 class="mt-4">Trainers</h2>
+  <form method="get" class="row g-2 mb-3">
+    <div class="col-md-3"><input class="form-control" name="q" placeholder="Search name or code" value="{{ request.GET.q }}"></div>
+    <div class="col-md-2"><input class="form-control" name="qualification" placeholder="Qualification" value="{{ request.GET.qualification }}"></div>
+    <div class="col-md-2">
+      <select name="skill" class="form-select">
+        <option value="">All Skills</option>
+        {% for s in skills_list %}
+          <option value="{{ s.pk }}" {% if request.GET.skill == s.pk|stringformat:'s' %}selected{% endif %}>{{ s.skill_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select name="availability" class="form-select">
+        <option value="">Availability</option>
+        <option value="Available" {% if request.GET.availability == 'Available' %}selected{% endif %}>Available</option>
+        <option value="Busy" {% if request.GET.availability == 'Busy' %}selected{% endif %}>Busy</option>
+        <option value="On Leave" {% if request.GET.availability == 'On Leave' %}selected{% endif %}>On Leave</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select name="status" class="form-select">
+        <option value="">Status</option>
+        <option value="Active" {% if request.GET.status == 'Active' %}selected{% endif %}>Active</option>
+        <option value="Inactive" {% if request.GET.status == 'Inactive' %}selected{% endif %}>Inactive</option>
+      </select>
+    </div>
+    <div class="col-md-1"><button class="btn btn-primary">Filter</button></div>
+    <div class="col-md-2 text-end">{% if is_admin %}<a class="btn btn-success" href="{% url 'trainers:add' %}">Add Trainer</a>{% endif %}</div>
+    <div class="col-12 mt-2">
+      <div class="row">
+        <div class="col-md-3"><input class="form-control" name="joining_from" type="date" value="{{ request.GET.joining_from }}" placeholder="Joining from"></div>
+        <div class="col-md-3"><input class="form-control" name="joining_to" type="date" value="{{ request.GET.joining_to }}" placeholder="Joining to"></div>
+      </div>
+    </div>
+  </form>
+
+  <table class="table table-striped">
+    <thead><tr><th>Code</th><th>Name</th><th>Qualification</th><th>Specialization</th><th>Mobile</th><th>Email</th><th>Status</th><th>Availability</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for t in trainers %}
+      <tr>
+        <td>{{ t.trainer_code }}</td>
+        <td>{{ t.first_name }} {{ t.last_name }}</td>
+        <td>{{ t.qualification }}</td>
+        <td>{{ t.specialization }}</td>
+        <td>{{ t.mobile }}</td>
+        <td>{{ t.email }}</td>
+        <td>{{ t.status }}</td>
+        <td>{{ t.availability }}</td>
+        <td>
+          <a class="btn btn-sm btn-primary" href="{% url 'trainers:detail' t.pk %}">View</a>
+          {% if is_admin %}
+            <a class="btn btn-sm btn-warning" href="{% url 'trainers:edit' t.pk %}">Edit</a>
+            <form method="post" action="{% url 'trainers:delete' t.pk %}" style="display:inline">{% csrf_token %}<button class="btn btn-sm btn-danger" onclick="return confirm('Delete trainer?')">Delete</button></form>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9">No trainers found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if page_obj.has_other_pages %}
+  <nav aria-label="Page navigation">
+    <ul class="pagination">
+      {% if page_obj.has_previous %}
+      <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ querystring }}">Previous</a></li>
+      {% else %}
+      <li class="page-item disabled"><span class="page-link">Previous</span></li>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+        {% else %}
+          <li class="page-item"><a class="page-link" href="?page={{ num }}&{{ querystring }}">{{ num }}</a></li>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+      <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ querystring }}">Next</a></li>
+      {% else %}
+      <li class="page-item disabled"><span class="page-link">Next</span></li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+
+</div>
+{% endblock %}

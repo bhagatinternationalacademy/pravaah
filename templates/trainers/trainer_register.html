@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Trainer Registration</h2>
+  <p>Please fill your details. Admin will review and approve for access.</p>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form|crispy }}
+    <button class="btn btn-primary">Submit Registration</button>
+  </form>
+</div>
+{% endblock %}

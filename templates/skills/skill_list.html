@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Skills</h2>
+  <a class="btn btn-success mb-3" href="{% url 'skills:add' %}">Add Skill</a>
+  <a class="btn btn-primary mb-3" href="{% url 'skills:assign' %}">Assign Skill</a>
+  <table class="table">
+    <thead><tr><th>Name</th></tr></thead>
+    <tbody>{% for s in skills %}<tr><td>{{ s.skill_name }}</td></tr>{% empty %}<tr><td>No skills.</td></tr>{% endfor %}</tbody>
+  </table>
+</div>
+{% endblock %}

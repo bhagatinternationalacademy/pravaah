@@ -65,7 +65,10 @@ class Room(models.Model):
     )
 
     def is_available(self):
-        return self.occupied < self.capacity
+        return self.status != 'maintenance' and self.occupied < self.capacity
+
+    def vacancy(self):
+        return self.capacity - self.occupied
 
     def __str__(self):
         return f"Room {self.room_number}"
@@ -75,17 +78,24 @@ class Room(models.Model):
 
 
 class RoomAllocation(models.Model):
+    """Stores student-to-room allocations (auto-allocated from participantmgmt)."""
     GENDER_CHOICES = [('male', 'Male'), ('female', 'Female')]
     STATUS_CHOICES = [('active', 'Active'), ('vacated', 'Vacated')]
+    PERSON_TYPE_CHOICES = [('student', 'Student'), ('trainer', 'Trainer')]
 
     allocation_id = models.AutoField(primary_key=True)
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
-    student_id = models.CharField(max_length=20)
+    # Generic fields – populated from participant/trainer data
+    person_type = models.CharField(
+        max_length=10, choices=PERSON_TYPE_CHOICES, default='student'
+    )
+    student_id = models.CharField(max_length=50)          # stores participant_id or trainer_id
     student_name = models.CharField(max_length=100)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES)
     bed_number = models.IntegerField()
-    allocation_date = models.DateField(auto_now_add=True)
+    checkin_date = models.DateField(null=True, blank=True)   # from source record
     checkout_date = models.DateField(null=True, blank=True)
+    allocation_date = models.DateField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
 
     def __str__(self):
@@ -93,6 +103,29 @@ class RoomAllocation(models.Model):
 
     class Meta:
         db_table = 'room_allocations'
+
+
+class WaitingList(models.Model):
+    """Students/trainers who could not be allocated due to no available rooms."""
+    GENDER_CHOICES = [('male', 'Male'), ('female', 'Female')]
+    PERSON_TYPE_CHOICES = [('student', 'Student'), ('trainer', 'Trainer')]
+    STATUS_CHOICES = [('waiting', 'Waiting'), ('allocated', 'Allocated'), ('cancelled', 'Cancelled')]
+
+    waiting_id = models.AutoField(primary_key=True)
+    person_type = models.CharField(max_length=10, choices=PERSON_TYPE_CHOICES, default='student')
+    person_id = models.CharField(max_length=50)
+    person_name = models.CharField(max_length=100)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES)
+    checkin_date = models.DateField(null=True, blank=True)
+    checkout_date = models.DateField(null=True, blank=True)
+    added_on = models.DateField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='waiting')
+
+    def __str__(self):
+        return f"[WAITING] {self.person_name}"
+
+    class Meta:
+        db_table = 'waiting_list'
 
 
 class RoomTransfer(models.Model):
@@ -103,19 +136,20 @@ class RoomTransfer(models.Model):
     ]
 
     transfer_id = models.AutoField(primary_key=True)
-    student_id = models.CharField(max_length=20)
+    student_id = models.CharField(max_length=50)
+    student_name = models.CharField(max_length=100, blank=True)
     from_room = models.ForeignKey(
         Room, on_delete=models.CASCADE, related_name='transfers_from'
     )
     to_room = models.ForeignKey(
         Room, on_delete=models.CASCADE, related_name='transfers_to'
     )
-    reason = models.TextField()
+    reason = models.TextField(blank=True, default='Drag & Drop Transfer')
     request_date = models.DateField(auto_now_add=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='approved')
 
     def __str__(self):
-        return f"{self.student_id}: Room {self.from_room} → {self.to_room}"
+        return f"{self.student_name}: Room {self.from_room} → {self.to_room}"
 
     class Meta:
         db_table = 'room_transfers'

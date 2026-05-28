@@ -1,3 +1,219 @@
 from django.db import models
+from django.contrib.auth.models import User
 
-# Create your models here.
+
+class Hostel(models.Model):
+    hostel_id = models.AutoField(primary_key=True)
+    hostel_code = models.CharField(max_length=20, unique=True)
+    hostel_name = models.CharField(max_length=100)
+    address = models.TextField()
+    status = models.CharField(
+        max_length=20,
+        choices=[('active', 'Active'), ('inactive', 'Inactive')],
+        default='active'
+    )
+
+    def __str__(self):
+        return self.hostel_name
+
+    class Meta:
+        db_table = 'hostels'
+
+
+class Block(models.Model):
+    block_id = models.AutoField(primary_key=True)
+    hostel = models.ForeignKey(Hostel, on_delete=models.CASCADE)
+    block_name = models.CharField(max_length=50)
+
+    def __str__(self):
+        return f"{self.hostel.hostel_name} – {self.block_name}"
+
+    class Meta:
+        db_table = 'blocks'
+
+
+class Floor(models.Model):
+    floor_id = models.AutoField(primary_key=True)
+    block = models.ForeignKey(Block, on_delete=models.CASCADE)
+    floor_no = models.IntegerField()
+
+    def __str__(self):
+        return f"Floor {self.floor_no} – {self.block.block_name}"
+
+    class Meta:
+        db_table = 'floors'
+
+
+class Room(models.Model):
+    GENDER_CHOICES = [('male', 'Male'), ('female', 'Female')]
+    STATUS_CHOICES = [
+        ('available', 'Available'),
+        ('full', 'Full'),
+        ('maintenance', 'Under Maintenance'),
+    ]
+
+    room_id = models.AutoField(primary_key=True)
+    floor = models.ForeignKey(Floor, on_delete=models.CASCADE)
+    room_number = models.CharField(max_length=10)
+    capacity = models.IntegerField(default=2)
+    occupied = models.IntegerField(default=0)
+    gender = models.CharField(
+        max_length=10, choices=GENDER_CHOICES, null=True, blank=True
+    )
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default='available'
+    )
+
+    def is_available(self):
+        return self.occupied < self.capacity
+
+    def __str__(self):
+        return f"Room {self.room_number}"
+
+    class Meta:
+        db_table = 'rooms'
+
+
+class RoomAllocation(models.Model):
+    GENDER_CHOICES = [('male', 'Male'), ('female', 'Female')]
+    STATUS_CHOICES = [('active', 'Active'), ('vacated', 'Vacated')]
+
+    allocation_id = models.AutoField(primary_key=True)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    student_id = models.CharField(max_length=20)
+    student_name = models.CharField(max_length=100)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES)
+    bed_number = models.IntegerField()
+    allocation_date = models.DateField(auto_now_add=True)
+    checkout_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+
+    def __str__(self):
+        return f"{self.student_name} → Room {self.room.room_number}"
+
+    class Meta:
+        db_table = 'room_allocations'
+
+
+class RoomTransfer(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    transfer_id = models.AutoField(primary_key=True)
+    student_id = models.CharField(max_length=20)
+    from_room = models.ForeignKey(
+        Room, on_delete=models.CASCADE, related_name='transfers_from'
+    )
+    to_room = models.ForeignKey(
+        Room, on_delete=models.CASCADE, related_name='transfers_to'
+    )
+    reason = models.TextField()
+    request_date = models.DateField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+
+    def __str__(self):
+        return f"{self.student_id}: Room {self.from_room} → {self.to_room}"
+
+    class Meta:
+        db_table = 'room_transfers'
+
+
+class Visitor(models.Model):
+    visitor_id = models.AutoField(primary_key=True)
+    student_id = models.CharField(max_length=20)
+    visitor_name = models.CharField(max_length=100)
+    relationship = models.CharField(max_length=50)
+    mobile = models.CharField(max_length=15)
+    checkin = models.DateTimeField()
+    checkout = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.visitor_name} visiting {self.student_id}"
+
+    class Meta:
+        db_table = 'visitors'
+
+
+class Complaint(models.Model):
+    COMPLAINT_TYPES = [
+        ('electrical', 'Electrical'),
+        ('plumbing', 'Plumbing'),
+        ('furniture', 'Furniture'),
+        ('cleanliness', 'Cleanliness'),
+        ('other', 'Other'),
+    ]
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('in_progress', 'In Progress'),
+        ('resolved', 'Resolved'),
+    ]
+
+    complaint_id = models.AutoField(primary_key=True)
+    student_id = models.CharField(max_length=20)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    complaint_type = models.CharField(max_length=30, choices=COMPLAINT_TYPES)
+    description = models.TextField()
+    complaint_date = models.DateField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
+
+    def __str__(self):
+        return f"{self.get_complaint_type_display()} – {self.student_id}"
+
+    class Meta:
+        db_table = 'complaints'
+
+
+class MaintenanceRequest(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('in_progress', 'In Progress'),
+        ('resolved', 'Resolved'),
+    ]
+
+    request_id = models.AutoField(primary_key=True)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    requested_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    request_date = models.DateField(auto_now_add=True)
+    description = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    resolved_on = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Maintenance – Room {self.room.room_number}"
+
+    class Meta:
+        db_table = 'maintenance_requests'
+
+
+class FeePayment(models.Model):
+    PAYMENT_MODE_CHOICES = [
+        ('cash', 'Cash'),
+        ('online', 'Online'),
+        ('dd', 'Demand Draft'),
+    ]
+    STATUS_CHOICES = [
+        ('paid', 'Paid'),
+        ('pending', 'Pending'),
+        ('failed', 'Failed'),
+    ]
+
+    payment_id = models.AutoField(primary_key=True)
+    allocation = models.ForeignKey(RoomAllocation, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_date = models.DateField()
+    payment_mode = models.CharField(max_length=30, choices=PAYMENT_MODE_CHOICES)
+    receipt_no = models.CharField(max_length=50)
+    payment_status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default='pending'
+    )
+
+    def __str__(self):
+        return f"Payment {self.receipt_no}"
+
+    class Meta:
+        db_table = 'fee_payments'

@@ -1,0 +1,358 @@
+{% extends 'hostelmgmt/base.html' %}
+
+{% block title %}Complaints{% endblock %}
+{% block page_title %}Complaints{% endblock %}
+
+{% block content %}
+
+<div class="page-header" style="background:linear-gradient(135deg,#43e97b,#38f9d7);">
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <h4 class="mb-1">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                Complaints
+            </h4>
+            <p class="mb-0 opacity-75">
+                Submit and track hostel complaints
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <span class="badge bg-white text-success px-3 py-2 fw-semibold">
+                {{ complaint_list.count }} Total
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+
+    <div class="col-md-4">
+        <div class="stat-card d-flex align-items-center gap-3">
+
+            <div style="background:#fee2e2;border-radius:12px;padding:14px;">
+                <i class="fas fa-exclamation-triangle fa-lg text-danger"></i>
+            </div>
+
+            <div>
+                <h4 class="mb-0 fw-bold text-danger">
+                    {{ open_count }}
+                </h4>
+                <small class="text-muted">Open Complaints</small>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="stat-card d-flex align-items-center gap-3">
+
+            <div style="background:#fef3c7;border-radius:12px;padding:14px;">
+                <i class="fas fa-spinner fa-lg text-warning"></i>
+            </div>
+
+            <div>
+                <h4 class="mb-0 fw-bold text-warning">
+                    {{ inprogress_count }}
+                </h4>
+                <small class="text-muted">In Progress</small>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="stat-card d-flex align-items-center gap-3">
+
+            <div style="background:#d1fae5;border-radius:12px;padding:14px;">
+                <i class="fas fa-check-circle fa-lg text-success"></i>
+            </div>
+
+            <div>
+                <h4 class="mb-0 fw-bold text-success">
+                    {{ resolved_count }}
+                </h4>
+                <small class="text-muted">Resolved</small>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<div class="row g-4">
+
+    <!-- Complaint Form -->
+    <div class="col-lg-5">
+
+        <div class="form-card h-100">
+
+            <div class="d-flex align-items-center gap-2 mb-4">
+                <div style="background:linear-gradient(135deg,#43e97b,#38f9d7);border-radius:10px;padding:10px 14px;">
+                    <i class="fas fa-plus text-white"></i>
+                </div>
+
+                <h5 class="fw-semibold mb-0">
+                    Submit New Complaint
+                </h5>
+            </div>
+
+            <form method="post">
+
+                {% csrf_token %}
+
+                <!-- Student ID -->
+                <div class="mb-3">
+
+                    <label class="form-label fw-500">
+                        <i class="fas fa-id-badge me-1 text-primary"></i>
+                        Student ID *
+                    </label>
+
+                    <input
+                        type="text"
+                        name="student_id"
+                        class="form-control"
+                        placeholder="Your Student ID"
+                        required
+                        value="{{ form.student_id.value|default:'' }}"
+                    >
+
+                    {% if form.student_id.errors %}
+                        <small class="text-danger">
+                            {{ form.student_id.errors }}
+                        </small>
+                    {% endif %}
+
+                </div>
+
+                <!-- Room -->
+                <div class="mb-3">
+
+                    <label class="form-label fw-500">
+                        <i class="fas fa-door-open me-1 text-primary"></i>
+                        Room Number *
+                    </label>
+
+                    <select name="room" class="form-select" required>
+
+                        <option value="">
+                            -- Select Your Room --
+                        </option>
+
+                        {% for room in all_rooms %}
+
+                            <option value="{{ room.room_id }}">
+                                Room {{ room.room_number }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                    {% if form.room.errors %}
+                        <small class="text-danger">
+                            {{ form.room.errors }}
+                        </small>
+                    {% endif %}
+
+                </div>
+
+                <!-- Complaint Type -->
+                <div class="mb-3">
+
+                    <label class="form-label fw-500">
+                        <i class="fas fa-tag me-1 text-warning"></i>
+                        Complaint Type *
+                    </label>
+
+                    <select name="complaint_type" class="form-select" required>
+
+                        <option value="">-- Select Type --</option>
+
+                        <option value="electrical">
+                            ⚡ Electrical
+                        </option>
+
+                        <option value="plumbing">
+                            🔧 Plumbing
+                        </option>
+
+                        <option value="furniture">
+                            🪑 Furniture
+                        </option>
+
+                        <option value="cleanliness">
+                            🧹 Cleanliness
+                        </option>
+
+                        <option value="other">
+                            📝 Other
+                        </option>
+
+                    </select>
+
+                    {% if form.complaint_type.errors %}
+                        <small class="text-danger">
+                            {{ form.complaint_type.errors }}
+                        </small>
+                    {% endif %}
+
+                </div>
+
+                <!-- Description -->
+                <div class="mb-4">
+
+                    <label class="form-label fw-500">
+                        <i class="fas fa-comment-dots me-1 text-info"></i>
+                        Description *
+                    </label>
+
+                    <textarea
+                        name="description"
+                        class="form-control"
+                        rows="4"
+                        placeholder="Describe the issue in detail..."
+                        required
+                    >{{ form.description.value|default:'' }}</textarea>
+
+                    {% if form.description.errors %}
+                        <small class="text-danger">
+                            {{ form.description.errors }}
+                        </small>
+                    {% endif %}
+
+                </div>
+
+                <!-- Submit Button -->
+                <button
+                    type="submit"
+                    class="btn w-100 py-3 fw-semibold text-white"
+                    style="background:linear-gradient(135deg,#43e97b,#38f9d7);border:none;border-radius:12px;color:#065f46 !important;"
+                >
+                    <i class="fas fa-paper-plane me-2"></i>
+                    Submit Complaint
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- Complaints List -->
+    <div class="col-lg-7">
+
+        <div class="form-card h-100">
+
+            <div class="d-flex align-items-center gap-2 mb-4">
+
+                <div style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:10px;padding:10px 14px;">
+                    <i class="fas fa-list text-white"></i>
+                </div>
+
+                <h5 class="fw-semibold mb-0">
+                    Recent Complaints
+                </h5>
+
+            </div>
+
+            {% if complaint_list %}
+
+                <div class="d-flex flex-column gap-3">
+
+                    {% for c in complaint_list %}
+
+                        <div
+                            class="p-3 rounded-3"
+                            style="
+                                border-left:4px solid
+                                {% if c.status == 'open' %}
+                                    #ef4444
+                                {% elif c.status == 'in_progress' %}
+                                    #f59e0b
+                                {% else %}
+                                    #10b981
+                                {% endif %};
+                                background:#fafafa;
+                            "
+                        >
+
+                            <div class="d-flex justify-content-between align-items-start">
+
+                                <div>
+
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+
+                                        <span class="badge bg-primary bg-opacity-10 text-primary fw-500">
+                                            {{ c.student_id }}
+                                        </span>
+
+                                        <span class="badge bg-secondary">
+                                            {{ c.get_complaint_type_display }}
+                                        </span>
+
+                                    </div>
+
+                                    <p class="mb-1 fw-500" style="font-size:0.9rem;">
+                                        Room {{ c.room.room_number }}
+                                    </p>
+
+                                    <p class="text-muted mb-0" style="font-size:0.82rem;">
+                                        {{ c.description|truncatechars:80 }}
+                                    </p>
+
+                                </div>
+
+                                <div class="text-end">
+
+                                    {% if c.status == 'open' %}
+                                        <span class="badge bg-danger">Open</span>
+
+                                    {% elif c.status == 'in_progress' %}
+                                        <span class="badge bg-warning text-dark">
+                                            In Progress
+                                        </span>
+
+                                    {% else %}
+                                        <span class="badge bg-success">
+                                            Resolved
+                                        </span>
+                                    {% endif %}
+
+                                    <p class="text-muted mt-1 mb-0" style="font-size:0.75rem;">
+                                        {{ c.complaint_date }}
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="text-center py-5">
+
+                    <i class="fas fa-smile fa-3x text-success mb-3"></i>
+
+                    <p class="text-muted">
+                        No complaints submitted yet. Great!
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

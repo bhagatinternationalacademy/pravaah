@@ -1,0 +1,57 @@
+{% extends 'hostelmgmt/base.html' %}
+{% block title %}Room Allocation{% endblock %}
+{% block page_title %}Room Allocation{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4 class="mb-0"><i class="fas fa-door-open me-2"></i>Room Allocation</h4>
+</div>
+<div class="row g-4">
+    <div class="col-md-5">
+        <div class="form-card">
+            <h5 class="fw-semibold mb-4">Allocate New Room</h5>
+            <form method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label fw-500">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}<small class="text-danger">{{ field.errors }}</small>{% endif %}
+                </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary w-100 py-2">
+                    <i class="fas fa-plus me-2"></i>Allocate Room
+                </button>
+            </form>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="form-card">
+            <h5 class="fw-semibold mb-4">Current Allocations</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead style="background:#f8f7ff;">
+                        <tr>
+                            <th>Student</th><th>ID</th><th>Room</th><th>Gender</th><th>Date</th><th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for a in allocations %}
+                        <tr>
+                            <td>{{ a.student_name }}</td>
+                            <td><span class="badge bg-primary bg-opacity-10 text-primary">{{ a.student_id }}</span></td>
+                            <td><strong>{{ a.room.room_number }}</strong></td>
+                            <td>{{ a.gender|capfirst }}</td>
+                            <td>{{ a.allocation_date }}</td>
+                            <td><span class="badge bg-success">{{ a.status|capfirst }}</span></td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="6" class="text-center text-muted py-4">No allocations yet.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

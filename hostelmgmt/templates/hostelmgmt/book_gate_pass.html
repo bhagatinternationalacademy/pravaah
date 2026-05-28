@@ -1,0 +1,194 @@
+{% extends 'hostelmgmt/base.html' %}
+{% block title %}Book Gate Pass{% endblock %}
+{% block page_title %}Book Gate Pass{% endblock %}
+
+{% block content %}
+<div class="page-header" style="background:linear-gradient(135deg,#4facfe,#00f2fe);">
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <h4 class="mb-1"><i class="fas fa-id-card me-2"></i>Book Gate Pass</h4>
+            <p class="mb-0 opacity-75">Register visitor details and generate entry gate pass</p>
+        </div>
+        <a href="{% url 'hostelmgmt:visitors' %}" class="btn btn-white btn-sm fw-semibold"
+           style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);">
+            <i class="fas fa-arrow-left me-1"></i> Back to Visitors
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-8">
+
+        <!-- Gate Pass Card -->
+        <div class="form-card">
+            <!-- Header icon section -->
+            <div class="text-center mb-4 p-4" style="background:linear-gradient(135deg,#e0f7ff,#b3ecff);border-radius:12px;">
+                <div style="width:80px;height:80px;background:linear-gradient(135deg,#4facfe,#00f2fe);
+                            border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+                            margin-bottom:15px;box-shadow:0 8px 25px rgba(79,172,254,0.4);">
+                    <i class="fas fa-user-check fa-2x text-white"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-1">Visitor Registration Form</h5>
+                <p class="text-muted mb-0" style="font-size:0.85rem;">
+                    Fill in all details to generate a gate pass for your visitor
+                </p>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="row g-3">
+                    <!-- Student ID -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-500">
+                            <i class="fas fa-id-badge me-1 text-primary"></i> Student ID *
+                        </label>
+                        <input type="text" name="student_id" class="form-control form-control-lg"
+                               placeholder="e.g. STU2024001" required
+                               value="{{ form.student_id.value|default:'' }}">
+                        {% if form.student_id.errors %}
+                            <small class="text-danger">{{ form.student_id.errors }}</small>
+                        {% endif %}
+                    </div>
+
+                    <!-- Visitor Name -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-500">
+                            <i class="fas fa-user me-1 text-primary"></i> Visitor Name *
+                        </label>
+                        <input type="text" name="visitor_name" class="form-control form-control-lg"
+                               placeholder="Full name of visitor" required
+                               value="{{ form.visitor_name.value|default:'' }}">
+                        {% if form.visitor_name.errors %}
+                            <small class="text-danger">{{ form.visitor_name.errors }}</small>
+                        {% endif %}
+                    </div>
+
+                    <!-- Relationship -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-500">
+                            <i class="fas fa-heart me-1 text-danger"></i> Relationship *
+                        </label>
+                        <select name="relationship" class="form-select form-select-lg" required>
+                            <option value="">-- Select Relationship --</option>
+                            <option value="Father" {% if form.relationship.value == 'Father' %}selected{% endif %}>Father</option>
+                            <option value="Mother" {% if form.relationship.value == 'Mother' %}selected{% endif %}>Mother</option>
+                            <option value="Brother" {% if form.relationship.value == 'Brother' %}selected{% endif %}>Brother</option>
+                            <option value="Sister" {% if form.relationship.value == 'Sister' %}selected{% endif %}>Sister</option>
+                            <option value="Guardian" {% if form.relationship.value == 'Guardian' %}selected{% endif %}>Guardian</option>
+                            <option value="Friend" {% if form.relationship.value == 'Friend' %}selected{% endif %}>Friend</option>
+                            <option value="Other" {% if form.relationship.value == 'Other' %}selected{% endif %}>Other</option>
+                        </select>
+                        {% if form.relationship.errors %}
+                            <small class="text-danger">{{ form.relationship.errors }}</small>
+                        {% endif %}
+                    </div>
+
+                    <!-- Mobile -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-500">
+                            <i class="fas fa-phone me-1 text-success"></i> Mobile Number *
+                        </label>
+                        <input type="tel" name="mobile" class="form-control form-control-lg"
+                               placeholder="10-digit mobile number" required
+                               maxlength="15" value="{{ form.mobile.value|default:'' }}">
+                        {% if form.mobile.errors %}
+                            <small class="text-danger">{{ form.mobile.errors }}</small>
+                        {% endif %}
+                    </div>
+
+                    <!-- Check-In -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-500">
+                            <i class="fas fa-sign-in-alt me-1 text-info"></i> Check-In Date & Time *
+                        </label>
+                        <input type="datetime-local" name="checkin" class="form-control form-control-lg"
+                               required value="{{ form.checkin.value|default:'' }}">
+                        {% if form.checkin.errors %}
+                            <small class="text-danger">{{ form.checkin.errors }}</small>
+                        {% endif %}
+                    </div>
+
+                    <!-- Check-Out -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-500">
+                            <i class="fas fa-sign-out-alt me-1 text-warning"></i> Expected Check-Out
+                        </label>
+                        <input type="datetime-local" name="checkout" class="form-control form-control-lg"
+                               value="{{ form.checkout.value|default:'' }}">
+                        {% if form.checkout.errors %}
+                            <small class="text-danger">{{ form.checkout.errors }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Info box -->
+                <div class="mt-4 p-3 rounded-3" style="background:#f0fdf4;border:1px solid #bbf7d0;">
+                    <div class="d-flex gap-2">
+                        <i class="fas fa-info-circle text-success mt-1"></i>
+                        <div>
+                            <strong class="text-success" style="font-size:0.85rem;">Note:</strong>
+                            <span class="text-muted" style="font-size:0.85rem;">
+                                The visitor must carry a valid government ID proof. Gate pass is valid for the specified duration only.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-3 mt-4">
+                    <a href="{% url 'hostelmgmt:visitors' %}" class="btn btn-outline-secondary px-4 py-2">
+                        <i class="fas fa-times me-1"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn flex-grow-1 py-2 fw-semibold text-white"
+                            style="background:linear-gradient(135deg,#4facfe,#00f2fe);border:none;border-radius:10px;">
+                        <i class="fas fa-id-card me-2"></i>Generate Gate Pass
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Side info panel -->
+    <div class="col-lg-4">
+        <div class="form-card" style="background:linear-gradient(160deg,#1e1b4b,#312e81);color:white;">
+            <h6 class="fw-bold mb-3" style="color:#a5b4fc;">
+                <i class="fas fa-clipboard-list me-2"></i>Visitor Guidelines
+            </h6>
+            <ul class="list-unstyled" style="font-size:0.85rem;color:rgba(255,255,255,0.8);">
+                <li class="mb-3 d-flex gap-2">
+                    <i class="fas fa-check-circle text-green mt-1" style="color:#4ade80;"></i>
+                    Visitors must report at the gate and show this pass.
+                </li>
+                <li class="mb-3 d-flex gap-2">
+                    <i class="fas fa-check-circle mt-1" style="color:#4ade80;"></i>
+                    Carry original photo ID (Aadhar / PAN / Passport).
+                </li>
+                <li class="mb-3 d-flex gap-2">
+                    <i class="fas fa-check-circle mt-1" style="color:#4ade80;"></i>
+                    Visiting hours: 9 AM – 8 PM only.
+                </li>
+                <li class="mb-3 d-flex gap-2">
+                    <i class="fas fa-check-circle mt-1" style="color:#4ade80;"></i>
+                    Maximum 2 visitors per student at a time.
+                </li>
+                <li class="mb-3 d-flex gap-2">
+                    <i class="fas fa-times-circle mt-1" style="color:#f87171;"></i>
+                    No overnight stays permitted without warden approval.
+                </li>
+                <li class="d-flex gap-2">
+                    <i class="fas fa-times-circle mt-1" style="color:#f87171;"></i>
+                    Violation may result in restricted visiting privileges.
+                </li>
+            </ul>
+
+            <hr style="border-color:rgba(255,255,255,0.15);">
+
+            <div class="text-center mt-3">
+                <i class="fas fa-phone-alt mb-2" style="color:#a5b4fc;font-size:1.5rem;"></i>
+                <p style="font-size:0.8rem;color:rgba(255,255,255,0.6);margin:0;">Warden Contact</p>
+                <p style="font-size:1rem;font-weight:600;color:white;margin:0;">+91 98765 43210</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

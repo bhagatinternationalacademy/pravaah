@@ -1,0 +1,76 @@
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Local secrets / keys
+secrets.json
+
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+out/
+coverage/
+.cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Django / SQLite
+db.sqlite3
+db.sqlite3-journal
+
+# Uploaded media (keep out of repo)
+media/
+
+# Collected static files
+/staticfiles/
+collectstatic/
+
+# Cookies and local browser artifacts
+cookies.txt
+
+# Celery
+celerybeat-schedule
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+
+# Package manager lock/state files (optional)
+.pnpm-store/
+
+# Misc
+*.tmp
+*.temp

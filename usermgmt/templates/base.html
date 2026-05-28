@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    {% load static %}
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>{% block title %} PRAVAAH {% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+  </head>
+
+  <body>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 py-3">
+      <div class="container-fluid">
+        <!-- Logo -->
+        <a class="navbar-brand fw-bold" href="#">
+          <i class="fa-solid fa-graduation-cap"></i>
+          PRAVAAH ERP
+        </a>
+
+        <!-- Mobile Toggle -->
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarSupportedContent"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar Content -->
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <!-- Left Links -->
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-2">
+            <li class="nav-item">
+              <a class="nav-link active" href="#"> Dashboard </a>
+            </li>
+
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                role="button"
+                data-bs-toggle="dropdown"
+              >
+                User Management
+              </a>
+
+              <ul class="dropdown-menu">
+                <li>
+                  <a class="dropdown-item" href="#"> Register User </a>
+                </li>
+
+                <li>
+                  <a class="dropdown-item" href="#"> Roles & Permissions </a>
+                </li>
+
+                <li>
+                  <a class="dropdown-item" href="#"> Audit Logs </a>
+                </li>
+              </ul>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link" href="#"> Participants </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link" href="#"> Trainers </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link" href="#"> Courses </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link" href="#"> Hostel </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link" href="#"> Reports </a>
+            </li>
+          </ul>
+
+          <!-- Search -->
+          <form class="d-flex gap-2" role="search">
+            <input
+              class="form-control"
+              type="search"
+              placeholder="Search Module"
+            />
+
+            <button class="btn btn-outline-light" type="submit">Search</button>
+          </form>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ALERT MESSAGES -->
+    <div class="container mt-3">
+      {% if messages %} {% for message in messages %}
+
+      <div class="alert alert-success alert-dismissible fade show">
+        {{ message }}
+
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+        ></button>
+      </div>
+
+      {% endfor %} {% endif %}
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="container mt-4 mb-5">{% block content %} {% endblock %}</div>
+
+    <!-- FOOTER -->
+    <footer
+      class="text-center text-white mt-5"
+      style="background-color: #3a1616"
+    >
+      <div class="container">
+        <!-- Footer Links -->
+        <section>
+          <div class="row text-center d-flex justify-content-center pt-5">
+            <div class="col-md-2 mb-3">
+              <h6 class="text-uppercase fw-bold">
+                <a href="#" class="text-white text-decoration-none"> About </a>
+              </h6>
+            </div>
+
+            <div class="col-md-2 mb-3">
+              <h6 class="text-uppercase fw-bold">
+                <a href="#" class="text-white text-decoration-none">
+                  Modules
+                </a>
+              </h6>
+            </div>
+
+            <div class="col-md-2 mb-3">
+              <h6 class="text-uppercase fw-bold">
+                <a href="#" class="text-white text-decoration-none">
+                  Dashboard
+                </a>
+              </h6>
+            </div>
+
+            <div class="col-md-2 mb-3">
+              <h6 class="text-uppercase fw-bold">
+                <a href="#" class="text-white text-decoration-none">
+                  Support
+                </a>
+              </h6>
+            </div>
+
+            <div class="col-md-2 mb-3">
+              <h6 class="text-uppercase fw-bold">
+                <a href="#" class="text-white text-decoration-none">
+                  Contact
+                </a>
+              </h6>
+            </div>
+          </div>
+        </section>
+
+        <hr />
+
+        <!-- Description -->
+        <section>
+          <div class="row d-flex justify-content-center">
+            <div class="col-lg-8">
+              <p>
+                PRAVAAH is an integrated ERP platform designed for training
+                institutes, student management, hostel allocation, course
+                administration, finance, notifications, and centralized
+                reporting.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Social Media -->
+        <section class="text-center pb-4">
+          <a href="#" class="text-white me-4">
+            <i class="fab fa-linkedin"></i>
+          </a>
+
+          <a href="#" class="text-white me-4">
+            <i class="fab fa-github"></i>
+          </a>
+
+          <a href="#" class="text-white me-4">
+            <i class="fab fa-google"></i>
+          </a>
+        </section>
+      </div>
+
+      <!-- Copyright -->
+      <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.2)">
+        © 2026 PRAVAAH ERP System
+      </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

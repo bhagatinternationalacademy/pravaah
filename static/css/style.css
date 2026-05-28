@@ -1,0 +1,27 @@
+/* Minimal custom styles for authentication pages */
+body {
+    background-color: #f8f9fa;
+}
+
+.card {
+    border-radius: 0.5rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.form-label {
+    font-weight: 500;
+}
+
+.btn-block {
+    display: block;
+}
+
+/* Responsive tweaks */
+@media (max-width: 576px) {
+    .card-body {
+        padding: 1rem;
+    }
+}

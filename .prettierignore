@@ -1,0 +1,2 @@
+# Ignore Django templates to avoid formatter breaking template tags
+**/templates/**

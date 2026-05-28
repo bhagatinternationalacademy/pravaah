@@ -1,3 +1,112 @@
-{% extends 'base.html' %} {% block content %}
-<!-- Reports template -->
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2 class="mb-4">
+
+    Reports
+
+</h2>
+
+<div class="card shadow p-4">
+
+    <form method="GET"
+          action="/report-result/">
+
+        <!-- REPORT TYPE -->
+
+        <div class="mb-3">
+
+            <label class="form-label">
+
+                Report Type
+
+            </label>
+
+            <select
+                name="report_type"
+                class="form-select">
+
+                <option value="users">
+
+                    Active Users
+
+                </option>
+
+                <option value="roles">
+
+                    Role-wise Users
+
+                </option>
+
+                <option value="logins">
+
+                    Login History
+
+                </option>
+
+            </select>
+
+        </div>
+
+        <!-- ROLE FILTER -->
+
+        <div class="mb-3">
+
+            <label class="form-label">
+
+                Role
+
+            </label>
+
+            <select
+                name="role"
+                class="form-select">
+
+                <option value="">
+
+                    All Roles
+
+                </option>
+
+                <option value="Super Admin">
+
+                    Super Admin
+
+                </option>
+
+                <option value="System Admin">
+
+                    System Admin
+
+                </option>
+
+                <option value="Manager">
+
+                    Manager
+
+                </option>
+
+                <option value="QA">
+
+                    QA
+
+                </option>
+
+            </select>
+
+        </div>
+
+        <button
+            type="submit"
+            class="btn btn-primary">
+
+            Generate Report
+
+        </button>
+
+    </form>
+
+</div>
+
 {% endblock %}

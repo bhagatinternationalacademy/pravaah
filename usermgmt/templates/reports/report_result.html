@@ -1,3 +1,93 @@
-{% extends 'base.html' %} {% block content %}
-<!-- Report result template -->
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2 class="mb-4">
+
+    Report Results
+
+</h2>
+
+<div class="card shadow p-4">
+
+    <table class="table table-bordered table-hover">
+
+        <thead class="table-dark">
+
+            <tr>
+
+                {% if report_type == 'logins' %}
+
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>IP Address</th>
+                    <th>Timestamp</th>
+
+                {% else %}
+
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+
+                {% endif %}
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            {% for item in data %}
+
+            <tr>
+
+                {% if report_type == 'logins' %}
+
+                    <td>
+                        {{ item.user.username }}
+                    </td>
+
+                    <td>
+                        {{ item.action }}
+                    </td>
+
+                    <td>
+                        {{ item.ip_address }}
+                    </td>
+
+                    <td>
+                        {{ item.created_at }}
+                    </td>
+
+                {% else %}
+
+                    <td>
+                        {{ item.username }}
+                    </td>
+
+                    <td>
+                        {{ item.email }}
+                    </td>
+
+                    <td>
+                        {{ item.role.role_name }}
+                    </td>
+
+                    <td>
+                        {{ item.status }}
+                    </td>
+
+                {% endif %}
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
 {% endblock %}

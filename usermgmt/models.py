@@ -14,12 +14,12 @@ class User(AbstractUser):
         - first_name (VARCHAR)
         - last_name (VARCHAR)
         - is_staff (BOOLEAN)
-        - is_active (BOOLEAN)
+        - is_active (BOOLEAN) -> Tracks account activation/status (Active/Inactive)
         - is_superuser (BOOLEAN)
         - date_joined (DATETIME)
     """
     # Custom attributes from registration requirements
-    email = models.EmailField(unique=True, max_length=254) # Overriding to ensure strict uniqueness
+    email = models.EmailField(unique=True, max_length=254)  # Overriding to ensure strict uniqueness
     mobile = models.CharField(max_length=15, blank=True, null=True)
     
     # Email Verification lifecycle tracking attributes
@@ -32,48 +32,45 @@ class User(AbstractUser):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'users' # Forces the database to name the table exactly 'users'
+        db_table = 'users'  # Forces the database to name the table exactly 'users'
 
     def __str__(self):
         return f"{self.username} ({self.email})"
 
 
-class RBACPermissionProxy(models.Model):
+class RBACPermissionProxy(Permission):
     """
     TABLE 2 & 3: roles & permissions Configuration
-    
-    NOTE ON REPOSITORY NORMALIZATION:
-    Django provides two native database tables out-of-the-box:
-      - auth_group (Which acts exactly as your 'roles' table)
-      - auth_permission (Which acts exactly as your 'permissions' table)
-    
-    Django also automatically manages the junction join tables:
-      - user_roles (via the 'groups' ManyToMany attribute on your User model)
-      - role_permissions (via the 'permissions' ManyToMany attribute on the Group model)
-    
-    This proxy model registers your custom system scopes into the core 
-    permissions engine without adding clutter to your physical DB schemas.
+    Proxy model registers system scopes into core permissions engine.
     """
     class Meta:
-        managed = False  # Tells Django not to create a separate physical layout table
-        default_permissions = ()  # Disables default model CRUD hooks
-        
-        permissions = [
-            # User Management & RBAC Module Scopes
-            ("can_view_admin_dashboard", "Can view central security dashboard layout"),
-            ("can_view_activity_dashboard", "Can view tracking activity summary visuals"),
-            ("can_manage_roles", "Can create, update, or delete system groups (roles)"),
-            ("can_assign_roles", "Can map user accounts to defined groups/roles"),
-            ("can_modify_permissions", "Can alter granular privileges or override system tokens"),
-            ("can_view_permission_matrix", "Can view global cross-reference matrix grid"),
+        proxy = True
+        permissions = (
+            # --- Higher-Level / Administrative Capabilities ---
+            ('can_view_admin_dashboard', 'Can view central security dashboard layout'),
+            ('can_view_permission_matrix', 'Can view global cross-reference matrix grid'),
+            ('can_modify_permissions', 'Can alter granular privileges or override tokens'),
+            ('can_manage_roles', 'Can create, update, or delete system groups'),
+            ('can_assign_roles', 'Can map user accounts to defined groups'),
             
-            # Module Cross-Access Authorization Scopes (For testing across other teams)
-            ("can_manage_students", "Can perform operations on student profiles (Team 2)"),
-            ("can_manage_trainers", "Can perform operations on trainer profiles (Team 3)"),
-            ("can_manage_courses", "Can update training programs and syllabus details (Team 4)"),
-            ("can_manage_hostels", "Can allocate or modify room configurations (Team 5)"),
-            ("can_manage_finance", "Can process invoices and update payment ledgers (Team 6)"),
-        ]
+            # --- Management Division Tokens ---
+            ('can_view_management_reports', 'Can read high-level analytical business summaries'),
+            ('can_approve_requests', 'Can authorize institutional operational overrides'),
+            
+            # --- Accounts / Finance Division Tokens ---
+            ('can_view_finance_dashboard', 'Can read accounting ledgers and payment histories'),
+            ('can_manage_finance', 'Can process invoices and update payment parameters'),
+            
+            # --- Quality Assurance (QA) Division Tokens ---
+            ('can_view_qa_logs', 'Can read automated testing output metrics and system reports'),
+            ('can_manage_qa_tickets', 'Can log, modify, or track software verification modules'),
+            
+            # --- Core Lower-Level Operational Read Permissions ---
+            ('can_view_student_profiles', 'Can read student records and profiles (Lower Level Access)'),
+            ('can_view_trainer_profiles', 'Can read trainer contact parameters (Lower Level Access)'),
+            ('can_view_course_details', 'Can read syllabus blueprints and batch timings (Lower Level Access)'),
+            ('can_view_hostel_status', 'Can read room vacancy layouts and allocation maps (Lower Level Access)'),
+        )
 
 
 class AuditLog(models.Model):
@@ -82,7 +79,7 @@ class AuditLog(models.Model):
     Tracks every structural database write, verification event, and authentication 
     state action chronologically for compliance tracking.
     """
-    id = models.AutoField(primary_key=True) # Explicit unique log entry identifier
+    id = models.AutoField(primary_key=True)  # Explicit unique log entry identifier
     user = models.ForeignKey(
         User, 
         on_delete=models.SET_NULL, 
@@ -97,8 +94,8 @@ class AuditLog(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)  # Equivalent to created_at for chronological sorting
 
     class Meta:
-        db_table = 'audit_logs' # Forces the database to name the table exactly 'audit_logs'
-        ordering = ['-timestamp'] # Pulls latest transactional updates first by default
+        db_table = 'audit_logs'  # Forces the database to name the table exactly 'audit_logs'
+        ordering = ['-timestamp']  # Pulls latest transactional updates first by default
 
     def __str__(self):
         user_str = self.user.username if self.user else "Anonymous"

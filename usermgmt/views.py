@@ -13,11 +13,12 @@ from django.utils import timezone
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-
 from .models import User, AuditLog
 from .forms import ProfileEditForm  # Ensure ProfileEditForm is defined in forms.py
 from commonservices.utils import send_email, get_client_ip
-
+from django.db.models import Q
+from django.utils import timezone
+from datetime import timedelta
 # --- Internal Session Helper ---
 def _redirect_if_session_expired(request):
     if not request.user.is_authenticated:
@@ -454,33 +455,82 @@ def reports(request):
 
 @login_required
 def report_result(request):
-    report_type = request.GET.get('report_type')
+
+    report_type = request.GET.get('report_type', 'users')
     role = request.GET.get('role')
+    status = request.GET.get('status')
     search = request.GET.get('search')
-    data = []
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
 
-    if report_type in ['users', 'roles']:
-        users = User.objects.all()
-        if role:
-            users = users.filter(groups__name=role)  # Aligned to clean Group-based setup structure
-        if search:
-            users = users.filter(username__icontains=search)
-        data = users
+    users = User.objects.all()
 
-    elif report_type == 'logins':
-        logs = AuditLog.objects.filter(action='Login Success')
-        if search:
-            logs = logs.filter(user__username__icontains=search)
-        data = logs
+    print("TOTAL USERS =", users.count())
+
+    if role:
+        users = users.filter(
+            groups__name=role
+        )
+
+    if status:
+
+        if status == "Active":
+            users = users.filter(is_active=True)
+
+        elif status == "Inactive":
+            users = users.filter(is_active=False)
+
+    if search:
+        users = users.filter(
+            Q(username__icontains=search) |
+            Q(email__icontains=search)
+        )
+
+    if start_date:
+        users = users.filter(
+            date_joined__date__gte=start_date
+        )
+
+    if end_date:
+        users = users.filter(
+            date_joined__date__lte=end_date
+        )
+
+    active_count = users.filter(
+        is_active=True
+    ).count()
+
+    inactive_count = users.filter(
+        is_active=False
+    ).count()
+
+    recent_count = users.filter(
+        date_joined__gte=timezone.now() - timedelta(days=30)
+    ).count()
+
+    counts = {
+        'total': users.count(),
+        'active': active_count,
+        'inactive': inactive_count,
+        'new': recent_count
+    }
 
     context = {
+        'users': users,
+        'counts': counts,
         'report_type': report_type,
-        'data': data,
-        'search': search
+        'role': role,
+        'status': status,
+        'search': search,
+        'start_date': start_date,
+        'end_date': end_date
     }
-    return render(request, 'reports/report_result.html', context)
 
-
+    return render(
+        request,
+        'reports/report_result.html',
+        context
+    )
 @login_required
 def users_list(request):
     users = User.objects.all().order_by('-created_at')

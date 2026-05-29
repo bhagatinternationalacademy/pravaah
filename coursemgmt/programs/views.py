@@ -49,13 +49,25 @@ class ProgramDetailView(RoleRequiredMixin, DetailView):
     roles = ("Admin", "Trainer", "Student")
 
     def get_context_data(self, **kwargs):
+        from trainers.models import CourseTrainer, ProgramTrainer
         context = super().get_context_data(**kwargs)
+        
+        program_courses = self.object.program_courses.select_related("course")
+        course_trainers = {}
+        for pc in program_courses:
+            trainers = CourseTrainer.objects.filter(course=pc.course, is_active=True).select_related("trainer")
+            course_trainers[pc.id] = list(trainers)
+        
+        program_trainers = ProgramTrainer.objects.filter(program=self.object, is_active=True).select_related("trainer")
+        
         context.update(
             {
-                "links": self.object.program_courses.select_related("course").annotate(
+                "links": program_courses.annotate(
                     module_count=Count("course__modules", distinct=True),
                     material_count=Count("course__modules__materials", distinct=True),
                 ),
+                "course_trainers": course_trainers,
+                "program_trainers": program_trainers,
                 "modules": Module.objects.filter(course__course_program_links__program=self.object)
                 .select_related("course")
                 .prefetch_related("materials")

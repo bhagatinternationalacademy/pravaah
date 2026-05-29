@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "certificates",
     "uploads",
     "reports",
+    "legacy_models",
 ]
 
 MIDDLEWARE = [
@@ -58,12 +59,13 @@ WSGI_APPLICATION = "training_management.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "pravaah",
-        "USER": "root",
-        "PASSWORD": "Iffat@123",
-        "HOST": "localhost",
-        "PORT": "7890",
+        "ENGINE": os.getenv("DJANGO_DB_ENGINE", "django.db.backends.mysql"),
+        "NAME": os.getenv("DJANGO_DB_NAME", "pravaah"),
+        "USER": os.getenv("DJANGO_DB_USER", "test"),
+        "PASSWORD": os.getenv("DJANGO_DB_PASSWORD", "Laptop@123"),
+        "HOST": os.getenv("DJANGO_DB_HOST", "192.168.0.95"),
+        "PORT": os.getenv("DJANGO_DB_PORT", "3306"),
+        "OPTIONS": os.getenv("DJANGO_DB_OPTIONS", None) and eval(os.getenv("DJANGO_DB_OPTIONS")) or {},
     }
 }
 

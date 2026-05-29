@@ -125,9 +125,20 @@ class BatchDetailView(RoleRequiredMixin, DetailView):
     roles = ("Admin", "Trainer", "Student")
 
     def get_context_data(self, **kwargs):
+        from trainers.models import CourseTrainer
         kwargs = super().get_context_data(**kwargs)
+        
+        courses = []
+        for session in self.object.sessions.select_related("course").distinct():
+            trainers = CourseTrainer.objects.filter(course=session.course, is_active=True).select_related("trainer")
+            courses.append({
+                "course": session.course,
+                "trainers": list(trainers),
+            })
+        
         kwargs["enrollments"] = self.object.enrollments.select_related("student").all()
         kwargs["sessions"] = self.object.sessions.select_related("course", "trainer").all()
+        kwargs["courses"] = courses
         kwargs["attendance_stats"] = list(
             Attendance.objects.filter(enrollment__batch=self.object)
             .values("status")

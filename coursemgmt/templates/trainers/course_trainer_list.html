@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Course Trainer Assignments{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">Course Trainer Assignments</h2>
+  <div class="d-flex gap-2">
+    <a class="btn btn-success" href="{% url 'trainers:course-trainer-create' %}">Assign Trainer to Course</a>
+    <form class="d-flex gap-2" method="get">
+      <input class="form-control" name="q" value="{{ request.GET.q }}" placeholder="Search trainer or course">
+      <button class="btn btn-primary">Search</button>
+    </form>
+  </div>
+</div>
+<div class="card page-card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>Trainer</th>
+            <th>Course</th>
+            <th>Assigned Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ct in page_obj %}
+            <tr>
+              <td>
+                <a href="{% url 'trainers:detail' ct.trainer.pk %}">{{ ct.trainer.full_name }}</a>
+              </td>
+              <td>
+                <a href="#">{{ ct.course.course_name }}</a>
+              </td>
+              <td>{{ ct.assigned_date|date:"d M Y" }}</td>
+              <td>
+                <span class="badge {% if ct.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                  {% if ct.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+              </td>
+              <td>
+                <a href="{% url 'trainers:course-trainer-edit' ct.pk %}" class="btn btn-sm btn-primary">Edit</a>
+                <a href="{% url 'trainers:course-trainer-delete' ct.pk %}" class="btn btn-sm btn-danger">Delete</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="text-muted text-center">No assignments found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "shared/pagination.html" with page_obj=page_obj %}
+  </div>
+</div>
+{% endblock %}

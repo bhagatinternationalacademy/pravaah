@@ -10,6 +10,8 @@ from .views import (
     student_guardian_update,
     student_list,
     student_update,
+    assessment_results,
+    export_marks,
 )
 
 app_name = "students"
@@ -18,6 +20,8 @@ urlpatterns = [
     path("", student_list, name="list"),
     path("create/", student_create, name="create"),
     path("dashboard/", dashboard, name="dashboard"),
+    path("assessment-results/", assessment_results, name="assessment-results"),
+    path("export-marks/", export_marks, name="export-marks"),
     path("<int:pk>/", student_detail, name="detail"),
     path("<int:pk>/edit/", student_update, name="edit"),
     path("<int:pk>/delete/", student_delete, name="delete"),

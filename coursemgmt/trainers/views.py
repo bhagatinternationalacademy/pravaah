@@ -7,8 +7,8 @@ from batches.models import Session
 from programs.models import Course
 from training_management.access import CrudFormMixin, RoleRequiredMixin, role_required
 
-from .forms import CertificationForm, TrainerForm, TrainerSkillForm
-from .models import Certification, Trainer, TrainerSkill
+from .forms import CertificationForm, TrainerForm, TrainerSkillForm, ProgramTrainerForm, CourseTrainerForm
+from .models import Certification, Trainer, TrainerSkill, ProgramTrainer, CourseTrainer
 
 
 def resolve_trainer(user):
@@ -44,6 +44,8 @@ class TrainerDetailView(RoleRequiredMixin, DetailView):
         kwargs["certifications"] = self.object.certifications.all()
         kwargs["sessions"] = self.object.sessions.select_related("batch", "course").all()
         kwargs["batches"] = self.object.batches.select_related("program").all()
+        kwargs["programs"] = self.object.program_assignments.select_related("program").filter(is_active=True)
+        kwargs["courses"] = self.object.course_assignments.select_related("course").filter(is_active=True)
         return kwargs
 
 
@@ -159,6 +161,98 @@ def availability(request):
     return render(request, "trainers/availability.html", {"trainers": Trainer.objects.all(), "trainer": trainer, "schedules": schedules[:50], "courses": Course.objects.all()})
 
 
+class ProgramTrainerListView(RoleRequiredMixin, ListView):
+    model = ProgramTrainer
+    template_name = "trainers/program_trainer_list.html"
+    context_object_name = "program_trainers"
+    paginate_by = 20
+    roles = ("Admin",)
+
+    def get_queryset(self):
+        qs = ProgramTrainer.objects.select_related("trainer", "program")
+        q = self.request.GET.get("q", "")
+        if q:
+            qs = qs.filter(Q(trainer__first_name__icontains=q) | Q(trainer__last_name__icontains=q) | Q(program__program_name__icontains=q))
+        is_active = self.request.GET.get("is_active", "")
+        if is_active:
+            qs = qs.filter(is_active=(is_active == "true"))
+        return qs
+
+
+class ProgramTrainerCreateView(CrudFormMixin, RoleRequiredMixin, CreateView):
+    model = ProgramTrainer
+    form_class = ProgramTrainerForm
+    template_name = "shared/form.html"
+    roles = ("Admin",)
+    success_url = reverse_lazy("trainers:program-trainer-list")
+    title = "Assign Trainer to Program"
+    button_text = "Assign"
+    back_url = reverse_lazy("trainers:program-trainer-list")
+
+
+class ProgramTrainerUpdateView(ProgramTrainerCreateView, UpdateView):
+    title = "Update Program Trainer Assignment"
+    button_text = "Update"
+
+
+class ProgramTrainerDeleteView(RoleRequiredMixin, DeleteView):
+    model = ProgramTrainer
+    template_name = "shared/confirm_delete.html"
+    roles = ("Admin",)
+    success_url = reverse_lazy("trainers:program-trainer-list")
+
+    def get_context_data(self, **kwargs):
+        kwargs = super().get_context_data(**kwargs)
+        kwargs["back_url"] = reverse_lazy("trainers:program-trainer-list")
+        return kwargs
+
+
+class CourseTrainerListView(RoleRequiredMixin, ListView):
+    model = CourseTrainer
+    template_name = "trainers/course_trainer_list.html"
+    context_object_name = "course_trainers"
+    paginate_by = 20
+    roles = ("Admin",)
+
+    def get_queryset(self):
+        qs = CourseTrainer.objects.select_related("trainer", "course")
+        q = self.request.GET.get("q", "")
+        if q:
+            qs = qs.filter(Q(trainer__first_name__icontains=q) | Q(trainer__last_name__icontains=q) | Q(course__course_name__icontains=q))
+        is_active = self.request.GET.get("is_active", "")
+        if is_active:
+            qs = qs.filter(is_active=(is_active == "true"))
+        return qs
+
+
+class CourseTrainerCreateView(CrudFormMixin, RoleRequiredMixin, CreateView):
+    model = CourseTrainer
+    form_class = CourseTrainerForm
+    template_name = "shared/form.html"
+    roles = ("Admin",)
+    success_url = reverse_lazy("trainers:course-trainer-list")
+    title = "Assign Trainer to Course"
+    button_text = "Assign"
+    back_url = reverse_lazy("trainers:course-trainer-list")
+
+
+class CourseTrainerUpdateView(CourseTrainerCreateView, UpdateView):
+    title = "Update Course Trainer Assignment"
+    button_text = "Update"
+
+
+class CourseTrainerDeleteView(RoleRequiredMixin, DeleteView):
+    model = CourseTrainer
+    template_name = "shared/confirm_delete.html"
+    roles = ("Admin",)
+    success_url = reverse_lazy("trainers:course-trainer-list")
+
+    def get_context_data(self, **kwargs):
+        kwargs = super().get_context_data(**kwargs)
+        kwargs["back_url"] = reverse_lazy("trainers:course-trainer-list")
+        return kwargs
+
+
 trainer_list = TrainerListView.as_view()
 trainer_detail = TrainerDetailView.as_view()
 trainer_create = TrainerCreateView.as_view()
@@ -170,3 +264,11 @@ trainer_skill_delete = TrainerSkillDeleteView.as_view()
 certification_create = CertificationCreateView.as_view()
 certification_update = CertificationUpdateView.as_view()
 certification_delete = CertificationDeleteView.as_view()
+program_trainer_list = ProgramTrainerListView.as_view()
+program_trainer_create = ProgramTrainerCreateView.as_view()
+program_trainer_update = ProgramTrainerUpdateView.as_view()
+program_trainer_delete = ProgramTrainerDeleteView.as_view()
+course_trainer_list = CourseTrainerListView.as_view()
+course_trainer_create = CourseTrainerCreateView.as_view()
+course_trainer_update = CourseTrainerUpdateView.as_view()
+course_trainer_delete = CourseTrainerDeleteView.as_view()

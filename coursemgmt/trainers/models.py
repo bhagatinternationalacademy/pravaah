@@ -1,6 +1,6 @@
 from django.db import models
 
-from programs.models import Gender
+from programs.models import Gender, Program, Course
 from training_management.codegen import generate_unique_code
 
 
@@ -67,3 +67,40 @@ class Certification(models.Model):
 
     def __str__(self):
         return self.certification_name
+
+
+class ProgramTrainer(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE, db_column="trainer_id", related_name="program_assignments")
+    program = models.ForeignKey(Program, on_delete=models.CASCADE, db_column="program_id", related_name="trainer_assignments")
+    specialization = models.CharField(max_length=200, blank=True, help_text="Area of specialization for this program")
+    assigned_date = models.DateField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "program_trainers"
+        ordering = ["program", "trainer"]
+        constraints = [
+            models.UniqueConstraint(fields=["trainer", "program"], name="uniq_trainer_program")
+        ]
+
+    def __str__(self):
+        return f"{self.trainer.full_name} -> {self.program.program_name}"
+
+
+class CourseTrainer(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE, db_column="trainer_id", related_name="course_assignments")
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, db_column="course_id", related_name="trainer_assignments")
+    assigned_date = models.DateField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "course_trainers"
+        ordering = ["course", "trainer"]
+        constraints = [
+            models.UniqueConstraint(fields=["trainer", "course"], name="uniq_trainer_course")
+        ]
+
+    def __str__(self):
+        return f"{self.trainer.full_name} -> {self.course.course_name}"

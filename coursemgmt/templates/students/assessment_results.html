@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Assessment Results{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">Assessment Results</h2>
+  {% if user.is_staff %}
+  <a class="btn btn-primary" href="{% url 'students:export-marks' %}">Export Marks</a>
+  {% endif %}
+</div>
+
+{% if not user.is_staff %}
+<div class="card page-card mb-3">
+  <div class="card-body">
+    <p class="text-muted mb-0">Your assessment results and marks are displayed below. Check the graded date to see when marks were updated.</p>
+  </div>
+</div>
+{% else %}
+<div class="card page-card mb-3">
+  <div class="card-header">
+    <h5 class="mb-0">Filters</h5>
+  </div>
+  <div class="card-body">
+    <form method="get" class="row g-2">
+      <div class="col-md-4">
+        <label class="form-label">Student</label>
+        <select name="student" class="form-select">
+          <option value="">-- Select Student --</option>
+          {% for student in students %}
+            <option value="{{ student.pk }}" {% if request.GET.student|add:"0" == student.pk %}selected{% endif %}>
+              {{ student.full_name }} ({{ student.student_code }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-12">
+        <button type="submit" class="btn btn-primary mt-4">Filter</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<div class="card page-card">
+  <div class="card-body">
+    {% if results %}
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            {% if user.is_staff %}<th>Student</th>{% endif %}
+            <th>Batch</th>
+            <th>Program</th>
+            <th>Course</th>
+            <th>Assessment</th>
+            <th>Marks</th>
+            <th>Status</th>
+            <th>Graded Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for result in results %}
+            <tr>
+              {% if user.is_staff %}
+              <td>
+                <a href="{% url 'students:detail' result.enrollment.student.pk %}">
+                  {{ result.enrollment.student.full_name }}
+                </a>
+              </td>
+              {% endif %}
+              <td>{{ result.enrollment.batch.batch_name }}</td>
+              <td>{{ result.enrollment.batch.program.program_name }}</td>
+              <td>{{ result.assessment.course.course_name }}</td>
+              <td>{{ result.assessment.assessment_name }}</td>
+              <td>
+                <strong>{{ result.marks_obtained }}/{{ result.assessment.total_marks }}</strong>
+                <span class="badge {% if result.marks_obtained >= result.assessment.passing_marks %}bg-success{% else %}bg-danger{% endif %}">
+                  {% if result.marks_obtained >= result.assessment.passing_marks %}Passed{% else %}Failed{% endif %}
+                </span>
+              </td>
+              <td>
+                <span class="badge bg-{% if result.status == 'Graded' %}success{% elif result.status == 'Pending' %}warning{% else %}secondary{% endif %}">
+                  {{ result.status }}
+                </span>
+              </td>
+              <td>
+                {% if result.graded_at %}
+                  <small>{{ result.graded_at|date:"d M Y, H:i" }}</small>
+                {% else %}
+                  <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+      <p class="mb-0">No assessment results found. Once you complete assessments and they are graded, your results will appear here.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

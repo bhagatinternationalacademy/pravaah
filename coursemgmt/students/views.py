@@ -3,11 +3,13 @@ from django.db.models import Q
 from django.urls import reverse_lazy
 from django.shortcuts import render
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
+from django.http import HttpResponse
+import pandas as pd
 
 from batches.models import Enrollment
 from assessments.models import AssessmentResult
 from certificates.models import Certificate
-from training_management.access import CrudFormMixin, RoleRequiredMixin, role_required
+from training_management.access import CrudFormMixin, RoleRequiredMixin, role_required, has_role
 
 from .forms import StudentForm, StudentGuardianForm
 from .models import Student, StudentGuardian
@@ -144,6 +146,98 @@ def dashboard(request):
             "result_count": results.count(),
         },
     )
+
+
+@role_required("Admin", "Student")
+def assessment_results(request):
+    if has_role(request.user, "Student"):
+        student = resolve_student(request.user)
+        if not student:
+            return render(request, "students/assessment_results.html", {"results": []})
+        results = AssessmentResult.objects.filter(enrollment__student=student).select_related(
+            "enrollment__batch__program",
+            "assessment__course",
+        ).order_by("-graded_at")
+    else:
+        student_id = request.GET.get("student")
+        batch_id = request.GET.get("batch")
+        program_id = request.GET.get("program")
+        
+        results = AssessmentResult.objects.select_related(
+            "enrollment__batch__program",
+            "assessment__course",
+            "enrollment__student",
+        )
+        
+        if student_id:
+            results = results.filter(enrollment__student_id=student_id)
+        if batch_id:
+            results = results.filter(enrollment__batch_id=batch_id)
+        if program_id:
+            results = results.filter(enrollment__batch__program_id=program_id)
+        
+        results = results.order_by("-graded_at")
+        student = Student.objects.filter(pk=student_id).first() if student_id else None
+    
+    context = {
+        "results": results,
+        "students": Student.objects.all() if not has_role(request.user, "Student") else [],
+        "batches": Enrollment.objects.values_list("batch_id", flat=True).distinct() if not has_role(request.user, "Student") else [],
+    }
+    return render(request, "students/assessment_results.html", context)
+
+
+@role_required("Admin")
+def export_marks(request):
+    export_type = request.GET.get("type", "all")
+    student_id = request.GET.get("student")
+    batch_id = request.GET.get("batch")
+    program_id = request.GET.get("program")
+    
+    results = AssessmentResult.objects.select_related(
+        "enrollment__batch__program",
+        "enrollment__student",
+        "assessment__course",
+    )
+    
+    if export_type == "student" and student_id:
+        results = results.filter(enrollment__student_id=student_id)
+        filename = f"marks_student_{student_id}.xlsx"
+    elif export_type == "batch" and batch_id:
+        results = results.filter(enrollment__batch_id=batch_id)
+        filename = f"marks_batch_{batch_id}.xlsx"
+    elif export_type == "program" and program_id:
+        results = results.filter(enrollment__batch__program_id=program_id)
+        filename = f"marks_program_{program_id}.xlsx"
+    else:
+        filename = "marks_all.xlsx"
+    
+    data = []
+    for result in results.order_by("enrollment__batch", "enrollment__student", "assessment__course"):
+        data.append({
+            "Student Name": result.enrollment.student.full_name,
+            "Student Code": result.enrollment.student.student_code,
+            "Batch": result.enrollment.batch.batch_name,
+            "Program": result.enrollment.batch.program.program_name,
+            "Course": result.assessment.course.course_name,
+            "Assessment": result.assessment.assessment_name,
+            "Marks Obtained": float(result.marks_obtained),
+            "Total Marks": result.assessment.total_marks,
+            "Status": result.status,
+            "Graded Date": result.graded_at.strftime("%Y-%m-%d %H:%M") if result.graded_at else "Not Graded",
+        })
+    
+    if not data:
+        return render(request, "students/export_marks.html", {"error": "No assessment results found for export."})
+    
+    df = pd.DataFrame(data)
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response["Content-Disposition"] = f"attachment; filename={filename}"
+    
+    with pd.ExcelWriter(response, engine="openpyxl") as writer:
+        df.to_excel(writer, sheet_name="Assessment Results", index=False)
+    
+    return response
 
 
 student_list = StudentListView.as_view()

@@ -1,9 +1,13 @@
 from functools import wraps
+import logging
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib import messages
+
+logger = logging.getLogger(__name__)
 
 
 def user_roles(user):
@@ -62,3 +66,13 @@ class CrudFormMixin:
         context.setdefault("back_url", self.back_url)
         context.setdefault("enctype", self.enctype)
         return context
+
+    def form_invalid(self, form):
+        """Log form errors and show a generic error message to the user."""
+        try:
+            err_json = form.errors.as_json()
+        except Exception:
+            err_json = str(form.errors)
+        logger.error("Form invalid in %s: %s", self.__class__.__name__, err_json)
+        messages.error(self.request, "There were errors with your submission. See the form for details.")
+        return super().form_invalid(form)

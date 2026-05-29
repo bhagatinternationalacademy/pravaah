@@ -1,0 +1,641 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Welcome to PRAVAAH{% endblock %}
+
+{% block body %}
+
+<!-- ========== NAVBAR ========== -->
+<nav class="navbar navbar-expand-lg landing-nav fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <span class="brand-icon"><i class="bi bi-mortarboard-fill"></i></span>
+      PRAVAAH
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav mx-auto">
+        <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+        <li class="nav-item"><a class="nav-link" href="#courses">Programs</a></li>
+        <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+        <li class="nav-item"><a class="nav-link" href="#testimonials">Reviews</a></li>
+        <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+      </ul>
+      <div class="d-flex gap-2 align-items-center">
+        <a href="{% url 'participantmgmt:login' %}" class="btn btn-outline-light btn-sm px-4">Login</a>
+        <a href="{% url 'participantmgmt:register' %}" class="btn btn-primary btn-sm px-4">Apply Now</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ========== HERO ========== -->
+<section class="hero-section">
+  <div class="container position-relative">
+    <div class="row align-items-center min-vh-100 py-5">
+      <div class="col-lg-7">
+        <div class="hero-content">
+          <div class="hero-badge mb-4">
+            <span class="badge-dot"></span>
+            India's Leading Training Management Platform
+          </div>
+          <h1 class="hero-title">
+            Empowering Careers Through
+            <span class="hero-highlight">Professional Training</span>
+          </h1>
+          <p class="hero-desc">
+            PRAVAAH is a comprehensive training institute management system — built to streamline admissions, track participant progress, manage courses, and deliver measurable outcomes.
+          </p>
+          <div class="hero-actions mt-4">
+            <a href="{% url 'participantmgmt:register' %}" class="btn btn-primary btn-lg me-3">
+              <i class="bi bi-person-plus-fill me-2"></i>Start Enrollment
+            </a>
+            <a href="#about" class="btn btn-outline-light btn-lg">
+              <i class="bi bi-play-circle me-2"></i>Learn More
+            </a>
+          </div>
+          <div class="hero-trust mt-5">
+            <span class="trust-label">Trusted by 500+ trainees across programs</span>
+            <div class="trust-avatars mt-2">
+              <span class="avatar-circle">A</span>
+              <span class="avatar-circle">P</span>
+              <span class="avatar-circle">R</span>
+              <span class="avatar-circle">S</span>
+              <span class="avatar-circle">+</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-5 d-none d-lg-block">
+        <div class="hero-dashboard-preview">
+          <div class="preview-card">
+            <div class="preview-header">
+              <span class="preview-dot red"></span>
+              <span class="preview-dot yellow"></span>
+              <span class="preview-dot green"></span>
+              <span class="ms-2 small text-muted">Participant Dashboard</span>
+            </div>
+            <div class="preview-body">
+              <div class="preview-stat-row">
+                <div class="preview-stat blue">
+                  <div class="ps-label">Attendance</div>
+                  <div class="ps-value">87%</div>
+                </div>
+                <div class="preview-stat green">
+                  <div class="ps-label">Progress</div>
+                  <div class="ps-value">64%</div>
+                </div>
+                <div class="preview-stat purple">
+                  <div class="ps-label">Score</div>
+                  <div class="ps-value">A+</div>
+                </div>
+              </div>
+              <div class="preview-profile-row mt-3">
+                <div class="preview-avatar">R</div>
+                <div>
+                  <div class="fw-600 small">Rahul Mehta</div>
+                  <div class="text-muted" style="font-size:11px">Full Stack Development &middot; Batch 2025</div>
+                </div>
+                <span class="ms-auto badge bg-success" style="font-size:10px">Active</span>
+              </div>
+              <div class="preview-progress mt-3">
+                <div class="d-flex justify-content-between mb-1">
+                  <span style="font-size:11px;color:#64748b">Course Completion</span>
+                  <span style="font-size:11px;font-weight:600">64%</span>
+                </div>
+                <div class="progress" style="height:6px;border-radius:10px;">
+                  <div class="progress-bar bg-primary" style="width:64%"></div>
+                </div>
+              </div>
+              <div class="preview-modules mt-3">
+                <div class="preview-module done"><i class="bi bi-check-circle-fill text-success me-2"></i>HTML &amp; CSS Fundamentals</div>
+                <div class="preview-module done"><i class="bi bi-check-circle-fill text-success me-2"></i>JavaScript Core</div>
+                <div class="preview-module active"><i class="bi bi-circle-half text-primary me-2"></i>React.js Framework</div>
+                <div class="preview-module"><i class="bi bi-circle text-muted me-2"></i>Node.js &amp; Backend</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-indicator">
+    <span>Scroll to explore</span>
+    <i class="bi bi-chevron-down"></i>
+  </div>
+</section>
+
+<!-- ========== STATS BAND ========== -->
+<section class="stats-band py-4">
+  <div class="container">
+    <div class="row g-0 text-center">
+      <div class="col-6 col-md-3">
+        <div class="stat-band-item">
+          <div class="sbi-value">2,500+</div>
+          <div class="sbi-label">Trainees Enrolled</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-band-item">
+          <div class="sbi-value">40+</div>
+          <div class="sbi-label">Training Programs</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-band-item">
+          <div class="sbi-value">95%</div>
+          <div class="sbi-label">Placement Rate</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-band-item border-0">
+          <div class="sbi-value">12+</div>
+          <div class="sbi-label">Years of Excellence</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== ABOUT ========== -->
+<section id="about" class="about-section py-5">
+  <div class="container py-4">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6">
+        <div class="about-info-grid">
+          <div class="aig-card aig-blue">
+            <i class="bi bi-award-fill"></i>
+            <div class="aig-title">ISO Certified</div>
+            <div class="aig-sub">Quality Training Standards</div>
+          </div>
+          <div class="aig-card aig-green">
+            <i class="bi bi-people-fill"></i>
+            <div class="aig-title">Expert Trainers</div>
+            <div class="aig-sub">Industry professionals</div>
+          </div>
+          <div class="aig-card aig-purple">
+            <i class="bi bi-graph-up-arrow"></i>
+            <div class="aig-title">95% Placement</div>
+            <div class="aig-sub">Consistent track record</div>
+          </div>
+          <div class="aig-card aig-orange">
+            <i class="bi bi-laptop-fill"></i>
+            <div class="aig-title">100% Digital</div>
+            <div class="aig-sub">Paperless processes</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="section-label">About PRAVAAH</div>
+        <h2 class="section-heading">A Modern Platform for <span class="text-primary">Skill Development</span></h2>
+        <p class="section-text">
+          PRAVAAH (&#2346;&#2381;&#2352;&#2357;&#2366;&#2361;) meaning "flow" is a complete training institute management ecosystem. From the moment a participant applies, to the day they complete their program and get placed, PRAVAAH manages every step digitally.
+        </p>
+        <p class="section-text">
+          Built for training institutes, coaching centers, and skill development organizations that want a professional, centralized system to manage their operations efficiently.
+        </p>
+        <div class="about-points mt-4">
+          <div class="ap-item"><i class="bi bi-check2-circle text-primary"></i> Digital admission and document management</div>
+          <div class="ap-item"><i class="bi bi-check2-circle text-primary"></i> Real-time attendance and progress tracking</div>
+          <div class="ap-item"><i class="bi bi-check2-circle text-primary"></i> Automated enrollment ID generation</div>
+          <div class="ap-item"><i class="bi bi-check2-circle text-primary"></i> Participant portal with secure login</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== PROGRAMS ========== -->
+<section id="courses" class="programs-section py-5">
+  <div class="container py-4">
+    <div class="text-center mb-5">
+      <div class="section-label">Our Programs</div>
+      <h2 class="section-heading">Industry-Ready Training Courses</h2>
+      <p class="section-subtext">Designed with industry experts to ensure job-ready skills from day one.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-4">
+        <div class="program-card">
+          <div class="program-icon" style="background:#eff6ff;color:#3b82f6"><i class="bi bi-code-slash"></i></div>
+          <h5>Full Stack Development</h5>
+          <p>HTML, CSS, JavaScript, React, Node.js, MySQL &mdash; complete web development training.</p>
+          <div class="program-meta">
+            <span><i class="bi bi-clock me-1"></i>6 Months</span>
+            <span><i class="bi bi-people me-1"></i>30 Seats</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="program-card">
+          <div class="program-icon" style="background:#f0fdf4;color:#22c55e"><i class="bi bi-bar-chart-line-fill"></i></div>
+          <h5>Data Analytics &amp; Python</h5>
+          <p>Python, Pandas, Data Visualization, Machine Learning fundamentals, real projects.</p>
+          <div class="program-meta">
+            <span><i class="bi bi-clock me-1"></i>4 Months</span>
+            <span><i class="bi bi-people me-1"></i>25 Seats</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="program-card">
+          <div class="program-icon" style="background:#faf5ff;color:#a855f7"><i class="bi bi-shield-lock-fill"></i></div>
+          <h5>Cybersecurity Essentials</h5>
+          <p>Network security, ethical hacking basics, VAPT, security certifications preparation.</p>
+          <div class="program-meta">
+            <span><i class="bi bi-clock me-1"></i>3 Months</span>
+            <span><i class="bi bi-people me-1"></i>20 Seats</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="program-card">
+          <div class="program-icon" style="background:#fff7ed;color:#f97316"><i class="bi bi-cloud-fill"></i></div>
+          <h5>Cloud Computing (AWS)</h5>
+          <p>AWS core services, cloud architecture, DevOps basics, deployment strategies.</p>
+          <div class="program-meta">
+            <span><i class="bi bi-clock me-1"></i>3 Months</span>
+            <span><i class="bi bi-people me-1"></i>20 Seats</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="program-card">
+          <div class="program-icon" style="background:#fef2f2;color:#ef4444"><i class="bi bi-phone-fill"></i></div>
+          <h5>Mobile App Development</h5>
+          <p>Flutter, Dart, cross-platform mobile development, app store publishing.</p>
+          <div class="program-meta">
+            <span><i class="bi bi-clock me-1"></i>5 Months</span>
+            <span><i class="bi bi-people me-1"></i>25 Seats</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="program-card program-card-cta">
+          <div class="program-icon" style="background:rgba(255,255,255,0.15);color:white"><i class="bi bi-plus-circle-fill"></i></div>
+          <h5>More Programs</h5>
+          <p>UI/UX Design, Digital Marketing, Tally, Hardware &amp; Networking and more.</p>
+          <a href="{% url 'participantmgmt:register' %}" class="btn btn-light btn-sm mt-2">View All &amp; Enroll</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FEATURES ========== -->
+<section id="features" class="features-section py-5">
+  <div class="container py-4">
+    <div class="text-center mb-5">
+      <div class="section-label">Platform Features</div>
+      <h2 class="section-heading">Everything You Need, In One Place</h2>
+      <p class="section-subtext">PRAVAAH gives participants and admins a powerful, unified experience.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-3">
+        <div class="feat-card">
+          <div class="feat-icon feat-blue"><i class="bi bi-person-vcard-fill"></i></div>
+          <h6>Smart Enrollment</h6>
+          <p>Multi-step digital admission with document uploads and auto-generated Enrollment ID.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="feat-card">
+          <div class="feat-icon feat-green"><i class="bi bi-calendar-check-fill"></i></div>
+          <h6>Attendance Tracker</h6>
+          <p>Daily attendance with subject-wise breakdown and monthly percentage analytics.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="feat-card">
+          <div class="feat-icon feat-purple"><i class="bi bi-graph-up-arrow"></i></div>
+          <h6>Progress &amp; Results</h6>
+          <p>Module-wise assessment scores, grades, and overall course completion tracking.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="feat-card">
+          <div class="feat-icon feat-orange"><i class="bi bi-bell-fill"></i></div>
+          <h6>Notifications</h6>
+          <p>Targeted and broadcast announcements from institute admin to all participants.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="feat-card">
+          <div class="feat-icon feat-red"><i class="bi bi-file-earmark-text-fill"></i></div>
+          <h6>Document Vault</h6>
+          <p>Secure upload and storage of Aadhaar, certificates, marksheets, and photos.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="feat-card">
+          <div class="feat-icon feat-teal"><i class="bi bi-shield-check-fill"></i></div>
+          <h6>Secure Portal</h6>
+          <p>Session-based auth, admin approval workflow, and role-based access control.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="feat-card">
+          <div class="feat-icon feat-indigo"><i class="bi bi-credit-card-fill"></i></div>
+          <h6>Fee Management</h6>
+          <p>Online fee payment interface with payment history and receipt generation.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="feat-card">
+          <div class="feat-icon feat-pink"><i class="bi bi-award-fill"></i></div>
+          <h6>Certification</h6>
+          <p>Auto-generated course completion certificates upon successful program finish.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== HOW IT WORKS ========== -->
+<section class="how-section py-5">
+  <div class="container py-4">
+    <div class="text-center mb-5">
+      <div class="section-label">Admission Process</div>
+      <h2 class="section-heading">Get Started in 4 Simple Steps</h2>
+    </div>
+    <div class="row g-4 justify-content-center">
+      <div class="col-md-6 col-lg-3">
+        <div class="how-step">
+          <div class="how-num">01</div>
+          <div class="how-icon"><i class="bi bi-person-plus-fill"></i></div>
+          <h6>Register Online</h6>
+          <p>Fill the multi-step admission form with personal, academic details and documents.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="how-step">
+          <div class="how-num">02</div>
+          <div class="how-icon"><i class="bi bi-search"></i></div>
+          <h6>Admin Review</h6>
+          <p>Institute admin verifies your application and documents within 24 hours.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="how-step">
+          <div class="how-num">03</div>
+          <div class="how-icon"><i class="bi bi-credit-card-fill"></i></div>
+          <h6>Pay Fees</h6>
+          <p>Complete the fee payment online. Receive confirmation and enrollment ID instantly.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="how-step">
+          <div class="how-num">04</div>
+          <div class="how-icon"><i class="bi bi-grid-1x2-fill"></i></div>
+          <h6>Access Portal</h6>
+          <p>Login to your participant dashboard and begin your learning journey.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== TESTIMONIALS ========== -->
+<section id="testimonials" class="testimonials-section py-5">
+  <div class="container py-4">
+    <div class="text-center mb-5">
+      <div class="section-label">Testimonials</div>
+      <h2 class="section-heading">What Our Participants Say</h2>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-4">
+        <div class="testi-card">
+          <div class="testi-stars">
+            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+          </div>
+          <p>"The PRAVAAH portal made tracking my attendance and results incredibly easy. The digital admission process was smooth and completely paperless."</p>
+          <div class="testi-author">
+            <div class="testi-avatar">A</div>
+            <div>
+              <div class="testi-name">Ananya Desai</div>
+              <div class="testi-role">Full Stack Development, Batch 2024</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="testi-card testi-featured">
+          <div class="testi-stars">
+            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+          </div>
+          <p>"From enrollment to certificate, everything is managed through one platform. The institute portal is professional and very easy to use daily."</p>
+          <div class="testi-author">
+            <div class="testi-avatar">R</div>
+            <div>
+              <div class="testi-name">Rohan Patil</div>
+              <div class="testi-role">Data Analytics, Batch 2024</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="testi-card">
+          <div class="testi-stars">
+            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i>
+          </div>
+          <p>"The dashboard shows my progress, attendance percentage and upcoming sessions clearly. I always know where I stand in my training program."</p>
+          <div class="testi-author">
+            <div class="testi-avatar">S</div>
+            <div>
+              <div class="testi-name">Sneha Kulkarni</div>
+              <div class="testi-role">Cybersecurity, Batch 2025</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CTA ========== -->
+<section class="cta-section py-5">
+  <div class="container">
+    <div class="cta-box">
+      <div class="row align-items-center">
+        <div class="col-lg-7 mb-4 mb-lg-0">
+          <h2 class="cta-title">Ready to Start Your Training Journey?</h2>
+          <p class="cta-desc">Join thousands of participants who have transformed their careers through PRAVAAH's industry-aligned training programs.</p>
+        </div>
+        <div class="col-lg-5 text-lg-end">
+          <a href="{% url 'participantmgmt:register' %}" class="btn btn-light btn-lg me-2 mb-2">
+            <i class="bi bi-person-plus-fill me-2"></i>Apply Now
+          </a>
+          <a href="{% url 'participantmgmt:login' %}" class="btn btn-outline-light btn-lg mb-2">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Participant Login
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CONTACT ========== -->
+<section id="contact" class="contact-section py-5">
+  <div class="container py-2">
+    <div class="row g-4 justify-content-center text-center">
+      <div class="col-md-4">
+        <div class="contact-item">
+          <div class="contact-icon"><i class="bi bi-geo-alt-fill"></i></div>
+          <h6>Address</h6>
+          <p>123, Training Hub, Sector 5<br>Pune, Maharashtra 411001</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="contact-item">
+          <div class="contact-icon"><i class="bi bi-telephone-fill"></i></div>
+          <h6>Phone</h6>
+          <p>+91 98765 43210<br>Mon&ndash;Sat, 9 AM &ndash; 6 PM</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="contact-item">
+          <div class="contact-icon"><i class="bi bi-envelope-fill"></i></div>
+          <h6>Email</h6>
+          <p>admissions@pravaah.edu<br>support@pravaah.edu</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer class="site-footer py-4">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-4 mb-3 mb-md-0">
+        <div class="footer-brand"><i class="bi bi-mortarboard-fill me-2"></i>PRAVAAH</div>
+        <div class="text-muted small mt-1">Training Institute Management System</div>
+      </div>
+      <div class="col-md-4 text-center mb-3 mb-md-0">
+        <div class="footer-links">
+          <a href="#about">About</a>
+          <a href="#courses">Programs</a>
+          <a href="#features">Features</a>
+          <a href="{% url 'participantmgmt:login' %}">Login</a>
+        </div>
+      </div>
+      <div class="col-md-4 text-md-end">
+        <div class="text-muted small">&copy; 2025 PRAVAAH. All rights reserved.</div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+.landing-nav{background:rgba(10,15,30,0.96);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,0.06);padding:14px 0}
+.landing-nav .navbar-brand{font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:800;color:white!important;display:flex;align-items:center;gap:8px}
+.brand-icon{width:34px;height:34px;background:linear-gradient(135deg,#4361ee,#7209b7);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:1rem}
+.landing-nav .nav-link{color:rgba(255,255,255,0.65)!important;font-size:14px;font-weight:500;padding:6px 14px!important;transition:color 0.2s}
+.landing-nav .nav-link:hover{color:white!important}
+.hero-section{min-height:100vh;background:linear-gradient(135deg,#060b18 0%,#0d1535 50%,#060b18 100%);position:relative;overflow:hidden;display:flex;align-items:center;padding-top:76px}
+.hero-section::before{content:'';position:absolute;width:700px;height:700px;background:radial-gradient(circle,rgba(67,97,238,0.12),transparent 70%);top:-200px;right:-200px;border-radius:50%}
+.hero-section::after{content:'';position:absolute;width:500px;height:500px;background:radial-gradient(circle,rgba(114,9,183,0.08),transparent 70%);bottom:-150px;left:-100px;border-radius:50%}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(67,97,238,0.15);border:1px solid rgba(67,97,238,0.35);color:#a5b4fc;padding:7px 18px;border-radius:50px;font-size:13px;font-weight:500}
+.badge-dot{width:7px;height:7px;background:#4361ee;border-radius:50%;box-shadow:0 0 0 3px rgba(67,97,238,0.3);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
+.hero-title{font-family:'Outfit',sans-serif;font-size:clamp(2.2rem,5vw,3.4rem);font-weight:800;color:white;line-height:1.15;letter-spacing:-1px;margin-bottom:20px}
+.hero-highlight{background:linear-gradient(135deg,#4361ee,#4cc9f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-desc{color:rgba(255,255,255,0.55);font-size:1.05rem;max-width:560px;line-height:1.75}
+.trust-label{color:rgba(255,255,255,0.4);font-size:13px}
+.trust-avatars{display:flex;gap:4px}
+.avatar-circle{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#4361ee,#7209b7);color:white;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,0.1)}
+.hero-dashboard-preview{perspective:1000px}
+.preview-card{background:white;border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,0.5);overflow:hidden;transform:rotateY(-8deg) rotateX(4deg);transition:transform 0.4s}
+.preview-card:hover{transform:rotateY(0) rotateX(0)}
+.preview-header{background:#f8fafc;padding:10px 16px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:6px}
+.preview-dot{width:10px;height:10px;border-radius:50%}
+.preview-dot.red{background:#ef4444}.preview-dot.yellow{background:#f59e0b}.preview-dot.green{background:#22c55e}
+.preview-body{padding:16px}
+.preview-stat-row{display:flex;gap:10px}
+.preview-stat{flex:1;padding:10px;border-radius:10px;text-align:center}
+.preview-stat.blue{background:#eff6ff}.preview-stat.green{background:#f0fdf4}.preview-stat.purple{background:#faf5ff}
+.ps-label{font-size:10px;color:#64748b}.ps-value{font-size:1.1rem;font-weight:700;color:#0f172a}
+.preview-profile-row{display:flex;align-items:center;gap:10px}
+.preview-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4361ee,#7209b7);color:white;font-weight:700;display:flex;align-items:center;justify-content:center}
+.preview-module{font-size:12px;color:#475569;padding:6px 0;border-bottom:1px solid #f1f5f9;display:flex;align-items:center}
+.preview-module:last-child{border-bottom:none}
+.preview-module.done{color:#15803d}.preview-module.active{color:#1d4ed8;font-weight:600}
+.scroll-indicator{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);text-align:center;color:rgba(255,255,255,0.3);font-size:12px;animation:bounce 2s infinite}
+.scroll-indicator i{display:block;margin-top:4px}
+@keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(8px)}}
+.stats-band{background:#0f172a;border-top:1px solid rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.05)}
+.stat-band-item{padding:20px 10px;border-right:1px solid rgba(255,255,255,0.07)}
+.sbi-value{font-family:'Outfit',sans-serif;font-size:2rem;font-weight:800;color:white}
+.sbi-label{font-size:13px;color:rgba(255,255,255,0.4);margin-top:2px}
+.section-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#4361ee;margin-bottom:10px}
+.section-heading{font-family:'Outfit',sans-serif;font-size:clamp(1.6rem,3vw,2.2rem);font-weight:700;color:#0f172a;margin-bottom:12px}
+.section-text{color:#475569;line-height:1.8;margin-bottom:10px}
+.section-subtext{color:#64748b;max-width:560px;margin:0 auto}
+.about-section{background:white}
+.about-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.aig-card{padding:24px 20px;border-radius:16px;text-align:center}
+.aig-card i{font-size:2rem;display:block;margin-bottom:10px}
+.aig-title{font-weight:700;font-size:14px}
+.aig-sub{font-size:12px;margin-top:3px}
+.aig-blue{background:#eff6ff;color:#3b82f6}.aig-green{background:#f0fdf4;color:#22c55e}
+.aig-purple{background:#faf5ff;color:#a855f7}.aig-orange{background:#fff7ed;color:#f97316}
+.about-points{display:flex;flex-direction:column;gap:10px}
+.ap-item{display:flex;align-items:center;gap:10px;font-size:14px;color:#334155}
+.ap-item i{font-size:1.1rem}
+.programs-section{background:#f8fafc}
+.program-card{background:white;border-radius:16px;padding:28px 24px;box-shadow:0 2px 12px rgba(0,0,0,0.06);transition:transform 0.3s,box-shadow 0.3s;height:100%}
+.program-card:hover{transform:translateY(-6px);box-shadow:0 12px 32px rgba(0,0,0,0.1)}
+.program-icon{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:16px}
+.program-card h5{font-weight:700;font-size:1rem;margin-bottom:8px}
+.program-card p{color:#64748b;font-size:13.5px;margin-bottom:14px}
+.program-meta{display:flex;gap:16px;font-size:12px;color:#94a3b8}
+.program-card-cta{background:linear-gradient(135deg,#4361ee,#7209b7);color:white}
+.program-card-cta h5,.program-card-cta p{color:white}
+.program-card-cta p{opacity:0.8}
+.features-section{background:white}
+.feat-card{padding:28px 22px;border:1.5px solid #f1f5f9;border-radius:16px;transition:border-color 0.3s,box-shadow 0.3s}
+.feat-card:hover{border-color:#4361ee;box-shadow:0 8px 24px rgba(67,97,238,0.1)}
+.feat-icon{width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:14px}
+.feat-blue{background:#eff6ff;color:#3b82f6}.feat-green{background:#f0fdf4;color:#22c55e}
+.feat-purple{background:#faf5ff;color:#a855f7}.feat-orange{background:#fff7ed;color:#f97316}
+.feat-red{background:#fef2f2;color:#ef4444}.feat-teal{background:#f0fdfa;color:#14b8a6}
+.feat-indigo{background:#eef2ff;color:#6366f1}.feat-pink{background:#fdf2f8;color:#ec4899}
+.feat-card h6{font-weight:700;margin-bottom:6px}
+.feat-card p{color:#64748b;font-size:13px;margin:0}
+.how-section{background:#f8fafc}
+.how-step{text-align:center;padding:32px 20px 24px;background:white;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.05);position:relative}
+.how-num{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#4361ee,#7209b7);color:white;font-family:'Outfit',sans-serif;font-size:12px;font-weight:800;padding:3px 12px;border-radius:20px}
+.how-icon{width:60px;height:60px;background:#eff6ff;color:#4361ee;border-radius:16px;font-size:1.5rem;display:flex;align-items:center;justify-content:center;margin:12px auto 14px}
+.how-step h6{font-weight:700;margin-bottom:6px}
+.how-step p{color:#64748b;font-size:13px;margin:0}
+.testimonials-section{background:white}
+.testi-card{background:#f8fafc;border-radius:16px;padding:28px 24px;height:100%;border:1.5px solid #f1f5f9;transition:border-color 0.3s}
+.testi-card:hover{border-color:#4361ee}
+.testi-featured{background:linear-gradient(135deg,#4361ee,#7209b7);border-color:transparent}
+.testi-featured p,.testi-featured .testi-name,.testi-featured .testi-role{color:white!important}
+.testi-featured .testi-stars i{color:rgba(255,255,255,0.9)!important}
+.testi-stars{color:#f59e0b;margin-bottom:14px;font-size:13px}
+.testi-card p{color:#475569;font-size:14px;line-height:1.7;margin-bottom:20px;font-style:italic}
+.testi-author{display:flex;align-items:center;gap:12px}
+.testi-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#4361ee,#7209b7);color:white;font-weight:700;display:flex;align-items:center;justify-content:center}
+.testi-featured .testi-avatar{background:rgba(255,255,255,0.25)}
+.testi-name{font-weight:700;font-size:14px;color:#0f172a}
+.testi-role{font-size:12px;color:#64748b}
+.cta-section{background:#f8fafc}
+.cta-box{background:linear-gradient(135deg,#4361ee 0%,#7209b7 100%);border-radius:24px;padding:50px 48px;color:white}
+.cta-title{font-family:'Outfit',sans-serif;font-size:1.8rem;font-weight:800;margin-bottom:10px}
+.cta-desc{color:rgba(255,255,255,0.7);margin:0}
+.contact-section{background:white}
+.contact-item{padding:20px}
+.contact-icon{width:52px;height:52px;background:#eff6ff;color:#4361ee;border-radius:14px;font-size:1.3rem;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.contact-item h6{font-weight:700;margin-bottom:6px}
+.contact-item p{color:#64748b;font-size:13.5px;margin:0}
+.site-footer{background:#060b18;border-top:1px solid rgba(255,255,255,0.06)}
+.footer-brand{font-family:'Outfit',sans-serif;font-size:1.2rem;font-weight:800;color:white}
+.footer-links{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}
+.footer-links a{color:rgba(255,255,255,0.4);font-size:13px;text-decoration:none;transition:color 0.2s}
+.footer-links a:hover{color:white}
+.fw-600{font-weight:600}
+@media(max-width:768px){.cta-box{padding:32px 24px}.about-info-grid{grid-template-columns:1fr}}
+</style>
+{% endblock %}

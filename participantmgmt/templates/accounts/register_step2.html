@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admission Documents{% endblock %}
+
+{% block body %}
+<div class="admission-page">
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-xl-11">
+        <div class="admission-shell">
+          <div class="admission-hero">
+            <div>
+              <a href="/" class="register-logo"><i class="bi bi-mortarboard-fill me-2"></i>PRAVAAH</a>
+              <h2 class="admission-title">Participant Admission</h2>
+              <p class="admission-subtitle">Upload academic details and supporting documents. Use the dropdown to label each file correctly.</p>
+            </div>
+            <div class="admission-hero-note">
+              <div class="small text-uppercase fw-semibold mb-1">Step 2 of 4</div>
+              <div>Documents</div>
+            </div>
+          </div>
+
+          <div class="admission-progress-grid mb-4">
+            <div class="admission-progress-item completed">1. Personal</div>
+            <div class="admission-progress-item active">2. Documents</div>
+            <div class="admission-progress-item">3. Course</div>
+            <div class="admission-progress-item">4. Payment</div>
+          </div>
+
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            <div class="row g-4 align-items-start">
+              <div class="col-lg-8">
+                <div class="admission-card-panel">
+                  <div class="section-title-block">
+                    <div class="form-section-title mb-0"><i class="bi bi-folder2-open me-2"></i>Academic Details & Documents</div>
+                    <p class="admission-section-copy mb-0">Add your academic year first, then attach the required documents.</p>
+                  </div>
+
+                  <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                      <label class="form-label">Academic Year <span class="text-danger">*</span></label>
+                      {{ form.academic_year }}
+                      {% if form.academic_year.errors %}<div class="text-danger small mt-1">{{ form.academic_year.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                      <div class="document-hint-card h-100">
+                        <div class="document-hint-title">Accepted files</div>
+                        <p class="mb-0">PDF, JPG, JPEG, PNG, DOC, and DOCX are supported for document uploads.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div id="documentRows" class="document-row-stack">
+                    {% for row in document_rows %}
+                      <div class="document-row" data-document-row data-row-index="{{ row.index }}">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                          <div class="document-row-number">Document {{ row.index }}</div>
+                          <button type="button" class="btn btn-sm btn-outline-danger remove-document-row">Remove</button>
+                        </div>
+                        <div class="row g-3 align-items-end">
+                          <div class="col-md-5">
+                            <label class="form-label">Document Type</label>
+                            <select name="document_type_{{ row.index }}" class="form-select">
+                              <option value="">-- Select Document --</option>
+                              {% for value, label in document_choices %}
+                                <option value="{{ value }}" {% if row.document_type == value %}selected{% endif %}>{{ label }}</option>
+                              {% endfor %}
+                            </select>
+                          </div>
+                          <div class="col-md-5">
+                            <label class="form-label">Upload File</label>
+                            <input type="file" name="document_file_{{ row.index }}" class="form-control doc-file-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                            <span class="file-name-hint">{{ row.file_name|default:'No file selected' }}</span>
+                          </div>
+                          <div class="col-md-2">
+                            <button type="button" class="btn btn-outline-danger w-100 remove-document-row">Remove</button>
+                          </div>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+
+                  {% if form.non_field_errors %}
+                    <div class="alert alert-danger mt-3 mb-0">{{ form.non_field_errors.0 }}</div>
+                  {% endif %}
+
+                  <div class="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-2">
+                    <button type="button" class="btn btn-outline-primary" id="addDocumentRow">
+                      <i class="bi bi-plus-circle me-1"></i>Add another document
+                    </button>
+                    <small class="text-muted">Add more rows only if you have more documents to upload.</small>
+                  </div>
+
+                  <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'participantmgmt:register' %}" class="btn btn-outline-secondary">
+                      <i class="bi bi-arrow-left me-1"></i> Back
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg px-5">
+                      Continue <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-lg-4">
+                <div class="admission-side-card mb-4">
+                  <div class="admission-side-title">Documents to upload</div>
+                  <div class="admission-side-list">
+                    <div class="admission-side-item">Aadhaar Card</div>
+                    <div class="admission-side-item">PAN Card</div>
+                    <div class="admission-side-item">10th / 12th Marksheet</div>
+                    <div class="admission-side-item">Transfer Certificate or other proof</div>
+                  </div>
+                </div>
+                <div class="admission-side-card">
+                  <div class="admission-side-title">Tip</div>
+                  <p class="mb-0">Keep each file clear and readable. You can add extra rows if your course requires more documents.</p>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

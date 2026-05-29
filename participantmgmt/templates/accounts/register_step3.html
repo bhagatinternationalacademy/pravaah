@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Course Selection{% endblock %}
+
+{% block body %}
+{{ course_catalog|json_script:"course-catalog-data" }}
+<div class="admission-page">
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-xl-11">
+        <div class="admission-shell">
+          <div class="admission-hero">
+            <div>
+              <a href="/" class="register-logo"><i class="bi bi-mortarboard-fill me-2"></i>PRAVAAH</a>
+              <h2 class="admission-title">Participant Admission</h2>
+              <p class="admission-subtitle">Choose a course, set your login details, and review the fee and duration before payment.</p>
+            </div>
+            <div class="admission-hero-note">
+              <div class="small text-uppercase fw-semibold mb-1">Step 3 of 4</div>
+              <div>Course</div>
+            </div>
+          </div>
+
+          <div class="admission-progress-grid mb-4">
+            <div class="admission-progress-item completed">1. Personal</div>
+            <div class="admission-progress-item completed">2. Documents</div>
+            <div class="admission-progress-item active">3. Course</div>
+            <div class="admission-progress-item">4. Payment</div>
+          </div>
+
+          <form method="post" novalidate id="courseSelectionForm">
+            {% csrf_token %}
+            <div class="row g-4 align-items-start">
+              <div class="col-lg-5">
+                <div class="admission-card-panel">
+                  <div class="section-title-block">
+                    <div class="form-section-title mb-0"><i class="bi bi-mortarboard-fill me-2"></i>Course Selection</div>
+                    <p class="admission-section-copy mb-0">Pick the program you want to join. Fees and duration update instantly.</p>
+                  </div>
+
+                  <label class="form-label">Course <span class="text-danger">*</span></label>
+                  {{ form.course }}
+                  {% if form.course.errors %}<div class="text-danger small mt-1">{{ form.course.errors.0 }}</div>{% endif %}
+
+                  <div class="course-mini-summary mt-4">
+                    <div class="course-mini-label">Fee</div>
+                    <div class="course-mini-value" id="courseSummaryFees">Select a course</div>
+                  </div>
+                  <div class="course-mini-summary mt-3">
+                    <div class="course-mini-label">Duration</div>
+                    <div class="course-mini-value" id="courseSummaryDurationText">---</div>
+                  </div>
+                  <div class="course-mini-summary mt-3">
+                    <div class="course-mini-label">Highlights</div>
+                    <div class="course-summary-list" id="courseSummaryHighlights"></div>
+                  </div>
+
+                  <hr class="my-4">
+
+                  <label class="form-label">Username <span class="text-danger">*</span></label>
+                  {{ form.username }}
+                  {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>{% endif %}
+
+                  <label class="form-label mt-3">Password <span class="text-danger">*</span></label>
+                  {{ form.password1 }}
+                  {% if form.password1.errors %}<div class="text-danger small mt-1">{{ form.password1.errors.0 }}</div>{% endif %}
+
+                  <label class="form-label mt-3">Confirm Password <span class="text-danger">*</span></label>
+                  {{ form.password2 }}
+                  {% if form.password2.errors %}<div class="text-danger small mt-1">{{ form.password2.errors.0 }}</div>{% endif %}
+
+                  {% if form.non_field_errors %}
+                    <div class="alert alert-danger mt-3 mb-0">{{ form.non_field_errors.0 }}</div>
+                  {% endif %}
+
+                  <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'participantmgmt:register_documents' %}" class="btn btn-outline-secondary">
+                      <i class="bi bi-arrow-left me-1"></i> Back
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg px-5">
+                      Continue <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-lg-7">
+                <div class="admission-side-card admission-course-card h-100">
+                  <div class="course-summary-card w-100">
+                    <div class="course-summary-top">
+                      <div>
+                        <div class="course-summary-label">Selected course</div>
+                        <h4 class="course-summary-title" id="courseSummaryTitle">Choose a course</h4>
+                      </div>
+                      <div class="course-summary-badge" id="courseSummaryDuration">Duration</div>
+                    </div>
+                    <div class="course-summary-meta">
+                      <div class="course-summary-meta-item">
+                        <span class="meta-label">Fees</span>
+                        <span class="meta-value" id="courseSummaryFeesCard">Select a course to see the fee</span>
+                      </div>
+                      <div class="course-summary-meta-item">
+                        <span class="meta-label">Duration</span>
+                        <span class="meta-value" id="courseSummaryDurationCard">---</span>
+                      </div>
+                    </div>
+                    <p class="course-summary-description" id="courseSummaryDescription">
+                      Course details will appear here once you choose a program.
+                    </p>
+                    <div class="course-summary-list" id="courseSummaryHighlightsCard"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+
+{% block title %}My Profile{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="dash-card text-center">
+      <div class="dash-card-body py-4">
+        {% if student.photo %}
+          <img src="{{ student.photo.url }}" alt="Profile" class="profile-photo-xl mb-3">
+        {% else %}
+          <div class="profile-avatar-xl mb-3"><i class="bi bi-person-fill"></i></div>
+        {% endif %}
+        <h4 class="mb-1">{{ student.get_full_name }}</h4>
+        <p class="text-muted">@{{ request.user.username }}</p>
+        <span class="badge {% if student.is_approved %}bg-success{% else %}bg-warning{% endif %} mb-3">
+          {% if student.is_approved %}Approved{% else %}Pending Approval{% endif %}
+        </span>
+        <div class="d-grid mt-2">
+          <a href="{% url 'participantmgmt:profile_edit' %}" class="btn btn-primary">
+            <i class="bi bi-pencil-fill me-2"></i>Edit Profile
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <span><i class="bi bi-info-circle-fill me-2"></i>Personal Details</span>
+      </div>
+      <div class="dash-card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="info-group">
+              <label class="info-label">First Name</label>
+              <div class="info-value">{{ student.first_name }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label class="info-label">Last Name</label>
+              <div class="info-value">{{ student.last_name }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label class="info-label">Date of Birth</label>
+              <div class="info-value">{{ student.dob }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label class="info-label">Gender</label>
+              <div class="info-value">{{ student.gender }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label class="info-label">Mobile</label>
+              <div class="info-value">{{ student.mobile }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label class="info-label">Email</label>
+              <div class="info-value">{{ student.email }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-card mt-4">
+      <div class="dash-card-header">
+        <span><i class="bi bi-book-fill me-2"></i>Academic Details</span>
+      </div>
+      <div class="dash-card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="info-group">
+              <label class="info-label">Course</label>
+              <div class="info-value">{{ student.course }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label class="info-label">Academic Year</label>
+              <div class="info-value">{{ student.academic_year }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label class="info-label">Attendance</label>
+              <div class="info-value">{{ student.attendance_percentage }}%</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label class="info-label">Joined</label>
+              <div class="info-value">{{ student.created_at|date:"d M Y" }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

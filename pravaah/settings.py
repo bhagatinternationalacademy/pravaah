@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-gx5qe+sn%shg@r*tb0s!7rha#74w$+h+*!#+4t*flo-ar_=46t
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
 
 
 # Application definition
@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'participantmgmt.apps.ParticipantmgmtConfig',
 ]
 
 MIDDLEWARE = [
@@ -79,6 +80,10 @@ DATABASES = {
     }
 }
 
+# Keep the existing `.using('server')` code paths working by pointing the
+# legacy alias at the same SQLite database during local development.
+DATABASES['server'] = DATABASES['default'].copy()
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -114,4 +119,5 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+# Ensure STATIC_URL starts with a leading slash so URLs are absolute in templates
+STATIC_URL = '/static/'

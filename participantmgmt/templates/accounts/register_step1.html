@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Personal Details{% endblock %}
+
+{% block body %}
+<div class="admission-page">
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-xl-11">
+        <div class="admission-shell">
+          <div class="admission-hero">
+            <div>
+              <a href="/" class="register-logo"><i class="bi bi-mortarboard-fill me-2"></i>PRAVAAH</a>
+              <h2 class="admission-title">Participant Admission</h2>
+              <p class="admission-subtitle">Start with participant and guardian details. The next pages will guide you through documents, course selection, and payment.</p>
+            </div>
+            <div class="admission-hero-note">
+              <div class="small text-uppercase fw-semibold mb-1">Step 1 of 4</div>
+              <div>Personal & guardian details</div>
+            </div>
+          </div>
+
+          <div class="admission-progress-grid mb-4">
+            <div class="admission-progress-item active">1. Personal & Guardian</div>
+            <div class="admission-progress-item">2. Documents</div>
+            <div class="admission-progress-item">3. Course</div>
+            <div class="admission-progress-item">4. Payment</div>
+          </div>
+
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            <div class="row g-4 align-items-start">
+              <div class="col-lg-8">
+                <div class="admission-card-panel">
+                  <div class="section-title-block">
+                    <div class="form-section-title mb-0"><i class="bi bi-person-badge-fill me-2"></i>Personal Information</div>
+                    <p class="admission-section-copy mb-0">Tell us who you are. Keep the details exactly as they appear on your documents.</p>
+                  </div>
+
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label class="form-label">First Name <span class="text-danger">*</span></label>
+                      {{ form.first_name }}
+                      {% if form.first_name.errors %}<div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                      {{ form.last_name }}
+                      {% if form.last_name.errors %}<div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                      {{ form.dob }}
+                      {% if form.dob.errors %}<div class="text-danger small mt-1">{{ form.dob.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Gender <span class="text-danger">*</span></label>
+                      {{ form.gender }}
+                      {% if form.gender.errors %}<div class="text-danger small mt-1">{{ form.gender.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Mobile <span class="text-danger">*</span></label>
+                      {{ form.mobile }}
+                      {% if form.mobile.errors %}<div class="text-danger small mt-1">{{ form.mobile.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Email <span class="text-danger">*</span></label>
+                      {{ form.email }}
+                      {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label">Address <span class="text-danger">*</span></label>
+                      {{ form.address }}
+                      {% if form.address.errors %}<div class="text-danger small mt-1">{{ form.address.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Participant Photo</label>
+                      {{ form.photo }}
+                      <div class="form-text">Optional. Upload a passport-size photo.</div>
+                      {% if form.photo.errors %}<div class="text-danger small mt-1">{{ form.photo.errors.0 }}</div>{% endif %}
+                    </div>
+                  </div>
+
+                  <hr class="my-4">
+
+                  <div class="section-title-block mb-3">
+                    <div class="form-section-title mb-0"><i class="bi bi-people-fill me-2"></i>Guardian Information</div>
+                    <p class="admission-section-copy mb-0">Add the guardian details that will be stored with the application.</p>
+                  </div>
+
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label class="form-label">Guardian Name <span class="text-danger">*</span></label>
+                      {{ form.guardian_name }}
+                      {% if form.guardian_name.errors %}<div class="text-danger small mt-1">{{ form.guardian_name.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Relationship <span class="text-danger">*</span></label>
+                      {{ form.relationship }}
+                      {% if form.relationship.errors %}<div class="text-danger small mt-1">{{ form.relationship.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Guardian Mobile <span class="text-danger">*</span></label>
+                      {{ form.guardian_mobile }}
+                      {% if form.guardian_mobile.errors %}<div class="text-danger small mt-1">{{ form.guardian_mobile.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Guardian Email <span class="text-danger">*</span></label>
+                      {{ form.guardian_email }}
+                      {% if form.guardian_email.errors %}<div class="text-danger small mt-1">{{ form.guardian_email.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label">Guardian Address <span class="text-danger">*</span></label>
+                      {{ form.guardian_address }}
+                      {% if form.guardian_address.errors %}<div class="text-danger small mt-1">{{ form.guardian_address.errors.0 }}</div>{% endif %}
+                    </div>
+                  </div>
+
+                  {% if form.non_field_errors %}
+                    <div class="alert alert-danger mt-3 mb-0">{{ form.non_field_errors.0 }}</div>
+                  {% endif %}
+
+                  <div class="d-flex justify-content-end mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg px-5">
+                      Continue <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-lg-4">
+                <div class="admission-side-card">
+                  <div class="admission-side-title">What happens next</div>
+                  <div class="admission-side-list">
+                    <div class="admission-side-item">Upload your supporting documents on the next page.</div>
+                    <div class="admission-side-item">Choose a course and review fee details.</div>
+                    <div class="admission-side-item">Complete payment on the last page.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

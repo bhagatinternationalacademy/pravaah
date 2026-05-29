@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payment{% endblock %}
+
+{% block body %}
+<div class="admission-page">
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-xl-11">
+        <div class="admission-shell">
+          <div class="admission-hero">
+            <div>
+              <a href="/" class="register-logo"><i class="bi bi-mortarboard-fill me-2"></i>PRAVAAH</a>
+              <h2 class="admission-title">Final Review & Payment</h2>
+              <p class="admission-subtitle">Review the complete application, including guardian details, before you submit the final payment step.</p>
+            </div>
+            <div class="admission-hero-note">
+              <div class="small text-uppercase fw-semibold mb-1">Step 4 of 4</div>
+              <div>Final review</div>
+            </div>
+          </div>
+
+          <div class="admission-progress-grid mb-4">
+            <div class="admission-progress-item completed">1. Personal</div>
+            <div class="admission-progress-item completed">2. Documents</div>
+            <div class="admission-progress-item completed">3. Course</div>
+            <div class="admission-progress-item active">4. Payment</div>
+          </div>
+
+          <div class="row g-4 align-items-start">
+            <div class="col-lg-5">
+              <div class="admission-card-panel">
+                <div class="section-title-block">
+                  <div class="form-section-title mb-0"><i class="bi bi-credit-card-2-front-fill me-2"></i>Payment Details</div>
+                  <p class="admission-section-copy mb-0">Use this page to record the payment method and reference number.</p>
+                </div>
+
+                <div class="payment-total-box mb-4">
+                  <div class="course-mini-label">Course fee</div>
+                  <div class="payment-total-value">{{ course_summary.fees|default:'To be decided' }}</div>
+                  <div class="text-muted small mt-1">{{ draft.course.course }}</div>
+                </div>
+
+                <form method="post" enctype="multipart/form-data" novalidate>
+                  {% csrf_token %}
+                  <label class="form-label">Payment Method <span class="text-danger">*</span></label>
+                  {{ form.payment_method }}
+                  {% if form.payment_method.errors %}<div class="text-danger small mt-1">{{ form.payment_method.errors.0 }}</div>{% endif %}
+
+                  <label class="form-label mt-3">Transaction / Reference ID</label>
+                  {{ form.transaction_id }}
+                  {% if form.transaction_id.errors %}<div class="text-danger small mt-1">{{ form.transaction_id.errors.0 }}</div>{% endif %}
+
+                  <label class="form-label mt-3">Payment Receipt</label>
+                  {{ form.receipt }}
+                  <div class="form-text">Optional, but recommended for verification.</div>
+                  {% if form.receipt.errors %}<div class="text-danger small mt-1">{{ form.receipt.errors.0 }}</div>{% endif %}
+
+                  {% if form.non_field_errors %}
+                    <div class="alert alert-danger mt-3 mb-0">{{ form.non_field_errors.0 }}</div>
+                  {% endif %}
+
+                  <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'participantmgmt:register_course' %}" class="btn btn-outline-secondary">
+                      <i class="bi bi-arrow-left me-1"></i> Back
+                    </a>
+                    <button type="submit" class="btn btn-success btn-lg px-5">
+                      Submit Application <i class="bi bi-send-check ms-1"></i>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div class="col-lg-7">
+              <div class="admission-side-card h-100">
+                <div class="admission-side-title">Application summary</div>
+                <div class="summary-stack">
+                  <div class="summary-item">
+                    <div class="course-mini-label">Participant</div>
+                    <div class="summary-value">{{ draft.personal.first_name }} {{ draft.personal.last_name }}</div>
+                    <div class="text-muted small">{{ draft.personal.email }}</div>
+                  </div>
+                  <div class="summary-item">
+                    <div class="course-mini-label">Course</div>
+                    <div class="summary-value">{{ draft.course.course }}</div>
+                    <div class="text-muted small">{{ course_summary.duration|default:'-' }} · {{ course_summary.fees|default:'-' }}</div>
+                  </div>
+                  <div class="summary-item">
+                    <div class="course-mini-label">Academic year</div>
+                    <div class="summary-value">{{ draft.academic.academic_year }}</div>
+                  </div>
+                  <div class="summary-item">
+                    <div class="course-mini-label">Documents uploaded</div>
+                    <div class="summary-value">{{ draft.documents|length }}</div>
+                  </div>
+                  <div class="summary-item">
+                    <div class="course-mini-label">Guardian</div>
+                    <div class="summary-value">{{ draft.personal.guardian_name }}</div>
+                    <div class="text-muted small">{{ draft.personal.relationship }} · {{ draft.personal.guardian_mobile }}</div>
+                    <div class="text-muted small">{{ draft.personal.guardian_email }}</div>
+                  </div>
+                </div>
+                <div class="mt-4 p-3 rounded-4 bg-light border">
+                  <div class="fw-semibold mb-1">Important</div>
+                  <p class="mb-0 text-muted">After you submit, the application will be stored and the admin can approve the participant from the admin panel.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

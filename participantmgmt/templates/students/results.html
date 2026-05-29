@@ -1,0 +1,104 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Results{% endblock %}
+{% block page_title %}Results{% endblock %}
+
+{% block content %}
+<!-- Summary -->
+<div class="row g-4 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card stat-card-purple">
+      <div class="stat-card-icon"><i class="bi bi-percent"></i></div>
+      <div class="stat-card-info">
+        <div class="stat-card-value">{{ overall_pct }}%</div>
+        <div class="stat-card-label">Overall Score</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card stat-card-blue">
+      <div class="stat-card-icon"><i class="bi bi-journal-text"></i></div>
+      <div class="stat-card-info">
+        <div class="stat-card-value">{{ results|length }}</div>
+        <div class="stat-card-label">Subjects</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card stat-card-green">
+      <div class="stat-card-icon"><i class="bi bi-award-fill"></i></div>
+      <div class="stat-card-info">
+        <div class="stat-card-value">{% if overall_pct >= 75 %}Distinction{% elif overall_pct >= 60 %}First Class{% elif overall_pct >= 50 %}Pass{% else %}Fail{% endif %}</div>
+        <div class="stat-card-label">Grade Class</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Results Table -->
+<div class="dash-card">
+  <div class="dash-card-header">
+    <span><i class="bi bi-bar-chart-fill me-2"></i>Subject Results</span>
+    {% if semesters %}
+    <form method="get" class="d-flex align-items-center gap-2">
+      <select name="semester" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()">
+        <option value="">All Semesters</option>
+        {% for sem in semesters %}
+          <option value="{{ sem }}" {% if semester_filter == sem %}selected{% endif %}>{{ sem }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    {% endif %}
+  </div>
+  <div class="dash-card-body">
+    {% if results %}
+    <div class="table-responsive">
+      <table class="table table-hover dash-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Subject</th>
+            <th>Semester</th>
+            <th>Max Marks</th>
+            <th>Obtained</th>
+            <th>Percentage</th>
+            <th>Grade</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in results %}
+          <tr>
+            <td class="text-muted">{{ forloop.counter }}</td>
+            <td class="fw-500">{{ r.subject }}</td>
+            <td>{{ r.semester }}</td>
+            <td>{{ r.max_marks }}</td>
+            <td>{{ r.obtained_marks }}</td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="progress flex-grow-1" style="height:6px;">
+                  <div class="progress-bar {% if r.percentage >= 75 %}bg-success{% elif r.percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                       style="width: {{ r.percentage }}%"></div>
+                </div>
+                <span class="small">{{ r.percentage }}%</span>
+              </div>
+            </td>
+            <td>
+              <span class="grade-badge grade-{{ r.grade|slugify }}">{{ r.grade }}</span>
+            </td>
+            <td class="text-muted small">{{ r.remarks|default:"-" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div class="empty-state">
+        <i class="bi bi-bar-chart"></i>
+        <p>No result records found.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

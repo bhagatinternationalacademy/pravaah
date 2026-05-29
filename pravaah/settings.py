@@ -30,15 +30,33 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-INSTALLED_APPS = [
+# INSTALLED_APPS = [                    #previous
+#     'django.contrib.admin',
+#     'django.contrib.auth',
+#     'django.contrib.contenttypes',
+#     'django.contrib.sessions',
+#     'django.contrib.messages',
+#     'django.contrib.staticfiles',
+#     'hostelmgmt',
+# ]
+
+INSTALLED_APPS = [                      #added by gayatri
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # Core applications
     'hostelmgmt',
+    
+    # Central integration dependencies
+    'rest_framework',   # Required for Document & Calendar REST API serializers
+    'commonservices',   # The newly integrated common services app
 ]
+
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -120,3 +138,18 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+
+# Media files configurations (Uploads)      #added by commonservices -gc
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+
+
+# SMTP/Email Configurations for gayatrichand08@gmail.com               #added by commonservices -gc
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'       
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'gayatrichand08@gmail.com'
+EMAIL_HOST_PASSWORD = 'dbagisbolgnyxrra'  # Secure Google App Password

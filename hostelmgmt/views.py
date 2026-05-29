@@ -6,14 +6,9 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.db.models.functions import Cast
-<<<<<<< HEAD
 from django.db.models import IntegerField, Count, Q
 from django.db import transaction
 from django.utils import timezone
-=======
-from django.db.models import IntegerField
-from django.db import transaction
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
 
 from .models import (
     Room, RoomAllocation, RoomTransfer, WaitingList,
@@ -25,26 +20,9 @@ from .forms import VisitorForm, ComplaintForm
 # ═════════════════════════════════════════════════════════════
 # CONSTANTS
 # ═════════════════════════════════════════════════════════════
-<<<<<<< HEAD
 
 STUDENT_ROOM_ORDER      = list(range(1, 39))   # 1 → 38 ascending
 TRAINER_PREFERRED_ORDER = list(range(1, 39))   # 1 → 38 ascending
-=======
-#
-# STUDENT_ROOM_ORDER:
-#   Generic ascending 1→38 for BOTH genders.
-#   No fixed female-priority ranges.  Allocation is purely driven by
-#   gender, occupancy, availability, and maintenance status.
-#   Females fill room 1 first; if room 1 is taken by females, males
-#   skip it (gender check) and fill room 2, etc.
-#
-# TRAINER_PREFERRED_ORDER:
-#   Also ascending 1→38.  After all students are placed, trainers
-#   claim the lowest-numbered empty rooms (1, 2, 3 …).
-
-STUDENT_ROOM_ORDER  = list(range(1, 39))   # rooms 1 – 38, ascending
-TRAINER_PREFERRED_ORDER = list(range(1, 39))  # rooms 1 – 38, ascending
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
 
 
 # ═════════════════════════════════════════════════════════════
@@ -120,60 +98,26 @@ def _already_waiting_ids():
 
 
 def _room_date_conflict(room_id, checkin, checkout, allocations_by_room, room_capacity):
-<<<<<<< HEAD
     if not checkin or not checkout:
         return False
     block_start   = checkin  - timedelta(days=1)
     block_end     = checkout + timedelta(days=1)
-=======
-    """
-    FIX: The old version returned True on the FIRST overlap found,
-    blocking the room even when a second bed was still free.
-
-    Correct behaviour:
-        Count how many existing active allocations on this room have
-        date ranges that overlap with [checkin-1 … checkout+1].
-        The room is only truly 'date-conflicted' when that count
-        reaches or exceeds room_capacity — i.e. every bed is spoken for
-        during the requested window.
-
-    This allows two students with different course dates to share a
-    capacity-2 room as long as at most one of them occupies it on any
-    given day.
-    """
-    if not checkin or not checkout:
-        return False
-
-    block_start = checkin  - timedelta(days=1)
-    block_end   = checkout + timedelta(days=1)
-
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     overlap_count = 0
     for alloc in allocations_by_room.get(room_id, []):
         ci = alloc['checkin_date']
         co = alloc['checkout_date']
         if ci and co and ci <= block_end and co >= block_start:
             overlap_count += 1
-<<<<<<< HEAD
-=======
-
-    # Room is fully blocked only when every bed is date-conflicted.
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     return overlap_count >= room_capacity
 
 
 # ═════════════════════════════════════════════════════════════
-<<<<<<< HEAD
 # RECALCULATE ROOM
-=======
-# RECALCULATE ROOM  (always driven by real DB allocations)
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
 # ═════════════════════════════════════════════════════════════
 
 def _recalculate_room(room):
     """
     Derive room.occupied / room.gender / room.status from the actual
-<<<<<<< HEAD
     active allocations in the DB.
 
     Called after:
@@ -181,16 +125,6 @@ def _recalculate_room(room):
       • remove_occupant
       • drag_drop_transfer  (both from_room and to_room)
       • security_checkout   ← NEW: when a person physically checks out
-=======
-    active allocations stored in the DB.  Called after every create /
-    vacate / transfer so the Room row is always consistent.
-
-    Trainer rule:
-        A trainer in the room → status = 'full' immediately regardless
-        of how many physical beds the room has.  The display will read
-        "1/1" because the template uses effective_capacity (see
-        room_allocation view and room_allocation.html).
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     """
     active   = RoomAllocation.objects.filter(room=room, status='active')
     occupied = active.count()
@@ -201,16 +135,9 @@ def _recalculate_room(room):
         room.gender = None
         room.status = 'available'
     else:
-<<<<<<< HEAD
         room.gender  = active.first().gender
         has_trainer  = active.filter(person_type='trainer').exists()
         if has_trainer:
-=======
-        room.gender     = active.first().gender
-        has_trainer     = active.filter(person_type='trainer').exists()
-        if has_trainer:
-            # Trainer present → room is private and fully occupied.
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
             room.status = 'full'
         else:
             room.status = 'full' if occupied >= room.capacity else 'available'
@@ -223,15 +150,6 @@ def _recalculate_room(room):
 # ═════════════════════════════════════════════════════════════
 
 class _RoomState:
-<<<<<<< HEAD
-=======
-    """
-    Lightweight in-memory mirror of a Room row.
-    Built once at the start of auto_allocate and mutated as allocations
-    are created, so _find_room_* always sees the latest state without
-    issuing repeated SELECT queries inside the allocation loop.
-    """
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     __slots__ = ('room', 'occupied', 'gender', 'has_trainer', 'capacity', 'db_status')
 
     def __init__(self, room):
@@ -250,18 +168,10 @@ class _RoomState:
 
     @property
     def is_full(self):
-<<<<<<< HEAD
-=======
-        # Trainer room is always considered full (private).
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
         return self.has_trainer or self.occupied >= self.capacity
 
     @property
     def is_partial(self):
-<<<<<<< HEAD
-=======
-        """Has at least one student but still has a free bed."""
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
         return (not self.has_trainer) and (0 < self.occupied < self.capacity)
 
     @property
@@ -276,43 +186,15 @@ class _RoomState:
 
 
 def _build_room_states():
-<<<<<<< HEAD
-=======
-    """Return { room_number_int: _RoomState } for every room."""
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     return {int(r.room_number): _RoomState(r) for r in Room.objects.all()}
 
 
 # ═════════════════════════════════════════════════════════════
-<<<<<<< HEAD
 # FIND ROOM FOR STUDENT / TRAINER
 # ═════════════════════════════════════════════════════════════
 
 def _find_room_for_student(gender, checkin, checkout, states, allocations_by_room):
     # Pass 1: top-up a partially-filled same-gender room.
-=======
-# FIND ROOM FOR STUDENT
-# ═════════════════════════════════════════════════════════════
-
-def _find_room_for_student(gender, checkin, checkout, states, allocations_by_room):
-    """
-    FIX: Generic ascending order 1→38 for BOTH genders.
-
-    Old code used FEMALE_PRIORITY_ROOMS / MALE_PREFERRED_ROOMS with gaps
-    (e.g. females skipped rooms 1-3, males skipped rooms 1-6 and 14-16).
-    Those gaps caused scattered allocation and lost usable rooms.
-
-    New behaviour:
-        Pass 1 — top up a partially-filled same-gender room (fill-first).
-        Pass 2 — open the lowest-numbered empty room available.
-    Both passes walk rooms 1, 2, 3 … 38 in order.
-
-    Gender segregation is enforced naturally:
-        If room 1 is occupied by females, a male student reaches Pass 1,
-        sees room 1 has gender='female', skips it, and opens room 2.
-    """
-    # Pass 1: Fill an existing partial same-gender room.
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     for rn in STUDENT_ROOM_ORDER:
         s = states.get(rn)
         if s is None or s.is_maintenance:
@@ -324,11 +206,7 @@ def _find_room_for_student(gender, checkin, checkout, states, allocations_by_roo
         ):
             return s
 
-<<<<<<< HEAD
     # Pass 2: open a fresh empty room.
-=======
-    # Pass 2: Open a brand-new empty room.
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     for rn in STUDENT_ROOM_ORDER:
         s = states.get(rn)
         if s is None or s.is_maintenance:
@@ -342,27 +220,7 @@ def _find_room_for_student(gender, checkin, checkout, states, allocations_by_roo
     return None
 
 
-<<<<<<< HEAD
 def _find_room_for_trainer(gender, checkin, checkout, states, allocations_by_room):
-=======
-# ═════════════════════════════════════════════════════════════
-# FIND ROOM FOR TRAINER
-# ═════════════════════════════════════════════════════════════
-
-def _find_room_for_trainer(gender, checkin, checkout, states, allocations_by_room):
-    """
-    Trainers always need a completely empty room (private).
-
-    FIX: TRAINER_PREFERRED_ORDER is now ascending (1, 2, 3 …).
-    Old code used descending order (38, 37 …) which caused trainers to
-    always land in the last rooms instead of the first available ones.
-
-    Because students are allocated before trainers, the lowest-numbered
-    rooms will already be occupied by students.  Trainers naturally get
-    the next available empty room from the bottom up — e.g. if students
-    fill rooms 1–4, trainers get room 5, 6, etc.
-    """
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     for rn in TRAINER_PREFERRED_ORDER:
         s = states.get(rn)
         if s is None or s.is_maintenance:
@@ -372,10 +230,6 @@ def _find_room_for_trainer(gender, checkin, checkout, states, allocations_by_roo
             and not _room_date_conflict(s.room.pk, checkin, checkout, allocations_by_room, s.capacity)
         ):
             return s
-<<<<<<< HEAD
-=======
-
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     return None
 
 
@@ -384,14 +238,6 @@ def _find_room_for_trainer(gender, checkin, checkout, states, allocations_by_roo
 # ═════════════════════════════════════════════════════════════
 
 def _room_occupant_names(room):
-<<<<<<< HEAD
-=======
-    """
-    Return comma-separated names of every active occupant in *room*.
-    Used by drag_drop_transfer to write rich history such as:
-        "Anjali Sharma moved to Room 5 with Priya Nair"
-    """
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     names = list(
         RoomAllocation.objects.filter(room=room, status='active')
         .values_list('student_name', flat=True)
@@ -405,7 +251,6 @@ def _room_occupant_names(room):
 
 def hostel_dashboard(request):
     return render(request, 'hostelmgmt/dashboard.html', {
-<<<<<<< HEAD
         'total_rooms':       Room.objects.count(),
         'available_rooms':   Room.objects.filter(status='available').count(),
         'allocated_rooms':   Room.objects.filter(status='full').count(),
@@ -415,13 +260,6 @@ def hostel_dashboard(request):
         'pending_checkouts': RoomAllocation.objects.filter(
             status='active', actual_checkout_time__isnull=True
         ).count(),
-=======
-        'total_rooms':      Room.objects.count(),
-        'available_rooms':  Room.objects.filter(status='available').count(),
-        'allocated_rooms':  Room.objects.filter(status='full').count(),
-        'total_complaints': Complaint.objects.filter(status='open').count(),
-        'waiting_count':    WaitingList.objects.filter(status='waiting').count(),
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     })
 
 
@@ -455,12 +293,6 @@ def room_allocation(request):
         .order_by('room_no_int')
     )
 
-<<<<<<< HEAD
-=======
-    # ── Build per-room display metadata ────────────────────────────────────
-    # effective_capacity: trainer rooms show 1/1 in the UI instead of 1/2.
-    # The template must use item.effective_capacity instead of room.capacity.
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     rooms_display = []
     for room in rooms:
         has_trainer = RoomAllocation.objects.filter(
@@ -493,20 +325,6 @@ def room_allocation(request):
 @require_POST
 @transaction.atomic
 def auto_allocate(request):
-<<<<<<< HEAD
-=======
-    """
-    ONE-CLICK ALLOCATION ORDER
-    ─────────────────────────
-    Step 1  Female students  ← highest priority, allocated first
-    Step 2  Male   students
-    Step 3  Trainers          ← only after ALL students are processed
-
-    All three steps share the same in-memory `states` dict so every
-    allocation is visible to subsequent iterations without extra DB reads.
-    This is what prevents rooms from being scattered.
-    """
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     allocated_ids = _already_allocated_ids()
     waiting_ids   = _already_waiting_ids()
 
@@ -519,45 +337,24 @@ def auto_allocate(request):
         if t['id'] not in allocated_ids and t['id'] not in waiting_ids
     ]
 
-<<<<<<< HEAD
     states = _build_room_states()
 
-=======
-    # Build shared in-memory state — one DB read per room, done once.
-    states = _build_room_states()
-
-    # Pre-load date ranges for conflict checking — one DB read for all.
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     allocations_by_room: dict[int, list] = {}
     for alloc in RoomAllocation.objects.filter(status='active').values(
         'room_id', 'checkin_date', 'checkout_date'
     ):
         allocations_by_room.setdefault(alloc['room_id'], []).append(alloc)
 
-<<<<<<< HEAD
     student_allocated  = student_waitlisted = 0
     trainer_allocated  = trainer_waitlisted = 0
-=======
-    student_allocated  = 0
-    student_waitlisted = 0
-    trainer_allocated  = 0
-    trainer_waitlisted = 0
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
 
     female_students = [s for s in students if s['gender'] == 'female']
     male_students   = [s for s in students if s['gender'] == 'male']
 
-<<<<<<< HEAD
-=======
-    # ═══════════════════════════════════════════════════
-    # STEP 1 + 2 — Students (females first to get lower room numbers)
-    # ═══════════════════════════════════════════════════
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     for student in female_students + male_students:
         gender   = student['gender']
         checkin  = student.get('checkin_date')
         checkout = student.get('checkout_date')
-<<<<<<< HEAD
         rs = _find_room_for_student(gender, checkin, checkout, states, allocations_by_room)
         if rs:
             RoomAllocation.objects.create(
@@ -579,53 +376,10 @@ def auto_allocate(request):
             )
             student_waitlisted += 1
 
-=======
-
-        room_state = _find_room_for_student(
-            gender, checkin, checkout, states, allocations_by_room
-        )
-
-        if room_state:
-            RoomAllocation.objects.create(
-                room=room_state.room,
-                person_type='student',
-                student_id=student['id'],
-                student_name=student['name'],
-                gender=gender,
-                bed_number=room_state.occupied + 1,
-                checkin_date=checkin,
-                checkout_date=checkout,
-                status='active',
-            )
-            # Mutate in-memory state — no DB re-read needed.
-            room_state.add_occupant(gender, 'student')
-            allocations_by_room.setdefault(room_state.room.pk, []).append({
-                'room_id': room_state.room.pk,
-                'checkin_date': checkin,
-                'checkout_date': checkout,
-            })
-            student_allocated += 1
-        else:
-            WaitingList.objects.create(
-                person_type='student',
-                person_id=student['id'],
-                person_name=student['name'],
-                gender=gender,
-                checkin_date=checkin,
-                checkout_date=checkout,
-                status='waiting',
-            )
-            student_waitlisted += 1
-
-    # ═══════════════════════════════════════════════════
-    # STEP 3 — Trainers (only after all students)
-    # ═══════════════════════════════════════════════════
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     for trainer in trainers:
         gender   = trainer['gender']
         checkin  = trainer.get('checkin_date')
         checkout = trainer.get('checkout_date')
-<<<<<<< HEAD
         rs = _find_room_for_trainer(gender, checkin, checkout, states, allocations_by_room)
         if rs:
             RoomAllocation.objects.create(
@@ -647,52 +401,12 @@ def auto_allocate(request):
             )
             trainer_waitlisted += 1
 
-=======
-
-        room_state = _find_room_for_trainer(
-            gender, checkin, checkout, states, allocations_by_room
-        )
-
-        if room_state:
-            RoomAllocation.objects.create(
-                room=room_state.room,
-                person_type='trainer',
-                student_id=trainer['id'],
-                student_name=trainer['name'],
-                gender=gender,
-                bed_number=1,
-                checkin_date=checkin,
-                checkout_date=checkout,
-                status='active',
-            )
-            room_state.add_occupant(gender, 'trainer')
-            allocations_by_room.setdefault(room_state.room.pk, []).append({
-                'room_id': room_state.room.pk,
-                'checkin_date': checkin,
-                'checkout_date': checkout,
-            })
-            trainer_allocated += 1
-        else:
-            WaitingList.objects.create(
-                person_type='trainer',
-                person_id=trainer['id'],
-                person_name=trainer['name'],
-                gender=gender,
-                checkin_date=checkin,
-                checkout_date=checkout,
-                status='waiting',
-            )
-            trainer_waitlisted += 1
-
-    # Persist correct room status to DB for every room that was touched.
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     modified_pks = {s.room.pk for s in states.values() if s.occupied > 0}
     for room in Room.objects.filter(pk__in=modified_pks):
         _recalculate_room(room)
 
     if student_allocated == 0 and trainer_allocated == 0 \
             and student_waitlisted == 0 and trainer_waitlisted == 0:
-<<<<<<< HEAD
         messages.info(request, "No pending students or trainers to allocate.")
     else:
         messages.success(
@@ -701,17 +415,6 @@ def auto_allocate(request):
             f"Students: {student_allocated} allocated, {student_waitlisted} waitlisted | "
             f"Trainers: {trainer_allocated} allocated, {trainer_waitlisted} waitlisted"
         )
-=======
-        messages.info(request, "ℹ️ No pending students or trainers to allocate.")
-    else:
-        messages.success(
-            request,
-            f"✅ Allocation complete — "
-            f"Students: {student_allocated} allocated, {student_waitlisted} waitlisted | "
-            f"Trainers: {trainer_allocated} allocated, {trainer_waitlisted} waitlisted"
-        )
-
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     return redirect('hostelmgmt:room_allocation')
 
 
@@ -726,11 +429,7 @@ def remove_occupant(request, allocation_id):
     allocation.status = 'vacated'
     allocation.save()
     _recalculate_room(room)
-<<<<<<< HEAD
     messages.success(request, f"{allocation.student_name} removed successfully.")
-=======
-    messages.success(request, f"✅ {allocation.student_name} removed successfully.")
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     return redirect('hostelmgmt:room_allocation')
 
 
@@ -738,21 +437,12 @@ def remove_occupant(request, allocation_id):
 def toggle_maintenance(request, room_id):
     room = get_object_or_404(Room, pk=room_id)
     if room.status == 'maintenance':
-<<<<<<< HEAD
         _recalculate_room(room)
         messages.success(request, f"Room {room.room_number} reactivated.")
     else:
         room.status = 'maintenance'
         room.save()
         messages.warning(request, f"Room {room.room_number} set to maintenance.")
-=======
-        _recalculate_room(room)   # restore from real allocations
-        messages.success(request, f"✅ Room {room.room_number} reactivated.")
-    else:
-        room.status = 'maintenance'
-        room.save()
-        messages.warning(request, f"🔧 Room {room.room_number} set to maintenance.")
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     return redirect('hostelmgmt:room_allocation')
 
 
@@ -766,10 +456,6 @@ def room_transfer(request):
         .annotate(room_no_int=Cast('room_number', IntegerField()))
         .order_by('room_no_int')
     )
-<<<<<<< HEAD
-=======
-
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     rooms_data = []
     for room in rooms:
         occupants = (
@@ -785,10 +471,6 @@ def room_transfer(request):
         .select_related('from_room', 'to_room')
         .order_by('-transfer_id')[:30]
     )
-<<<<<<< HEAD
-=======
-
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     return render(request, 'hostelmgmt/room_transfer.html', {
         'rooms_data': rooms_data,
         'transfers':  transfers,
@@ -801,19 +483,6 @@ def room_transfer(request):
 
 @require_POST
 def drag_drop_transfer(request):
-<<<<<<< HEAD
-=======
-    """
-    Validates and executes a drag-and-drop room transfer.
-
-    FIX — Transfer history:
-        The `reason` field is now written as a full sentence:
-            "Anjali Sharma moved to Room 5 with Priya Nair"
-        instead of the generic "Drag & Drop Transfer".
-        The template should display {{ t.reason }} in the history column
-        (see room_transfer.html update below).
-    """
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     try:
         data          = json.loads(request.body)
         allocation_id = int(data.get('allocation_id'))
@@ -825,15 +494,8 @@ def drag_drop_transfer(request):
     to_room    = get_object_or_404(Room, pk=to_room_id)
     from_room  = allocation.room
 
-<<<<<<< HEAD
     if from_room.room_id == to_room.room_id:
         return JsonResponse({'success': False, 'message': 'Source and destination are the same room.'})
-=======
-    # ── Validation ────────────────────────────────────────────────────────
-    if from_room.room_id == to_room.room_id:
-        return JsonResponse({'success': False, 'message': 'Source and destination are the same room.'})
-
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     if to_room.status == 'maintenance':
         return JsonResponse({'success': False, 'message': f'Room {to_room.room_number} is under maintenance.'})
 
@@ -849,7 +511,6 @@ def drag_drop_transfer(request):
             'success': False,
             'message': f'Gender mismatch — Room {to_room.room_number} is a {first_dest.gender} room.'
         })
-<<<<<<< HEAD
     if active_in_dest.filter(person_type='trainer').exists():
         return JsonResponse({'success': False, 'message': 'Trainer room is private — transfer blocked.'})
     if allocation.person_type == 'trainer' and active_count > 0:
@@ -869,40 +530,6 @@ def drag_drop_transfer(request):
     allocation.room       = to_room
     allocation.bed_number = active_count + 1
     allocation.save()
-=======
-
-    trainer_in_dest = active_in_dest.filter(person_type='trainer').exists()
-    if trainer_in_dest:
-        return JsonResponse({'success': False, 'message': 'Trainer room is private — transfer blocked.'})
-
-    if allocation.person_type == 'trainer' and active_count > 0:
-        return JsonResponse({'success': False, 'message': 'Trainer requires an empty room.'})
-
-    # ── Rich history message ───────────────────────────────────────────────
-    existing_names = _room_occupant_names(to_room)
-    if existing_names:
-        reason = (
-            f"{allocation.student_name} moved to Room {to_room.room_number} "
-            f"with {existing_names}"
-        )
-    else:
-        reason = f"{allocation.student_name} moved to Room {to_room.room_number} (empty room)"
-
-    # ── Execute transfer ───────────────────────────────────────────────────
-    RoomTransfer.objects.create(
-        student_id=allocation.student_id,
-        student_name=allocation.student_name,
-        from_room=from_room,
-        to_room=to_room,
-        reason=reason,
-        status='approved',
-    )
-
-    allocation.room       = to_room
-    allocation.bed_number = active_count + 1
-    allocation.save()
-
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     _recalculate_room(from_room)
     _recalculate_room(to_room)
 
@@ -910,7 +537,6 @@ def drag_drop_transfer(request):
 
 
 # ═════════════════════════════════════════════════════════════
-<<<<<<< HEAD
 # ███████╗███████╗ ██████╗██╗   ██╗██████╗ ██╗████████╗██╗   ██╗
 # ██╔════╝██╔════╝██╔════╝██║   ██║██╔══██╗██║╚══██╔══╝╚██╗ ██╔╝
 # ███████╗█████╗  ██║     ██║   ██║██████╔╝██║   ██║    ╚████╔╝
@@ -1089,8 +715,6 @@ def security_checkout_bulk(request):
 
 
 # ═════════════════════════════════════════════════════════════
-=======
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
 # VISITORS
 # ═════════════════════════════════════════════════════════════
 
@@ -1104,11 +728,7 @@ def book_gate_pass(request):
         form = VisitorForm(request.POST)
         if form.is_valid():
             form.save()
-<<<<<<< HEAD
             messages.success(request, 'Gate pass booked successfully.')
-=======
-            messages.success(request, '✅ Gate pass booked successfully.')
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
             return redirect('hostelmgmt:visitors')
     else:
         form = VisitorForm()
@@ -1124,24 +744,12 @@ def complaints(request):
         form = ComplaintForm(request.POST)
         if form.is_valid():
             form.save()
-<<<<<<< HEAD
             messages.success(request, 'Complaint submitted.')
             return redirect('hostelmgmt:complaints')
     else:
         form = ComplaintForm()
     complaint_list = (
         Complaint.objects.all().select_related('room').order_by('-complaint_id')[:30]
-=======
-            messages.success(request, '✅ Complaint submitted.')
-            return redirect('hostelmgmt:complaints')
-    else:
-        form = ComplaintForm()
-
-    complaint_list = (
-        Complaint.objects.all()
-        .select_related('room')
-        .order_by('-complaint_id')[:30]
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     )
     return render(request, 'hostelmgmt/complaints.html', {
         'form':             form,
@@ -1164,13 +772,7 @@ def maintenance(request):
         .order_by('room_no_int')
     )
     maintenance_requests = (
-<<<<<<< HEAD
         MaintenanceRequest.objects.all().select_related('room').order_by('-request_id')[:20]
-=======
-        MaintenanceRequest.objects.all()
-        .select_related('room')
-        .order_by('-request_id')[:20]
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     )
     return render(request, 'hostelmgmt/maintenance.html', {
         'rooms':               rooms,
@@ -1183,7 +785,6 @@ def maintenance(request):
 
 
 # ═════════════════════════════════════════════════════════════
-<<<<<<< HEAD
 # REPORTS  (updated to include checkout stats)
 # ═════════════════════════════════════════════════════════════
 
@@ -1212,25 +813,8 @@ def reports(request):
         actual_checkout_time__isnull=True,
         checkout_date__lt=today,
     ).count()
-=======
-# REPORTS
-# ═════════════════════════════════════════════════════════════
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
 
-def reports(request):
-    allocations  = (
-        RoomAllocation.objects.filter(status='active')
-        .select_related('room')
-        .order_by('room__room_number')
-    )
-    waiting_list = WaitingList.objects.filter(status='waiting').order_by('added_on')
-    room_wise    = (
-        Room.objects.all()
-        .annotate(room_no_int=Cast('room_number', IntegerField()))
-        .order_by('room_no_int')
-    )
     return render(request, 'hostelmgmt/reports.html', {
-<<<<<<< HEAD
         'total_allocated':      allocations.count(),
         'total_visitors':       Visitor.objects.count(),
         'open_complaints':      Complaint.objects.filter(status='open').count(),
@@ -1246,16 +830,4 @@ def reports(request):
         'checked_out_today':    checked_out_today.count(),
         'overdue_count':        overdue_count,
         'recent_checkouts':     checked_out_all.select_related('room').order_by('-actual_checkout_time')[:20],
-=======
-        'total_allocated':     allocations.count(),
-        'total_visitors':      Visitor.objects.count(),
-        'open_complaints':     Complaint.objects.filter(status='open').count(),
-        'resolved_complaints': Complaint.objects.filter(status='resolved').count(),
-        'available_rooms':     Room.objects.filter(status='available').count(),
-        'full_rooms':          Room.objects.filter(status='full').count(),
-        'waiting_count':       waiting_list.count(),
-        'room_wise':           room_wise,
-        'allocations':         allocations,
-        'waiting_list':        waiting_list,
->>>>>>> b8b93250895fbd030f0735b4c9bc8d219420f9fa
     })

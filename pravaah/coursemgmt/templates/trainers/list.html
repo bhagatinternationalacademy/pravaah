@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Trainers{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">Trainers</h2>
+  <div class="d-flex gap-2">
+    {% if user.is_staff %}<a class="btn btn-success" href="{% url 'trainers:create' %}">Add Trainer</a>{% endif %}
+    <form class="d-flex gap-2" method="get">
+      <input class="form-control" name="q" value="{{ query }}" placeholder="Search">
+      <button class="btn btn-primary">Search</button>
+    </form>
+  </div>
+</div>
+<div class="card page-card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead><tr><th>Code</th><th>Name</th><th>Email</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for trainer in page_obj %}
+            <tr>
+              <td><a href="{% url 'trainers:detail' trainer.pk %}">{{ trainer.trainer_code }}</a></td>
+              <td>{{ trainer.full_name }}</td>
+              <td>{{ trainer.email }}</td>
+              <td>{{ trainer.status }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="text-muted">No trainers found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "shared/pagination.html" with page_obj=page_obj %}
+  </div>
+</div>
+{% endblock %}

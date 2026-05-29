@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Material Detail{% endblock %}
+{% block content %}
+<div class="page-hero mb-4">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+    <div>
+      <div class="text-uppercase small fw-semibold text-muted mb-2">Material</div>
+      <h2 class="mb-1">{{ material.title }}</h2>
+      <div class="text-muted">{{ material.module.course.course_name }} • {{ material.module.module_name }}</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a class="btn btn-outline-primary" href="{% url 'programs:module-detail' material.module.pk %}">Back to Module</a>
+      {% if user.is_staff %}
+        <a class="btn btn-outline-secondary" href="{% url 'programs:material-edit' material.pk %}">Edit</a>
+        <a class="btn btn-outline-danger" href="{% url 'programs:material-delete' material.pk %}">Delete</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card page-card h-100">
+      <div class="card-body">
+        <p class="mb-1"><strong>Type:</strong> {{ material.file_type }}</p>
+        <p class="mb-1"><strong>Uploaded at:</strong> {{ material.uploaded_at }}</p>
+        <p class="mb-1"><strong>Uploaded by:</strong> {{ material.uploaded_by|default:"-" }}</p>
+        {% if material.file_url %}
+          <a class="btn btn-primary mt-3" href="{{ material.file_url.url }}" target="_blank" rel="noreferrer">Download / View</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card page-card h-100">
+      <div class="card-body">
+        <h5 class="mb-3">Description</h5>
+        <p class="text-muted mb-0">{{ material.module.description|default:"No module description provided." }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

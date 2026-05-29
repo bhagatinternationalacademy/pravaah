@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Trainer Dashboard{% endblock %}
+{% block content %}
+<h2 class="mb-4">Trainer Dashboard</h2>
+<div class="row g-3 mb-4">
+  <div class="col-md-6"><div class="card page-card"><div class="card-body"><div class="text-muted">Trainer</div><div class="fs-4 fw-semibold">{{ trainer.full_name|default:"Trainer" }}</div></div></div></div>
+  <div class="col-md-3"><div class="card page-card"><div class="card-body"><div class="text-muted">Active Batches</div><div class="fs-4 fw-semibold">{{ active_batches }}</div></div></div></div>
+  <div class="col-md-3"><div class="card page-card"><div class="card-body"><div class="text-muted">Upcoming Sessions</div><div class="fs-4 fw-semibold">{{ upcoming_sessions }}</div></div></div></div>
+</div>
+<div class="card page-card">
+  <div class="card-body">
+    <h5 class="mb-3">Recent Sessions</h5>
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead><tr><th>Date</th><th>Batch</th><th>Course</th><th>Topic</th></tr></thead>
+        <tbody>
+          {% for session in sessions %}
+            <tr>
+              <td>{{ session.session_date }}</td>
+              <td>{{ session.batch.batch_name }}</td>
+              <td>{{ session.course.course_name }}</td>
+              <td>{{ session.session_topic }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="text-muted">No sessions found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

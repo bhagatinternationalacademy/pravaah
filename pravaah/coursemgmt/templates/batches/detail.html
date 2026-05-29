@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Batch Detail{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h2 class="mb-1">{{ batch.batch_name }}</h2>
+    <div class="text-muted">{{ batch.program.program_name }} • {{ batch.batch_code }}</div>
+  </div>
+  <span class="badge text-bg-primary">{{ batch.status }}</span>
+</div>
+{% if user.is_staff %}
+<div class="d-flex gap-2 mb-3">
+  <a class="btn btn-outline-primary" href="{% url 'batches:edit' batch.pk %}">Edit</a>
+  <a class="btn btn-outline-danger" href="{% url 'batches:delete' batch.pk %}">Delete</a>
+  <a class="btn btn-success" href="{% url 'batches:session-create' %}?batch={{ batch.pk }}">Schedule Session</a>
+  <a class="btn btn-success" href="{% url 'batches:enrollment-create' %}?batch={{ batch.pk }}">Add Enrollment</a>
+  <a class="btn btn-success" href="{% url 'attendance:create' %}?batch={{ batch.pk }}">Mark Attendance</a>
+  <form method="post" action="{% url 'batches:generate-session-plan' batch.pk %}" class="d-inline">
+    {% csrf_token %}
+    <button class="btn btn-outline-success" type="submit">Generate Session Plan</button>
+  </form>
+  <a class="btn btn-outline-dark" href="{% url 'batches:enrollment-review' %}">Review Enrollments</a>
+</div>
+{% endif %}
+<div class="card page-card mb-3"><div class="card-body">
+  <div class="row g-3">
+    <div class="col-md-3"><div class="mini-pill"><strong>{{ batch.participant_count }}</strong><span>Participants</span></div></div>
+    <div class="col-md-3"><div class="mini-pill"><strong>{{ batch.schedule_count }}</strong><span>Sessions</span></div></div>
+    <div class="col-md-3"><div class="mini-pill"><strong>{{ batch.certificate_count }}</strong><span>Certificates Issued</span></div></div>
+    <div class="col-md-3"><div class="mini-pill"><strong>{{ batch.pending_certificate_count }}</strong><span>Certificates Pending</span></div></div>
+  </div>
+  <hr class="my-4">
+  <p class="mb-1"><strong>Code:</strong> {{ batch.batch_code }}</p>
+  <p class="mb-1"><strong>Program:</strong> {{ batch.program.program_name }}</p>
+  <p class="mb-1"><strong>Primary Course:</strong> {{ batch.primary_course.course_name|default:"-" }}</p>
+  <p class="mb-1"><strong>Client:</strong> {{ batch.client_name|default:"-" }}</p>
+  <p class="mb-1"><strong>Subject:</strong> {{ batch.subject_short_name|default:"-" }}</p>
+  <p class="mb-1"><strong>Trainer:</strong> {{ batch.trainer.full_name|default:"-" }}</p>
+  <p class="mb-1"><strong>Schedule Count:</strong> {{ batch.schedule_count }}</p>
+  <p class="mb-0"><strong>Date Range:</strong> {{ batch.start_date }} - {{ batch.end_date }}</p>
+</div></div>
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card page-card"><div class="card-body">
+      <h5>Participants</h5>
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead><tr><th>Student</th><th>Status</th><th>Fee</th><th>Payment</th></tr></thead>
+          <tbody>
+            {% for enrollment in enrollments %}
+              <tr>
+                <td>{{ enrollment.student.full_name }}</td>
+                <td>{{ enrollment.status }}</td>
+                <td>{{ enrollment.fee_amount }}</td>
+                <td>{{ enrollment.payment_status }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="text-muted">No enrollments.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div></div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card page-card"><div class="card-body">
+      <h5>Sessions</h5>
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead><tr><th>Date</th><th>Time</th><th>Course</th><th>Topic</th></tr></thead>
+          <tbody>
+            {% for session in sessions %}
+              <tr>
+                <td>{{ session.session_date }}</td>
+                <td>{{ session.start_time }} - {{ session.end_time }}</td>
+                <td>{{ session.course.course_name }}</td>
+                <td>{{ session.session_topic }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="text-muted">No sessions.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div></div>
+  </div>
+</div>
+<div class="row g-3 mt-1">
+  <div class="col-lg-6">
+    <div class="card page-card"><div class="card-body">
+      <h5 class="mb-3">Attendance Summary</h5>
+      <div class="d-flex flex-wrap gap-2">
+        {% for item in attendance_stats %}
+          <span class="badge text-bg-light">{{ item.status }}: {{ item.total }}</span>
+        {% empty %}
+          <span class="text-muted">No attendance recorded yet.</span>
+        {% endfor %}
+      </div>
+    </div></div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card page-card"><div class="card-body">
+      <h5 class="mb-3">Certificate Status</h5>
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead><tr><th>Student</th><th>Status</th><th>Issue Date</th><th>Expiry</th></tr></thead>
+          <tbody>
+            {% for certificate in certificates %}
+              <tr>
+                <td>{{ certificate.enrollment.student.full_name }}</td>
+                <td>{{ certificate.validity_status }}</td>
+                <td>{{ certificate.issue_date|default:"-" }}</td>
+                <td>{{ certificate.expiry_date|default:"-" }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="text-muted">No certificates linked to this batch.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

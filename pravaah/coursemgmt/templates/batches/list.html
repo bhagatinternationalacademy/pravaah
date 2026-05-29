@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Batches{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">Batches</h2>
+  <div class="d-flex gap-2">
+    {% if user.is_staff %}<a class="btn btn-success" href="{% url 'batches:create' %}">Add Batch</a>{% endif %}
+    {% if user.is_staff %}<a class="btn btn-outline-dark" href="{% url 'batches:enrollment-review' %}">Enrollments</a>{% endif %}
+    <form class="d-flex gap-2" method="get">
+      <input class="form-control" name="q" value="{{ query }}" placeholder="Search">
+      <select class="form-select" name="status">
+        <option value="">All</option>
+        <option value="Active" {% if status == "Active" %}selected{% endif %}>Active</option>
+        <option value="Planned" {% if status == "Planned" %}selected{% endif %}>Planned</option>
+        <option value="Completed" {% if status == "Completed" %}selected{% endif %}>Completed</option>
+      </select>
+      <button class="btn btn-primary">Search</button>
+    </form>
+  </div>
+</div>
+<div class="card page-card"><div class="card-body">
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead><tr><th>Code</th><th>Name</th><th>Program</th><th>Course</th><th>Trainer</th><th>Participants</th><th>Dates</th><th>Sessions</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for batch in page_obj %}
+          <tr>
+            <td><a href="{% url 'batches:detail' batch.pk %}">{{ batch.batch_code }}</a></td>
+            <td>{{ batch.batch_name }}</td>
+            <td>{{ batch.program.program_name }}</td>
+            <td>{{ batch.primary_course.course_name|default:"-" }}</td>
+            <td>{{ batch.trainer.full_name|default:"-" }}</td>
+            <td>{{ batch.participant_count }}</td>
+            <td>{{ batch.start_date }} - {{ batch.end_date }}</td>
+            <td>{{ batch.schedule_count }}</td>
+            <td>{{ batch.status }}</td>
+          </tr>
+        {% empty %}
+        <tr><td colspan="9" class="text-muted">No batches found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "shared/pagination.html" with page_obj=page_obj %}
+</div></div>
+{% endblock %}

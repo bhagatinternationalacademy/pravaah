@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="page-hero mb-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <div class="text-uppercase small fw-semibold text-muted mb-2">Batch formation</div>
+      <h2 class="mb-1">{{ title }}</h2>
+      <div class="text-muted">Select a program, course, trainer, and participants to build a live batch.</div>
+    </div>
+    {% if back_url %}<a class="btn btn-outline-secondary" href="{{ back_url }}">Back</a>{% endif %}
+  </div>
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  <div class="row g-3">
+    <div class="col-lg-7">
+      <div class="card page-card h-100">
+        <div class="card-body">
+          <h5 class="mb-3">Batch Details</h5>
+          <div class="row g-3">
+            <div class="col-md-6">{{ form.batch_name.label_tag }}{{ form.batch_name }}{{ form.batch_name.errors }}</div>
+            <div class="col-md-6">{{ form.program.label_tag }}{{ form.program }}{{ form.program.errors }}</div>
+            <div class="col-md-6">{{ form.course.label_tag }}{{ form.course }}{{ form.course.errors }}</div>
+            <div class="col-md-6">{{ form.trainer.label_tag }}{{ form.trainer }}{{ form.trainer.errors }}</div>
+            <div class="col-md-6">{{ form.client_name.label_tag }}{{ form.client_name }}{{ form.client_name.errors }}</div>
+            <div class="col-md-6">{{ form.subject_short_name.label_tag }}{{ form.subject_short_name }}{{ form.subject_short_name.errors }}</div>
+            <div class="col-md-4">{{ form.start_date.label_tag }}{{ form.start_date }}{{ form.start_date.errors }}</div>
+            <div class="col-md-4">{{ form.end_date.label_tag }}{{ form.end_date }}{{ form.end_date.errors }}</div>
+            <div class="col-md-4">{{ form.mode.label_tag }}{{ form.mode }}{{ form.mode.errors }}</div>
+            <div class="col-md-6">{{ form.status.label_tag }}{{ form.status }}{{ form.status.errors }}</div>
+            <div class="col-md-6 d-flex align-items-end">
+              <div class="form-check mb-2">
+                {{ form.generate_session_plan }}
+                <label class="form-check-label" for="{{ form.generate_session_plan.id_for_label }}">{{ form.generate_session_plan.label }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card page-card h-100">
+        <div class="card-body">
+          <h5 class="mb-3">Participants</h5>
+          <div class="text-muted small mb-3">Approved learners are listed here. Unselected students remain available for another batch.</div>
+          <div class="participant-box">
+            {{ form.participants.errors }}
+            {% for checkbox in form.participants %}
+              <label class="mini-material d-flex justify-content-between align-items-center mb-2">
+                <span>
+                  <span class="fw-semibold d-block">{{ checkbox.choice_label }}</span>
+                  <span class="text-muted small">{{ checkbox.choice_value }}</span>
+                </span>
+                {{ checkbox.tag }}
+              </label>
+            {% empty %}
+              <div class="text-muted">No participants available.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-end gap-2 mt-3">
+    <button class="btn btn-primary btn-lg" type="submit">{{ button_text|default:"Save" }}</button>
+  </div>
+</form>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const startInput = document.getElementById("id_start_date");
+  const endInput = document.getElementById("id_end_date");
+  const programSelect = document.getElementById("id_program");
+  const courseSelect = document.getElementById("id_course");
+  const trainerSelect = document.getElementById("id_trainer");
+  const batchId = "{{ object.pk|default:'' }}";
+
+  function refreshTrainers() {
+    if (!startInput.value || !endInput.value) return;
+    const params = new URLSearchParams({ start_date: startInput.value, end_date: endInput.value });
+    if (batchId) params.append("batch_id", batchId);
+    fetch("{% url 'batches:available-trainers' %}?" + params.toString())
+      .then(response => response.json())
+      .then(items => {
+        const current = trainerSelect.value;
+        trainerSelect.innerHTML = '<option value="">Select trainer</option>';
+        items.forEach(item => {
+          const option = document.createElement("option");
+          option.value = item.id;
+          option.textContent = `${item.name} (${item.code})`;
+          if (String(item.id) === String(current)) option.selected = true;
+          trainerSelect.appendChild(option);
+        });
+      });
+  }
+
+  function refreshCourses() {
+    if (!programSelect.value) return;
+    fetch("{% url 'programs:program-courses-api' 0 %}".replace("/0/", "/" + programSelect.value + "/"))
+      .then(response => response.json())
+      .then(items => {
+        const current = courseSelect.value;
+        courseSelect.innerHTML = '<option value="">Select course</option>';
+        items.forEach(item => {
+          const option = document.createElement("option");
+          option.value = item.id;
+          option.textContent = `${item.name} (${item.code})`;
+          if (String(item.id) === String(current)) option.selected = true;
+          courseSelect.appendChild(option);
+        });
+      });
+  }
+
+  [startInput, endInput].forEach(el => el && el.addEventListener("change", refreshTrainers));
+  programSelect && programSelect.addEventListener("change", refreshCourses);
+  refreshTrainers();
+  refreshCourses();
+});
+</script>
+{% endblock %}

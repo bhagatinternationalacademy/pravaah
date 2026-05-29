@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Calendar{% endblock %}
+{% block extra_head %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+{% endblock %}
+{% block content %}
+<h2 class="mb-4">Calendar</h2>
+<div class="card page-card">
+  <div class="card-body">
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <select id="trainerFilter" class="form-select">
+          <option value="">All Trainers</option>
+          {% for trainer in trainers %}<option value="{{ trainer.pk }}">{{ trainer.full_name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <select id="batchFilter" class="form-select">
+          <option value="">All Batches</option>
+          {% for batch in batches %}<option value="{{ batch.pk }}">{{ batch.batch_name }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    {% if user.is_staff %}
+      <div class="text-muted small mb-2">Drag sessions to reschedule them.</div>
+    {% endif %}
+    <div id="calendar"></div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const calendarEl = document.getElementById('calendar');
+  const trainerFilter = document.getElementById('trainerFilter');
+  const batchFilter = document.getElementById('batchFilter');
+  const calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    height: 'auto',
+    editable: {{ user.is_staff|yesno:"true,false" }},
+    headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
+    events: function(fetchInfo, successCallback, failureCallback) {
+      const params = new URLSearchParams();
+      if (trainerFilter.value) params.append('trainer', trainerFilter.value);
+      if (batchFilter.value) params.append('batch', batchFilter.value);
+      fetch('{% url "batches:calendar-events" %}?' + params.toString())
+        .then(response => response.json())
+        .then(successCallback)
+        .catch(failureCallback);
+    }
+    {% if user.is_staff %}
+    , eventDrop: function(info) {
+      const payload = new URLSearchParams();
+      payload.append('id', info.event.id);
+      payload.append('date', info.event.startStr.split('T')[0]);
+      payload.append('start', info.event.startStr.includes('T') ? info.event.startStr.split('T')[1].slice(0,5) : '00:00');
+      payload.append('end', info.event.endStr ? info.event.endStr.split('T')[1].slice(0,5) : '00:00');
+      fetch('{% url "batches:session-move" %}', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1] || ''
+        },
+        body: payload
+      }).then(r => {
+        if (!r.ok) info.revert();
+      }).catch(() => info.revert());
+    }
+    {% endif %}
+  });
+  calendar.render();
+  [trainerFilter, batchFilter].forEach(el => el.addEventListener('change', () => calendar.refetchEvents()));
+});
+</script>
+{% endblock %}

@@ -1,0 +1,51 @@
+from django.urls import path
+
+from .views import (
+    course_create,
+    course_delete,
+    course_detail,
+    course_list,
+    course_update,
+    material_create,
+    material_detail,
+    material_delete,
+    material_update,
+    module_detail,
+    module_create,
+    module_delete,
+    module_update,
+    program_course_create,
+    program_course_delete,
+    program_courses_api,
+    program_create,
+    program_delete,
+    program_detail,
+    program_list,
+    program_update,
+)
+
+app_name = "programs"
+
+urlpatterns = [
+    path("", program_list, name="list"),
+    path("create/", program_create, name="program-create"),
+    path("<int:pk>/", program_detail, name="detail"),
+    path("<int:pk>/edit/", program_update, name="program-edit"),
+    path("<int:pk>/delete/", program_delete, name="program-delete"),
+    path("courses/", course_list, name="courses"),
+    path("courses/create/", course_create, name="course-create"),
+    path("courses/<int:pk>/", course_detail, name="course-detail"),
+    path("courses/<int:pk>/edit/", course_update, name="course-edit"),
+    path("courses/<int:pk>/delete/", course_delete, name="course-delete"),
+    path("program-courses/assign/", program_course_create, name="program-course-assign"),
+    path("program-courses/<int:pk>/delete/", program_course_delete, name="program-course-delete"),
+    path("modules/create/", module_create, name="module-create"),
+    path("modules/<int:pk>/", module_detail, name="module-detail"),
+    path("modules/<int:pk>/edit/", module_update, name="module-edit"),
+    path("modules/<int:pk>/delete/", module_delete, name="module-delete"),
+    path("materials/create/", material_create, name="material-create"),
+    path("materials/<int:pk>/", material_detail, name="material-detail"),
+    path("materials/<int:pk>/edit/", material_update, name="material-edit"),
+    path("materials/<int:pk>/delete/", material_delete, name="material-delete"),
+    path("<int:pk>/courses/", program_courses_api, name="program-courses-api"),
+]

@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block title %}Enrollments{% endblock %}
+{% block content %}
+<div class="page-hero mb-4">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+    <div>
+      <div class="text-uppercase small fw-semibold text-muted mb-2">Enrollments</div>
+      <h2 class="mb-1">Applicant intake & batch formation</h2>
+      <div class="text-muted">Select pending students, approve/reject them, or form a batch from the checked applicants.</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a class="btn btn-outline-primary" href="{% url 'batches:list' %}">Batches</a>
+      <a class="btn btn-outline-primary" href="{% url 'students:list' %}">Students</a>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="card card-stat"><div class="card-body"><div class="text-muted">Pending</div><div class="fs-3 fw-bold">{{ pending|length }}</div></div></div></div>
+  <div class="col-md-4"><div class="card card-stat"><div class="card-body"><div class="text-muted">Approved</div><div class="fs-3 fw-bold">{{ approved|length }}</div></div></div></div>
+  <div class="col-md-4"><div class="card card-stat"><div class="card-body"><div class="text-muted">Rejected</div><div class="fs-3 fw-bold">{{ rejected|length }}</div></div></div></div>
+</div>
+
+<form method="post" id="enrollment-board-form">
+  {% csrf_token %}
+  <div class="row g-3">
+    <div class="col-lg-7">
+      <div class="card page-card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <div>
+              <h5 class="mb-1">Pending applicants</h5>
+              <div class="text-muted small">Check the students you want to use now. Unchecked students stay pending.</div>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="select-all">
+              <label class="form-check-label fw-semibold" for="select-all">Select all</label>
+            </div>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            <button class="btn btn-success" type="submit" name="action" value="approve">Approve Selected</button>
+            <button class="btn btn-outline-danger" type="submit" name="action" value="reject">Reject Selected</button>
+            <button class="btn btn-primary" type="submit" name="action" value="create_batch">Create Batch From Selected</button>
+          </div>
+
+          <div class="row g-2">
+            {% for enrollment in pending %}
+              <div class="col-12">
+                <div class="mini-material d-flex justify-content-between align-items-center gap-3">
+                  <div>
+                    <div class="fw-semibold">{{ enrollment.student.full_name }}</div>
+                    <div class="text-muted small">{{ enrollment.student.email }}</div>
+                    <div class="text-muted small">{{ enrollment.batch.batch_name }} • {{ enrollment.batch.program.program_name }}</div>
+                  </div>
+                  <div class="text-end">
+                    <div class="badge text-bg-light mb-2">{{ enrollment.status }}</div>
+                    <input class="form-check-input enrollment-check" type="checkbox" name="selected_enrollments" value="{{ enrollment.pk }}">
+                  </div>
+                </div>
+              </div>
+            {% empty %}
+              <div class="col-12 text-muted">No pending enrollment requests.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card page-card h-100">
+        <div class="card-body">
+          <h5 class="mb-3">Create batch from selected applicants</h5>
+          <p class="text-muted small mb-4">This batch form uses the applicants you checked on the left.</p>
+
+          <div class="row g-3">
+            <div class="col-12">
+              {{ batch_form.batch_name.label_tag }}{{ batch_form.batch_name }}{{ batch_form.batch_name.errors }}
+            </div>
+            <div class="col-md-6">
+              {{ batch_form.program.label_tag }}{{ batch_form.program }}{{ batch_form.program.errors }}
+            </div>
+            <div class="col-md-6">
+              {{ batch_form.course.label_tag }}{{ batch_form.course }}{{ batch_form.course.errors }}
+            </div>
+            <div class="col-md-6">
+              {{ batch_form.trainer.label_tag }}{{ batch_form.trainer }}{{ batch_form.trainer.errors }}
+            </div>
+            <div class="col-md-6">
+              {{ batch_form.mode.label_tag }}{{ batch_form.mode }}{{ batch_form.mode.errors }}
+            </div>
+            <div class="col-md-6">
+              {{ batch_form.client_name.label_tag }}{{ batch_form.client_name }}{{ batch_form.client_name.errors }}
+            </div>
+            <div class="col-md-6">
+              {{ batch_form.subject_short_name.label_tag }}{{ batch_form.subject_short_name }}{{ batch_form.subject_short_name.errors }}
+            </div>
+            <div class="col-md-6">
+              {{ batch_form.start_date.label_tag }}{{ batch_form.start_date }}{{ batch_form.start_date.errors }}
+            </div>
+            <div class="col-md-6">
+              {{ batch_form.end_date.label_tag }}{{ batch_form.end_date }}{{ batch_form.end_date.errors }}
+            </div>
+            <div class="col-md-6">
+              {{ batch_form.status.label_tag }}{{ batch_form.status }}{{ batch_form.status.errors }}
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+              <div class="form-check mb-2">
+                {{ batch_form.generate_session_plan }}
+                <label class="form-check-label" for="{{ batch_form.generate_session_plan.id_for_label }}">{{ batch_form.generate_session_plan.label }}</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 d-flex gap-2 flex-wrap">
+            <button class="btn btn-primary" type="submit" name="action" value="create_batch">Form Batch</button>
+            <a class="btn btn-outline-secondary" href="{% url 'batches:create' %}">Open Batch Builder</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+<div class="row g-3 mt-2">
+  <div class="col-lg-4">
+    <div class="card page-card h-100"><div class="card-body">
+      <h5 class="mb-3">Approved</h5>
+      <div class="text-muted small">{{ approved|length }} approved enrollment(s).</div>
+    </div></div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card page-card h-100"><div class="card-body">
+      <h5 class="mb-3">Rejected</h5>
+      <div class="text-muted small">{{ rejected|length }} rejected enrollment(s).</div>
+    </div></div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card page-card h-100"><div class="card-body">
+      <h5 class="mb-3">Workflow</h5>
+      <div class="text-muted small">Checked applicants can be approved, rejected, or used to form a new batch.</div>
+    </div></div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const selectAll = document.getElementById("select-all");
+  const items = () => Array.from(document.querySelectorAll(".enrollment-check"));
+  const programSelect = document.getElementById("id_batch-program");
+  const courseSelect = document.getElementById("id_batch-course");
+  const trainerSelect = document.getElementById("id_batch-trainer");
+  const startInput = document.getElementById("id_batch-start_date");
+  const endInput = document.getElementById("id_batch-end_date");
+
+  if (selectAll) {
+    selectAll.addEventListener("change", function () {
+      items().forEach(cb => cb.checked = selectAll.checked);
+    });
+  }
+
+  function refreshCourses() {
+    if (!programSelect || !courseSelect || !programSelect.value) return;
+    fetch(`{% url 'programs:program-courses-api' 0 %}`.replace("/0/", "/" + programSelect.value + "/"))
+      .then(response => response.json())
+      .then(items => {
+        const current = courseSelect.value;
+        courseSelect.innerHTML = '<option value="">Select course</option>';
+        items.forEach(item => {
+          const option = document.createElement("option");
+          option.value = item.id;
+          option.textContent = `${item.name} (${item.code})`;
+          if (String(item.id) === String(current)) option.selected = true;
+          courseSelect.appendChild(option);
+        });
+      });
+  }
+
+  function refreshTrainers() {
+    if (!trainerSelect || !startInput || !endInput || !startInput.value || !endInput.value) return;
+    const params = new URLSearchParams({ start_date: startInput.value, end_date: endInput.value });
+    fetch(`{% url 'batches:available-trainers' %}?` + params.toString())
+      .then(response => response.json())
+      .then(items => {
+        const current = trainerSelect.value;
+        trainerSelect.innerHTML = '<option value="">Select trainer</option>';
+        items.forEach(item => {
+          const option = document.createElement("option");
+          option.value = item.id;
+          option.textContent = `${item.name} (${item.code})`;
+          if (String(item.id) === String(current)) option.selected = true;
+          trainerSelect.appendChild(option);
+        });
+      });
+  }
+
+  programSelect && programSelect.addEventListener("change", refreshCourses);
+  startInput && startInput.addEventListener("change", refreshTrainers);
+  endInput && endInput.addEventListener("change", refreshTrainers);
+  refreshCourses();
+  refreshTrainers();
+});
+</script>
+{% endblock %}

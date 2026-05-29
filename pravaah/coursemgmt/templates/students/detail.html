@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Student Detail{% endblock %}
+{% block content %}
+<div class="page-hero mb-4">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+    <div>
+      <div class="text-uppercase small fw-semibold text-muted mb-2">Student</div>
+      <h2 class="mb-1">{{ student.full_name }}</h2>
+      <div class="text-muted">{{ student.email }} • {{ student.student_code }}</div>
+    </div>
+    {% if user.is_staff %}
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-primary" href="{% url 'students:edit' student.pk %}">Edit</a>
+      <a class="btn btn-outline-danger" href="{% url 'students:delete' student.pk %}">Delete</a>
+      <a class="btn btn-success" href="{% url 'students:guardian-create' %}?student={{ student.pk }}">Add Guardian</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-3"><div class="mini-pill"><strong>{{ enrollments|length }}</strong><span>Batches</span></div></div>
+  <div class="col-md-3"><div class="mini-pill"><strong>{{ result_count }}</strong><span>Results</span></div></div>
+  <div class="col-md-3"><div class="mini-pill"><strong>{{ average_marks }}</strong><span>Average Marks</span></div></div>
+  <div class="col-md-3"><div class="mini-pill"><strong>{{ certificates|length }}</strong><span>Certificates</span></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card page-card h-100"><div class="card-body">
+      <p class="mb-1"><strong>Email:</strong> {{ student.email }}</p>
+      <p class="mb-1"><strong>City:</strong> {{ student.city.city_name|default:"-" }}</p>
+      <p class="mb-1"><strong>Gender:</strong> {{ student.gender.gender_name|default:"-" }}</p>
+      <p class="mb-1"><strong>Join Date:</strong> {{ student.join_date }}</p>
+      <p class="mb-0"><strong>Status:</strong> {{ student.status }}</p>
+    </div></div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card page-card mb-3"><div class="card-body">
+      <h5 class="mb-3">Batch and course info</h5>
+      <div class="row g-3">
+        {% for enrollment in enrollments %}
+          <div class="col-12">
+            <div class="mini-material">
+              <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                <div>
+                  <div class="fw-semibold">{{ enrollment.batch.batch_name }}</div>
+                  <div class="text-muted small">{{ enrollment.batch.batch_code }}</div>
+                  <div class="text-muted small">{{ enrollment.batch.program.program_name }} • {{ enrollment.batch.primary_course.course_name|default:"-" }}</div>
+                </div>
+                <span class="badge text-bg-light">{{ enrollment.status }}</span>
+              </div>
+              <div class="d-flex flex-wrap gap-2">
+                <span class="badge text-bg-light">Trainer: {{ enrollment.batch.trainer.full_name|default:"-" }}</span>
+                <span class="badge text-bg-light">Dates: {{ enrollment.batch.start_date }} - {{ enrollment.batch.end_date }}</span>
+                <span class="badge text-bg-light">Fee: {{ enrollment.fee_amount }}</span>
+                <span class="badge text-bg-light">Payment: {{ enrollment.payment_status }}</span>
+              </div>
+            </div>
+          </div>
+        {% empty %}
+          <div class="col-12 text-muted">No enrollments.</div>
+        {% endfor %}
+      </div>
+    </div></div>
+
+    <div class="card page-card mb-3"><div class="card-body">
+      <h5 class="mb-3">Scores and assessments</h5>
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead>
+            <tr>
+              <th>Batch</th>
+              <th>Course</th>
+              <th>Assessment</th>
+              <th>Marks</th>
+              <th>Total</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for result in results %}
+              <tr>
+                <td>{{ result.enrollment.batch.batch_name }}</td>
+                <td>{{ result.assessment.course.course_name }}</td>
+                <td>{{ result.assessment.assessment_name }}</td>
+                <td>{{ result.marks_obtained }}</td>
+                <td>{{ result.assessment.total_marks }}</td>
+                <td>{{ result.status }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="text-muted">No scores yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div></div>
+
+    <div class="card page-card mb-3"><div class="card-body">
+      <h5>Guardians</h5>
+      <ul>{% for guardian in guardians %}<li>{{ guardian.guardian_name }} ({{ guardian.relation }})</li>{% empty %}<li class="text-muted">No guardians.</li>{% endfor %}</ul>
+    </div></div>
+    <div class="card page-card"><div class="card-body">
+      <h5>Certificates</h5>
+      <ul>{% for certificate in certificates %}<li>{{ certificate.certificate_no }} - {{ certificate.validity_status }}</li>{% empty %}<li class="text-muted">No certificates.</li>{% endfor %}</ul>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

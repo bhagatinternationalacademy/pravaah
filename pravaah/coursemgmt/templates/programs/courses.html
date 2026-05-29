@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Courses{% endblock %}
+{% block content %}
+<div class="page-hero mb-4">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+    <div>
+      <div class="text-uppercase small fw-semibold text-muted mb-2">Courses</div>
+      <h2 class="mb-1">Course structure and modules</h2>
+      <div class="text-muted">Open a course to see its modules, sections, and materials.</div>
+    </div>
+    {% if user.is_staff %}
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-primary" href="{% url 'programs:course-create' %}">Add Course</a>
+        <a class="btn btn-outline-primary" href="{% url 'programs:module-create' %}">Add Module</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="card card-stat"><div class="card-body"><div class="text-muted">Courses</div><div class="fs-3 fw-bold">{{ course_count }}</div></div></div></div>
+  <div class="col-md-4"><div class="card card-stat"><div class="card-body"><div class="text-muted">Active Courses</div><div class="fs-3 fw-bold">{{ active_courses }}</div></div></div></div>
+  <div class="col-md-4"><div class="card card-stat"><div class="card-body"><div class="text-muted">Modules</div><div class="fs-3 fw-bold">{{ module_count }}</div></div></div></div>
+</div>
+
+<div class="card page-card mb-3">
+  <div class="card-body">
+    <form class="row g-3 align-items-end" method="get">
+      <div class="col-md-8">
+        <label class="form-label">Search</label>
+        <input class="form-control" name="q" value="{{ query }}" placeholder="Search course name or code">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Status</label>
+        <select class="form-select" name="status">
+          <option value="">All</option>
+          <option value="Active" {% if status == "Active" %}selected{% endif %}>Active</option>
+          <option value="Inactive" {% if status == "Inactive" %}selected{% endif %}>Inactive</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-primary w-100" type="submit">Filter</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row g-3">
+  {% for course in page_obj %}
+    <div class="col-lg-4 col-md-6">
+      <div class="card page-card h-100">
+        {% if course.course_image %}
+          <img src="{{ course.course_image.url }}" class="card-img-top page-card-image" alt="{{ course.course_name }}">
+        {% else %}
+          <img src="https://picsum.photos/seed/course-card-{{ course.pk }}/900/500" class="card-img-top page-card-image" alt="{{ course.course_name }}">
+        {% endif %}
+        <div class="card-body d-flex flex-column">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <div class="text-muted small">{{ course.level }}</div>
+              <h5 class="mb-1"><a class="text-decoration-none" href="{% url 'programs:course-detail' course.pk %}">{{ course.course_name }}</a></h5>
+            </div>
+            <span class="badge text-bg-dark">{{ course.course_code }}</span>
+          </div>
+          <p class="text-muted mb-3">{{ course.description|default:"No description provided."|truncatechars:120 }}</p>
+          <div class="d-flex justify-content-between align-items-center text-muted small mb-3">
+            <span>{{ course.duration_hours }} hrs</span>
+            <span>Fee {{ course.fees }}</span>
+          </div>
+          <div class="mt-auto d-flex gap-2 flex-wrap">
+            <a class="btn btn-sm btn-outline-primary" href="{% url 'programs:course-detail' course.pk %}">Open</a>
+            {% if user.is_staff %}
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'programs:course-edit' course.pk %}">Edit</a>
+              <a class="btn btn-sm btn-outline-danger" href="{% url 'programs:course-delete' course.pk %}">Delete</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12"><div class="card page-card"><div class="card-body text-muted">No courses found.</div></div></div>
+  {% endfor %}
+</div>
+
+{% include "shared/pagination.html" with page_obj=page_obj %}
+{% endblock %}

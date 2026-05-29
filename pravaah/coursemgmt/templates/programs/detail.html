@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Program Detail{% endblock %}
+{% block content %}
+<div class="page-hero page-hero-image mb-4" style="background-image: linear-gradient(180deg, rgba(2,6,23,.2), rgba(2,6,23,.8)), url('{% if program.program_image %}{{ program.program_image.url }}{% else %}https://picsum.photos/seed/program-hero-{{ program.pk }}/1400/500{% endif %}');">
+  <div>
+    <div class="text-uppercase small fw-semibold text-white-50 mb-2">Program</div>
+    <h2 class="mb-2 text-white">{{ program.program_name }}</h2>
+    <p class="mb-0 text-white-50">{{ program.category.category_name }} • {{ program.program_code }}</p>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-4"><div class="mini-pill"><strong>{{ links|length }}</strong><span>Courses</span></div></div>
+  <div class="col-md-4"><div class="mini-pill"><strong>{{ modules|length }}</strong><span>Modules</span></div></div>
+  <div class="col-md-4"><div class="mini-pill"><strong>{{ batches|length }}</strong><span>Batches</span></div></div>
+</div>
+
+{% if user.is_staff %}
+<div class="d-flex gap-2 mb-3 flex-wrap">
+  <a class="btn btn-outline-primary" href="{% url 'programs:program-edit' program.pk %}">Edit Program</a>
+  <a class="btn btn-outline-danger" href="{% url 'programs:program-delete' program.pk %}">Delete Program</a>
+  <a class="btn btn-success" href="{% url 'programs:program-course-assign' %}?program={{ program.pk }}">Attach Course</a>
+</div>
+{% endif %}
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card page-card h-100">
+      <div class="card-body">
+        {% if program.program_image %}
+          <img src="{{ program.program_image.url }}" alt="{{ program.program_name }}" class="img-fluid rounded-4 mb-3">
+        {% endif %}
+        <p class="mb-1"><strong>Category:</strong> {{ program.category.category_name }}</p>
+        <p class="mb-1"><strong>Duration:</strong> {{ program.duration_days }} days</p>
+        <p class="mb-0"><strong>Status:</strong> {{ program.status }}</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card page-card h-100">
+      <div class="card-body">
+        <h5 class="mb-3">About this program</h5>
+        <p class="text-muted mb-0">{{ program.description|default:"No description provided." }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card page-card mt-3">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+      <h5 class="mb-0">Courses inside this program</h5>
+      <a class="btn btn-sm btn-outline-primary" href="{% url 'programs:course-create' %}">Create Course</a>
+    </div>
+    <div class="row g-3">
+      {% for link in links %}
+        <div class="col-lg-6">
+          <div class="mini-material h-100">
+            <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+              <div>
+                <div class="text-uppercase small text-muted">Course {{ link.sequence_no }}</div>
+                <h5 class="mb-1"><a href="{% url 'programs:course-detail' link.course.pk %}" class="text-decoration-none">{{ link.course.course_name }}</a></h5>
+                <div class="text-muted small">{{ link.course.level }} • {{ link.course.course_code }}</div>
+              </div>
+              <span class="badge text-bg-primary">{{ link.course.status }}</span>
+            </div>
+            <p class="text-muted mb-3">{{ link.course.description|default:"No description provided."|truncatechars:150 }}</p>
+            <div class="d-flex gap-2 flex-wrap mb-2">
+              <span class="badge text-bg-light">{{ link.module_count }} modules</span>
+              <span class="badge text-bg-light">{{ link.material_count }} materials</span>
+              <span class="badge text-bg-light">{{ link.course.duration_hours }} hrs</span>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+              <a class="btn btn-sm btn-primary" href="{% url 'programs:course-detail' link.course.pk %}">Open course</a>
+              {% if user.is_staff %}
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'programs:course-edit' link.course.pk %}">Edit</a>
+                <a class="btn btn-sm btn-outline-danger" href="{% url 'programs:course-delete' link.course.pk %}">Delete</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="col-12 text-muted">No courses linked yet.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="card page-card mt-3">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+      <h5 class="mb-0">Modules in this program</h5>
+      {% if user.is_staff %}<a class="btn btn-sm btn-outline-primary" href="{% url 'programs:module-create' %}">Create Module</a>{% endif %}
+    </div>
+    <div class="accordion" id="programModules">
+      {% for module in modules %}
+        <div class="accordion-item mb-2 border-0 shadow-sm rounded-4 overflow-hidden">
+          <h2 class="accordion-header" id="heading{{ module.pk }}">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ module.pk }}">
+              {{ module.course.course_name }} — {{ module.module_name }}
+              <span class="ms-2 text-muted small">{{ module.duration_hours }} hrs</span>
+            </button>
+          </h2>
+          <div id="collapse{{ module.pk }}" class="accordion-collapse collapse" data-bs-parent="#programModules">
+            <div class="accordion-body">
+              <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                <p class="text-muted mb-0">{{ module.description|default:"No description provided." }}</p>
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'programs:module-detail' module.pk %}">Open</a>
+              </div>
+              <div class="d-flex gap-2 flex-wrap">
+                <span class="badge text-bg-light">{{ module.materials.count }} materials</span>
+                <span class="badge text-bg-light">Seq {{ module.sequence_no }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="text-muted">No modules linked yet.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="card page-card mt-3">
+  <div class="card-body">
+    <h5 class="mb-3">Available batches</h5>
+    <div class="row g-3">
+      {% for batch in batches %}
+        <div class="col-md-6 col-lg-4">
+          <div class="mini-material">
+            <div class="fw-semibold">{{ batch.batch_name }}</div>
+            <div class="text-muted small">{{ batch.batch_code }}</div>
+            <div class="text-muted small">{{ batch.start_date }} - {{ batch.end_date }}</div>
+            <div class="text-muted small">{{ batch.trainer.full_name|default:"No trainer" }}</div>
+            <a class="btn btn-sm btn-primary mt-2" href="{% url 'batches:enrollment-request' %}?batch={{ batch.pk }}">Request Enrollment</a>
+          </div>
+        </div>
+      {% empty %}
+        <div class="col-12 text-muted">No batches yet.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

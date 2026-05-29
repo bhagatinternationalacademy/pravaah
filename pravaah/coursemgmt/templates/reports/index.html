@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Reports</h2>
+    <div class="text-muted">Live summaries and detailed reports from MySQL.</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-primary" href="{% url 'reports:export' 'attendance' %}">Export Attendance</a>
+    <a class="btn btn-outline-primary" href="{% url 'reports:export' 'batches' %}">Export Batches</a>
+    <a class="btn btn-outline-primary" href="{% url 'reports:export' 'assessments' %}">Export Marks</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="card card-stat"><div class="card-body"><div class="text-muted">Students</div><div class="fs-3 fw-bold">{{ students_count }}</div></div></div></div>
+  <div class="col-md-4"><div class="card card-stat"><div class="card-body"><div class="text-muted">Trainers</div><div class="fs-3 fw-bold">{{ trainers_count }}</div></div></div></div>
+  <div class="col-md-4"><div class="card card-stat"><div class="card-body"><div class="text-muted">Attendance Records</div><div class="fs-3 fw-bold">{{ attendance_count }}</div></div></div></div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-3"><div class="card card-stat"><div class="card-body"><div class="text-muted">Attendance %</div><div class="fs-3 fw-bold">{{ attendance_percentage }}%</div></div></div></div>
+  <div class="col-md-3"><div class="card card-stat"><div class="card-body"><div class="text-muted">Certificate Success</div><div class="fs-3 fw-bold">{{ certificate_success_rate }}%</div></div></div></div>
+  <div class="col-md-3"><div class="card card-stat"><div class="card-body"><div class="text-muted">Active Batches</div><div class="fs-3 fw-bold">{{ active_batches }}</div></div></div></div>
+  <div class="col-md-3"><div class="card card-stat"><div class="card-body"><div class="text-muted">Batch Performance</div><div class="fs-3 fw-bold">{{ batch_performance }}%</div></div></div></div>
+</div>
+<div class="row g-3">
+  <div class="col-md-4"><a class="text-decoration-none" href="{% url 'reports:students' %}"><div class="feature-card feature-blue"><div class="feature-kicker">REPORT</div><h5>Students</h5><p>Browse enrolled students and their status.</p></div></a></div>
+  <div class="col-md-4"><a class="text-decoration-none" href="{% url 'reports:trainers' %}"><div class="feature-card feature-purple"><div class="feature-kicker">REPORT</div><h5>Trainers</h5><p>Review trainer profiles, schedules, and status.</p></div></a></div>
+  <div class="col-md-4"><a class="text-decoration-none" href="{% url 'reports:batches' %}"><div class="feature-card feature-teal"><div class="feature-kicker">REPORT</div><h5>Batches</h5><p>Track batches, dates, trainers, and status.</p></div></a></div>
+</div>
+<div class="row g-3 mt-1">
+  <div class="col-lg-7">
+    <div class="card page-card h-100">
+      <div class="card-body">
+        <h5 class="mb-1">Monthly Enrollments</h5>
+        <div class="text-muted mb-3">New enrollments by month</div>
+        <canvas id="enrollmentChart" height="140"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card page-card h-100">
+      <div class="card-body">
+        <h5 class="mb-1">Batch Performance</h5>
+        <div class="text-muted mb-3">Batches by status</div>
+        <canvas id="batchReportChart" height="140"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row g-3 mt-1">
+  <div class="col-lg-7">
+    <div class="card page-card h-100">
+      <div class="card-body">
+        <h5 class="mb-1">Attendance Status</h5>
+        <div class="text-muted mb-3">Live attendance distribution</div>
+        <canvas id="attendanceChart" height="140"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card page-card h-100">
+      <div class="card-body">
+        <h5 class="mb-1">Certificate Status</h5>
+        <div class="text-muted mb-3">Issued vs pending certificates</div>
+        <canvas id="certificateChart" height="140"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+{{ attendance_labels|json_script:"attendance-labels" }}
+{{ attendance_counts|json_script:"attendance-counts" }}
+{{ certificate_labels|json_script:"certificate-labels" }}
+{{ certificate_counts|json_script:"certificate-counts" }}
+{{ enrollment_month_labels|json_script:"enrollment-month-labels" }}
+{{ enrollment_month_counts|json_script:"enrollment-month-counts" }}
+{{ batch_report_labels|json_script:"batch-report-labels" }}
+{{ batch_report_counts|json_script:"batch-report-counts" }}
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  const attendanceBreakdown = JSON.parse(document.getElementById("attendance-labels").textContent || "[]");
+  const attendanceCounts = JSON.parse(document.getElementById("attendance-counts").textContent || "[]");
+  const certificateLabels = JSON.parse(document.getElementById("certificate-labels").textContent || "[]");
+  const certificateCounts = JSON.parse(document.getElementById("certificate-counts").textContent || "[]");
+  const enrollmentMonthLabels = JSON.parse(document.getElementById("enrollment-month-labels").textContent || "[]");
+  const enrollmentMonthCounts = JSON.parse(document.getElementById("enrollment-month-counts").textContent || "[]");
+  const batchReportLabels = JSON.parse(document.getElementById("batch-report-labels").textContent || "[]");
+  const batchReportCounts = JSON.parse(document.getElementById("batch-report-counts").textContent || "[]");
+
+  if (document.getElementById("enrollmentChart")) {
+    new Chart(document.getElementById("enrollmentChart"), {
+      type: "line",
+      data: {
+        labels: enrollmentMonthLabels.length ? enrollmentMonthLabels : ["No data"],
+        datasets: [{
+          label: "Enrollments",
+          data: enrollmentMonthCounts.length ? enrollmentMonthCounts : [0],
+          borderColor: "#2563eb",
+          backgroundColor: "rgba(37,99,235,.15)",
+          fill: true,
+          tension: .35
+        }]
+      },
+      options: {responsive: true, plugins: {legend: {display: false}}, scales: {y: {beginAtZero: true, ticks: {precision: 0}}}}
+    });
+  }
+
+  if (document.getElementById("batchReportChart")) {
+    new Chart(document.getElementById("batchReportChart"), {
+      type: "bar",
+      data: {
+        labels: batchReportLabels.length ? batchReportLabels : ["No data"],
+        datasets: [{
+          label: "Batches",
+          data: batchReportCounts.length ? batchReportCounts : [0],
+          backgroundColor: ["#2563eb", "#7c3aed", "#06b6d4", "#0f766e"],
+          borderRadius: 12
+        }]
+      },
+      options: {responsive: true, plugins: {legend: {display: false}}, scales: {y: {beginAtZero: true, ticks: {precision: 0}}}}
+    });
+  }
+
+  if (document.getElementById("attendanceChart")) {
+    new Chart(document.getElementById("attendanceChart"), {
+      type: "bar",
+      data: {
+        labels: attendanceBreakdown.length ? attendanceBreakdown : ["No data"],
+        datasets: [{
+          label: "Attendance",
+          data: attendanceCounts.length ? attendanceCounts : [0],
+          backgroundColor: ["#2563eb", "#7c3aed", "#06b6d4", "#0f766e", "#f59e0b", "#ef4444"],
+          borderRadius: 12
+        }]
+      },
+      options: {responsive: true, plugins: {legend: {display: false}}, scales: {y: {beginAtZero: true, ticks: {precision: 0}}}}
+    });
+  }
+
+  if (document.getElementById("certificateChart")) {
+    new Chart(document.getElementById("certificateChart"), {
+      type: "doughnut",
+      data: {
+        labels: certificateLabels.length ? certificateLabels : ["No data"],
+        datasets: [{
+          data: certificateCounts.length ? certificateCounts : [0],
+          backgroundColor: ["#2563eb", "#7c3aed", "#06b6d4", "#0f766e"]
+        }]
+      },
+      options: {responsive: true, plugins: {legend: {position: "bottom"}}}
+    });
+  }
+</script>
+{% endblock %}

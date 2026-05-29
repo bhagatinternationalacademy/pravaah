@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block content %}
+<div class="auth-page-center">
+  <div class="auth-shell">
+    <div class="auth-board">
+      <div class="auth-board-top">
+        <span class="badge hero-badge mb-3">Training Suite</span>
+        <h1 class="display-6 fw-bold mb-3">Beautiful LMS operations in one place.</h1>
+        <p class="text-muted mb-4">Manage programs, courses, batches, sessions, and attendance from a premium institute workspace.</p>
+      </div>
+      <div class="pin-grid">
+        <div class="pin-card pin-card-lg" style="background-image:url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80');">
+          <div>
+            <div class="small text-white-50">Programs</div>
+            <div class="fw-semibold">Visual course library</div>
+          </div>
+        </div>
+        <div class="pin-card" style="background-image:url('https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1200&q=80');">
+          <div class="fw-semibold">Trainer scheduling</div>
+        </div>
+        <div class="pin-card" style="background-image:url('https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80');">
+          <div class="fw-semibold">Batch planning</div>
+        </div>
+        <div class="pin-card pin-card-tall" style="background-image:url('https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80');">
+          <div>
+            <div class="small text-white-50">Attendance</div>
+            <div class="fw-semibold">Real-time tracking</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="auth-form-panel">
+      <div class="card page-card auth-form-card">
+        <div class="card-body p-4 p-lg-5">
+          <div class="mb-4">
+            <div class="text-uppercase small text-primary fw-semibold mb-2">Welcome back</div>
+            <h2 class="fw-bold mb-2">Sign in to continue</h2>
+            <p class="text-muted mb-0">Access your dashboard, batches, attendance, and reports.</p>
+          </div>
+          <form method="post" class="auth-form">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            {% for field in form %}
+              <div class="mb-3">
+                {{ field.label_tag }}
+                {{ field }}
+                {{ field.errors }}
+              </div>
+            {% endfor %}
+            <button class="btn btn-primary w-100 btn-lg mt-2" type="submit">Sign in</button>
+          </form>
+          <div class="auth-meta mt-4">
+            <div class="auth-chip">Admin • Trainer • Student</div>
+            <div class="text-muted small mt-3">Use your assigned username and password.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

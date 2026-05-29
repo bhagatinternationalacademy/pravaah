@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Trainer Detail{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h2 class="mb-1">{{ trainer.full_name }}</h2>
+    <div class="text-muted">{{ trainer.email }}</div>
+  </div>
+  <span class="badge text-bg-primary">{{ trainer.trainer_code }}</span>
+</div>
+{% if user.is_staff %}
+<div class="d-flex gap-2 mb-3">
+  <a class="btn btn-outline-primary" href="{% url 'trainers:edit' trainer.pk %}">Edit</a>
+  <a class="btn btn-outline-danger" href="{% url 'trainers:delete' trainer.pk %}">Delete</a>
+  <a class="btn btn-success" href="{% url 'trainers:skill-create' %}?trainer={{ trainer.pk }}">Add Skill</a>
+  <a class="btn btn-success" href="{% url 'trainers:cert-create' %}?trainer={{ trainer.pk }}">Add Certification</a>
+</div>
+{% endif %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card page-card"><div class="card-body">
+      <p class="mb-1"><strong>Email:</strong> {{ trainer.email }}</p>
+      <p class="mb-1"><strong>Qualification:</strong> {{ trainer.qualification }}</p>
+      <p class="mb-0"><strong>Status:</strong> {{ trainer.status }}</p>
+    </div></div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card page-card mb-3"><div class="card-body">
+      <h5>Sessions</h5>
+      <div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Batch</th><th>Topic</th></tr></thead><tbody>
+        {% for session in sessions %}
+          <tr><td>{{ session.session_date }}</td><td>{{ session.batch.batch_name }}</td><td>{{ session.session_topic }}</td></tr>
+        {% empty %}<tr><td colspan="3" class="text-muted">No sessions.</td></tr>{% endfor %}
+      </tbody></table></div>
+    </div></div>
+    <div class="card page-card mb-3"><div class="card-body">
+      <h5>Skills</h5>
+      <ul class="mb-0">{% for skill in skills %}<li>Skill {{ skill.skill_id }} - {{ skill.proficiency_level }}</li>{% empty %}<li class="text-muted">No skills.</li>{% endfor %}</ul>
+    </div></div>
+    <div class="card page-card"><div class="card-body">
+      <h5>Certifications</h5>
+      <ul class="mb-0">{% for certification in certifications %}<li>{{ certification.certification_name }}</li>{% empty %}<li class="text-muted">No certifications.</li>{% endfor %}</ul>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

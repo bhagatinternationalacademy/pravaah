@@ -1,6 +1,4 @@
 {% extends 'dashboard_base.html' %}
-{% load static %}
-
 {% block title %}Attendance{% endblock %}
 {% block page_title %}Attendance{% endblock %}
 
@@ -20,17 +18,17 @@
     <div class="stat-card stat-card-green">
       <div class="stat-card-icon"><i class="bi bi-check-circle-fill"></i></div>
       <div class="stat-card-info">
-        <div class="stat-card-value">{{ attendance_records|length }}</div>
-        <div class="stat-card-label">Total Records</div>
+        <div class="stat-card-value">{{ present_count }}</div>
+        <div class="stat-card-label">Present</div>
       </div>
     </div>
   </div>
   <div class="col-md-4">
     <div class="stat-card {% if percentage >= 75 %}stat-card-green{% else %}stat-card-orange{% endif %}">
-      <div class="stat-card-icon"><i class="bi bi-award-fill"></i></div>
+      <div class="stat-card-icon"><i class="bi bi-x-circle-fill"></i></div>
       <div class="stat-card-info">
-        <div class="stat-card-value">{% if percentage >= 75 %}Good{% else %}Low{% endif %}</div>
-        <div class="stat-card-label">Status</div>
+        <div class="stat-card-value">{{ absent_count }}</div>
+        <div class="stat-card-label">Absent</div>
       </div>
     </div>
   </div>
@@ -54,49 +52,28 @@
   </div>
 </div>
 
-<!-- Filter -->
 <div class="dash-card">
   <div class="dash-card-header">
     <span><i class="bi bi-calendar-check-fill me-2"></i>Attendance Records</span>
-    <form method="get" class="d-flex align-items-center gap-2">
-      <select name="month" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()">
-        <option value="">All Months</option>
-        {% for i in "123456789101112"|make_list %}
-        {% endfor %}
-        <option value="1" {% if month_filter == '1' %}selected{% endif %}>January</option>
-        <option value="2" {% if month_filter == '2' %}selected{% endif %}>February</option>
-        <option value="3" {% if month_filter == '3' %}selected{% endif %}>March</option>
-        <option value="4" {% if month_filter == '4' %}selected{% endif %}>April</option>
-        <option value="5" {% if month_filter == '5' %}selected{% endif %}>May</option>
-        <option value="6" {% if month_filter == '6' %}selected{% endif %}>June</option>
-        <option value="7" {% if month_filter == '7' %}selected{% endif %}>July</option>
-        <option value="8" {% if month_filter == '8' %}selected{% endif %}>August</option>
-        <option value="9" {% if month_filter == '9' %}selected{% endif %}>September</option>
-        <option value="10" {% if month_filter == '10' %}selected{% endif %}>October</option>
-        <option value="11" {% if month_filter == '11' %}selected{% endif %}>November</option>
-        <option value="12" {% if month_filter == '12' %}selected{% endif %}>December</option>
-      </select>
-    </form>
+    <span class="text-muted small">From DB table: enrollment_id + status</span>
   </div>
   <div class="dash-card-body">
     {% if attendance_records %}
     <div class="table-responsive">
       <table class="table table-hover dash-table">
         <thead>
-          <tr><th>#</th><th>Date</th><th>Subject</th><th>Status</th><th>Remarks</th></tr>
+          <tr><th>#</th><th>Enrollment ID</th><th>Status</th></tr>
         </thead>
         <tbody>
           {% for a in attendance_records %}
           <tr>
             <td class="text-muted">{{ forloop.counter }}</td>
-            <td>{{ a.date|date:"d M Y" }}</td>
-            <td>{{ a.subject }}</td>
+            <td>{{ a.enrollment_id }}</td>
             <td>
-              <span class="badge {% if a.status == 'Present' %}bg-success{% elif a.status == 'Absent' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+              <span class="badge {% if a.status|lower == 'present' %}bg-success{% elif a.status|lower == 'absent' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
                 {{ a.status }}
               </span>
             </td>
-            <td class="text-muted small">{{ a.remarks|default:"-" }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -106,6 +83,7 @@
       <div class="empty-state">
         <i class="bi bi-calendar-x"></i>
         <p>No attendance records found.</p>
+        <small class="text-muted">Make sure your participant has a `user_id` that matches `attendance.enrollment_id`.</small>
       </div>
     {% endif %}
   </div>

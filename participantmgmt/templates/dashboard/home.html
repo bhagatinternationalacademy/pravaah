@@ -9,7 +9,7 @@
 <div class="welcome-banner mb-4">
   <div class="welcome-left">
     <h4 class="welcome-title">Good day, {{ student.get_full_name }}! </h4>
-    <p class="welcome-sub">{{ student.course }} &middot; {{ student.academic_year }}</p>
+    <p class="welcome-sub">{{ student.program_name|default:student.course }} &middot; {{ student.academic_year }}</p>
   </div>
   <div class="welcome-right d-none d-md-block">
     <i class="bi bi-mortarboard-fill"></i>
@@ -28,29 +28,29 @@
     </div>
   </div>
   <div class="col-md-3 col-sm-6">
-    <div class="stat-card stat-card-green">
-      <div class="stat-card-icon"><i class="bi bi-book-fill"></i></div>
+    <div class="stat-card stat-card-purple">
+      <div class="stat-card-icon"><i class="bi bi-clipboard2-data-fill"></i></div>
       <div class="stat-card-info">
-        <div class="stat-card-value">{{ total_subjects }}</div>
-        <div class="stat-card-label">Subjects</div>
+        <div class="stat-card-value">{{ assessment_avg }}%</div>
+        <div class="stat-card-label">Assessment Avg</div>
       </div>
     </div>
   </div>
   <div class="col-md-3 col-sm-6">
-    <div class="stat-card stat-card-purple">
-      <div class="stat-card-icon"><i class="bi bi-calendar3"></i></div>
+    <div class="stat-card stat-card-green">
+      <div class="stat-card-icon"><i class="bi bi-bar-chart-fill"></i></div>
       <div class="stat-card-info">
-        <div class="stat-card-value">{{ total_attendance_days }}</div>
-        <div class="stat-card-label">Classes Tracked</div>
+        <div class="stat-card-value">{{ result_overall_pct }}%</div>
+        <div class="stat-card-label">Overall Result</div>
       </div>
     </div>
   </div>
   <div class="col-md-3 col-sm-6">
     <div class="stat-card stat-card-orange">
-      <div class="stat-card-icon"><i class="bi bi-person-check-fill"></i></div>
+      <div class="stat-card-icon"><i class="bi bi-clock-history"></i></div>
       <div class="stat-card-info">
-        <div class="stat-card-value">{% if student.is_approved %}Active{% else %}Pending{% endif %}</div>
-        <div class="stat-card-label">Status</div>
+        <div class="stat-card-value">{{ pending_assessments }}</div>
+        <div class="stat-card-label">Pending Tasks</div>
       </div>
     </div>
   </div>
@@ -71,11 +71,11 @@
           <div class="profile-avatar-lg mb-3"><i class="bi bi-person-fill"></i></div>
         {% endif %}
         <h5 class="mb-1">{{ student.get_full_name }}</h5>
-        <p class="text-muted mb-3 small">@{{ request.user.username }}</p>
+        <p class="text-muted mb-3 small">@{{ student.username }}</p>
         <div class="profile-details">
           <div class="profile-detail-row">
-            <span class="detail-label"><i class="bi bi-book me-1"></i>Course</span>
-            <span class="detail-value">{{ student.course }}</span>
+            <span class="detail-label"><i class="bi bi-book me-1"></i>Program</span>
+            <span class="detail-value">{{ student.program_name|default:student.course }}</span>
           </div>
           <div class="profile-detail-row">
             <span class="detail-label"><i class="bi bi-calendar me-1"></i>Year</span>
@@ -87,18 +87,18 @@
           </div>
           <div class="profile-detail-row">
             <span class="detail-label"><i class="bi bi-envelope me-1"></i>Email</span>
-            <span class="detail-value small">{{ request.user.email }}</span>
+            <span class="detail-value small">{{ student.email }}</span>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Attendance + Notifications -->
+  <!-- Learning Panels -->
   <div class="col-lg-8">
     <div class="row g-4 h-100">
       <!-- Attendance -->
-      <div class="col-12">
+      <div class="col-12 col-xl-6">
         <div class="dash-card">
           <div class="dash-card-header">
             <span><i class="bi bi-calendar-check-fill me-2"></i>Recent Attendance</span>
@@ -108,14 +108,13 @@
             {% if recent_attendance %}
             <div class="table-responsive">
               <table class="table table-hover dash-table">
-                <thead><tr><th>Date</th><th>Subject</th><th>Status</th></tr></thead>
+                <thead><tr><th>Enrollment ID</th><th>Status</th></tr></thead>
                 <tbody>
                 {% for a in recent_attendance %}
                   <tr>
-                    <td>{{ a.date }}</td>
-                    <td>{{ a.subject }}</td>
+                    <td>{{ a.enrollment_id }}</td>
                     <td>
-                      <span class="badge {% if a.status == 'Present' %}bg-success{% elif a.status == 'Absent' %}bg-danger{% else %}bg-warning{% endif %}">
+                      <span class="badge {% if a.status|lower == 'present' %}bg-success{% elif a.status|lower == 'absent' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
                         {{ a.status }}
                       </span>
                     </td>
@@ -131,26 +130,62 @@
         </div>
       </div>
 
-      <!-- Notifications -->
-      <div class="col-12">
+      <!-- Assessments -->
+      <div class="col-12 col-xl-6">
         <div class="dash-card">
           <div class="dash-card-header">
-            <span><i class="bi bi-bell-fill me-2"></i>Notifications</span>
+            <span><i class="bi bi-clipboard2-data-fill me-2"></i>Upcoming Assessments</span>
+            <a href="{% url 'participantmgmt:assessment' %}" class="btn btn-sm btn-outline-primary">View All</a>
           </div>
           <div class="dash-card-body">
-            {% if notifications %}
-              {% for notif in notifications %}
+            {% if recent_assessments %}
+              {% for assessment in recent_assessments %}
               <div class="notification-item">
-                <div class="notif-icon"><i class="bi bi-megaphone-fill"></i></div>
+                <div class="notif-icon"><i class="bi bi-journal-check"></i></div>
                 <div class="notif-content">
-                  <div class="notif-title">{{ notif.title }}</div>
-                  <div class="notif-msg">{{ notif.message }}</div>
-                  <div class="notif-time text-muted small">{{ notif.created_at|date:"d M Y" }}</div>
+                  <div class="notif-title">{{ assessment.title }}</div>
+                  <div class="notif-msg">{{ assessment.subject }}</div>
+                  <div class="notif-time text-muted small">Due {{ assessment.due_date|date:"d M Y" }}</div>
                 </div>
               </div>
               {% endfor %}
             {% else %}
-              <div class="empty-state"><i class="bi bi-bell-slash"></i><p>No notifications.</p></div>
+              <div class="empty-state"><i class="bi bi-clipboard-x"></i><p>No assessments published yet.</p></div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="col-12">
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <span><i class="bi bi-bar-chart-line-fill me-2"></i>Recent Results</span>
+            <a href="{% url 'participantmgmt:results' %}" class="btn btn-sm btn-outline-primary">View All</a>
+          </div>
+          <div class="dash-card-body">
+            {% if recent_results %}
+            <div class="table-responsive">
+              <table class="table table-hover dash-table">
+                <thead><tr><th>Subject</th><th>Exam</th><th>Score</th><th>Status</th></tr></thead>
+                <tbody>
+                {% for result in recent_results %}
+                  <tr>
+                    <td>{{ result.subject }}</td>
+                    <td>{{ result.exam_name }}</td>
+                    <td>{{ result.score }}%</td>
+                    <td>
+                      <span class="badge {% if result.score >= 40 %}bg-success{% else %}bg-danger{% endif %}">
+                        {% if result.score >= 40 %}Pass{% else %}Needs Work{% endif %}
+                      </span>
+                    </td>
+                  </tr>
+                {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+              <div class="empty-state"><i class="bi bi-bar-chart"></i><p>No results available yet.</p></div>
             {% endif %}
           </div>
         </div>

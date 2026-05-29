@@ -151,43 +151,60 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   const courseSelect = document.querySelector('#courseSelectionForm select[name="course"]');
-  const courseDataElement = document.getElementById('course-catalog-data');
+  const courseDataElement = document.getElementById('program-catalog-data') || document.getElementById('course-catalog-data');
   if (courseSelect && courseDataElement) {
-    let courseCatalog = {};
+    let programCatalog = {};
     try {
-      courseCatalog = JSON.parse(courseDataElement.textContent || '{}');
+      programCatalog = JSON.parse(courseDataElement.textContent || '{}');
     } catch (error) {
-      courseCatalog = {};
+      programCatalog = {};
     }
 
-    const setCourseSummary = (courseKey) => {
-      const summary = courseCatalog[courseKey] || null;
+    const setProgramSummary = (programKey) => {
+      const summary = programCatalog[programKey] || null;
       const titleEl = document.getElementById('courseSummaryTitle');
       const durationBadge = document.getElementById('courseSummaryDuration');
       const feesEls = [document.getElementById('courseSummaryFees'), document.getElementById('courseSummaryFeesCard')];
       const durationEls = [document.getElementById('courseSummaryDurationText'), document.getElementById('courseSummaryDurationCard')];
+      const codeEls = [document.getElementById('courseSummaryCode'), document.getElementById('courseSummaryCodeCard')];
+      const levelEls = [document.getElementById('courseSummaryLevel'), document.getElementById('courseSummaryLevelCard')];
+      const imageEls = [document.getElementById('courseSummaryImage'), document.getElementById('courseSummaryImageCard')];
       const descriptionEl = document.getElementById('courseSummaryDescription');
       const highlightTargets = [document.getElementById('courseSummaryHighlights'), document.getElementById('courseSummaryHighlightsCard')];
 
       if (!summary) {
-        if (titleEl) titleEl.textContent = 'Choose a course';
+        if (titleEl) titleEl.textContent = 'Choose a program';
         if (durationBadge) durationBadge.textContent = 'Duration';
-        feesEls.forEach((element) => { if (element) element.textContent = 'Select a course'; });
+        feesEls.forEach((element) => { if (element) element.textContent = 'Select a program'; });
         durationEls.forEach((element) => { if (element) element.textContent = '---'; });
-        if (descriptionEl) descriptionEl.textContent = 'Course details will appear here once you choose a program.';
+        codeEls.forEach((element) => { if (element) element.textContent = '---'; });
+        levelEls.forEach((element) => { if (element) element.textContent = '---'; });
+        imageEls.forEach((element) => { if (element) element.textContent = '---'; });
+        if (descriptionEl) descriptionEl.textContent = 'Program details will appear here once you choose a program.';
         highlightTargets.forEach((element) => { if (element) element.innerHTML = ''; });
         return;
       }
 
-      if (titleEl) titleEl.textContent = courseKey;
-      if (durationBadge) durationBadge.textContent = summary.duration || 'Duration';
-      feesEls.forEach((element) => { if (element) element.textContent = summary.fees || 'To be announced'; });
-      durationEls.forEach((element) => { if (element) element.textContent = summary.duration || '---'; });
+      if (titleEl) titleEl.textContent = summary.program_name || summary.course_name || programKey;
+      if (durationBadge) durationBadge.textContent = summary.category_label || 'Program';
+      feesEls.forEach((element) => { if (element) element.textContent = summary.program_name || summary.course_name || 'Select a program'; });
+      durationEls.forEach((element) => { if (element) element.textContent = summary.duration_display || `${summary.duration_days || summary.duration_hours || '---'} Days`; });
+      codeEls.forEach((element) => { if (element) element.textContent = summary.category_label || summary.level || '---'; });
+      levelEls.forEach((element) => { if (element) element.textContent = summary.status || '---'; });
+      imageEls.forEach((element) => { if (element) element.textContent = summary.program_image || summary.course_image || '---'; });
       if (descriptionEl) descriptionEl.textContent = summary.description || '';
       highlightTargets.forEach((element) => {
         if (!element) return;
         element.innerHTML = '';
-        (summary.highlights || []).forEach((item) => {
+        [
+          summary.program_code ? `Code: ${summary.program_code}` : summary.course_code ? `Code: ${summary.course_code}` : '',
+          summary.category_label ? `Category: ${summary.category_label}` : summary.level ? `Category: ${summary.level}` : '',
+          summary.status ? `Status: ${summary.status}` : '',
+          summary.duration_days ? `Duration: ${summary.duration_days} Days` : summary.duration_hours ? `Duration: ${summary.duration_hours} Days` : '',
+          summary.start_date ? `Start: ${summary.start_date}` : '',
+          summary.end_date ? `End: ${summary.end_date}` : '',
+          typeof summary.enrollment_open !== 'undefined' ? `Open: ${summary.enrollment_open ? 'Yes' : 'No'}` : '',
+        ].filter(Boolean).forEach((item) => {
           const badge = document.createElement('span');
           badge.className = 'course-summary-pill';
           badge.textContent = item;
@@ -196,8 +213,8 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     };
 
-    courseSelect.addEventListener('change', () => setCourseSummary(courseSelect.value));
-    setCourseSummary(courseSelect.value);
+    courseSelect.addEventListener('change', () => setProgramSummary(courseSelect.value));
+    setProgramSummary(courseSelect.value);
   }
 
 });

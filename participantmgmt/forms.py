@@ -1,5 +1,4 @@
 from django import forms
-from django.contrib.auth.models import User
 
 from participantmgmt.models import Participant
 
@@ -52,10 +51,16 @@ class AcademicDetailsForm(forms.Form):
 
 
 class CourseSelectionForm(forms.Form):
-    course = forms.ChoiceField(choices=COURSE_CHOICES, widget=forms.Select(attrs={'class': 'form-select'}))
+    course = forms.ChoiceField(choices=[('', '-- Select Program --')], widget=forms.Select(attrs={'class': 'form-select'}))
     username = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Username'}))
     password1 = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password'}))
     password2 = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirm Password'}))
+
+    def __init__(self, *args, **kwargs):
+        course_choices = kwargs.pop('course_choices', None)
+        super().__init__(*args, **kwargs)
+        if course_choices is not None:
+            self.fields['course'].choices = [('', '-- Select Program --')] + list(course_choices)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -111,14 +116,6 @@ class ParticipantProfileForm(forms.ModelForm):
         participant = super().save(commit=False)
         participant.email = self.cleaned_data['email']
         if commit:
-            from django.contrib.auth.models import User
-
-            user = User.objects.filter(id=participant.user_id).first()
-            if user:
-                user.first_name = self.cleaned_data['first_name']
-                user.last_name = self.cleaned_data['last_name']
-                user.email = self.cleaned_data['email']
-                user.save()
             participant.first_name = self.cleaned_data['first_name']
             participant.last_name = self.cleaned_data['last_name']
             participant.save(using='server')

@@ -1,6 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'participantmgmt/css/dashboard.css' %}">
+{% endblock %}
+
 {% block body %}
 <div class="dashboard-wrapper">
   <!-- Sidebar -->
@@ -25,8 +29,8 @@
         </div>
       {% endif %}
       <div class="sidebar-profile-info">
-        <span class="sidebar-name">{{ student.get_full_name|default:request.user.get_full_name }}</span>
-        <span class="sidebar-course">{{ student.course|default:'Participant' }}</span>
+        <span class="sidebar-name">{{ student.get_full_name|default:student.username }}</span>
+        <span class="sidebar-course">{{ student.program_name|default:student.course|default:'Participant' }}</span>
       </div>
     </div>
     {% endif %}
@@ -50,6 +54,12 @@
         <a href="{% url 'participantmgmt:attendance' %}" class="sidebar-link {% if request.resolver_match.url_name == 'attendance' %}active{% endif %}">
           <i class="bi bi-calendar-check-fill"></i>
           <span>Attendance</span>
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a href="{% url 'participantmgmt:assessment' %}" class="sidebar-link {% if request.resolver_match.url_name == 'assessment' %}active{% endif %}">
+          <i class="bi bi-clipboard2-data-fill"></i>
+          <span>Assessment</span>
         </a>
       </li>
       <li class="sidebar-item">
@@ -90,7 +100,7 @@
             {% else %}
               <div class="user-avatar-placeholder"><i class="bi bi-person-fill"></i></div>
             {% endif %}
-            <span class="d-none d-md-inline">{{ request.user.first_name }}</span>
+            <span class="d-none d-md-inline">{{ student.first_name|default:student.username }}</span>
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
             <li><a class="dropdown-item" href="{% url 'participantmgmt:profile' %}"><i class="bi bi-person me-2"></i>Profile</a></li>

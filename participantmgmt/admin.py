@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from participantmgmt.models import Participant, Course, ParticipantGuardian
+from participantmgmt.models import Participant, Course, Program, ParticipantGuardian
 
 
 @admin.register(Participant)
@@ -18,8 +18,14 @@ class ParticipantAdmin(admin.ModelAdmin):
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ['course_name', 'level', 'duration_years', 'status']
-    search_fields = ['course_name']
+    list_display = ['course_code', 'course_name', 'level', 'duration_hours', 'fees', 'status']
+    search_fields = ['course_code', 'course_name', 'level']
+
+
+@admin.register(Program)
+class ProgramAdmin(admin.ModelAdmin):
+    list_display = ['program_code', 'program_name', 'category_id', 'duration_days', 'enrollment_open', 'status']
+    search_fields = ['program_code', 'program_name', 'description']
 
 
 @admin.register(ParticipantGuardian)

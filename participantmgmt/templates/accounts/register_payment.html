@@ -24,7 +24,7 @@
           <div class="admission-progress-grid mb-4">
             <div class="admission-progress-item completed">1. Personal</div>
             <div class="admission-progress-item completed">2. Documents</div>
-            <div class="admission-progress-item completed">3. Course</div>
+            <div class="admission-progress-item completed">3. Program</div>
             <div class="admission-progress-item active">4. Payment</div>
           </div>
 
@@ -37,9 +37,10 @@
                 </div>
 
                 <div class="payment-total-box mb-4">
-                  <div class="course-mini-label">Course fee</div>
-                  <div class="payment-total-value">{{ course_summary.fees|default:'To be decided' }}</div>
-                  <div class="text-muted small mt-1">{{ draft.course.course }}</div>
+                  <div class="course-mini-label">Program details</div>
+                  <div class="payment-total-value">{{ program_summary.fees_display|default:program_summary.fees|default:'To be decided' }}</div>
+                  <div class="text-muted small mt-1">{{ draft.program.program|default:draft.course.course }}</div>
+                  <div class="text-muted small">{{ draft.program.program_code|default:draft.course.course_code }}</div>
                 </div>
 
                 <form method="post" enctype="multipart/form-data" novalidate>
@@ -83,9 +84,13 @@
                     <div class="text-muted small">{{ draft.personal.email }}</div>
                   </div>
                   <div class="summary-item">
-                    <div class="course-mini-label">Course</div>
-                    <div class="summary-value">{{ draft.course.course }}</div>
-                    <div class="text-muted small">{{ course_summary.duration|default:'-' }} · {{ course_summary.fees|default:'-' }}</div>
+                    <div class="course-mini-label">Program</div>
+                    <div class="summary-value">{{ draft.program.program|default:draft.course.course }}</div>
+                    <div class="text-muted small">{{ draft.program.program_code|default:draft.course.course_code }}</div>
+                    <div class="text-muted small">{{ program_summary.duration_display|default:program_summary.duration_days|default:'-' }}</div>
+                    <div class="text-muted small">{{ program_summary.category_label|default:program_summary.level|default:'-' }}</div>
+                    <div class="text-muted small">{{ program_summary.start_date|default:'-' }} - {{ program_summary.end_date|default:'-' }}</div>
+                    <div class="text-muted small">Enrollment open: {{ program_summary.enrollment_open|yesno:'Yes,No' }}</div>
                   </div>
                   <div class="summary-item">
                     <div class="course-mini-label">Academic year</div>
@@ -94,6 +99,10 @@
                   <div class="summary-item">
                     <div class="course-mini-label">Documents uploaded</div>
                     <div class="summary-value">{{ draft.documents|length }}</div>
+                  </div>
+                  <div class="summary-item">
+                    <div class="course-mini-label">Description</div>
+                    <div class="text-muted small">{{ program_summary.description|default:'-' }}</div>
                   </div>
                   <div class="summary-item">
                     <div class="course-mini-label">Guardian</div>

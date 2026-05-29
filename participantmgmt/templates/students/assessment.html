@@ -1,0 +1,95 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Assessment{% endblock %}
+{% block page_title %}Assessment{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card stat-card-purple">
+      <div class="stat-card-icon"><i class="bi bi-clipboard2-data-fill"></i></div>
+      <div class="stat-card-info">
+        <div class="stat-card-value">{{ assessments|length }}</div>
+        <div class="stat-card-label">Total Assessments</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card stat-card-green">
+      <div class="stat-card-icon"><i class="bi bi-check-circle-fill"></i></div>
+      <div class="stat-card-info">
+        <div class="stat-card-value">{{ completed_count }}</div>
+        <div class="stat-card-label">Completed</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card stat-card-orange">
+      <div class="stat-card-icon"><i class="bi bi-hourglass-split"></i></div>
+      <div class="stat-card-info">
+        <div class="stat-card-value">{{ pending_count }}</div>
+        <div class="stat-card-label">Pending</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="dash-card mb-4">
+  <div class="dash-card-body">
+    <div class="d-flex justify-content-between mb-2">
+      <span class="fw-500">Average Assessment Score</span>
+      <span class="fw-600">{{ average_score }}%</span>
+    </div>
+    <div class="progress" style="height: 12px; border-radius: 10px;">
+      <div class="progress-bar {% if average_score >= 75 %}bg-success{% elif average_score >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+           style="width: {{ average_score }}%; border-radius: 10px;" role="progressbar"></div>
+    </div>
+  </div>
+</div>
+
+<div class="dash-card">
+  <div class="dash-card-header">
+    <span><i class="bi bi-journal-text me-2"></i>Assessment Records</span>
+  </div>
+  <div class="dash-card-body">
+    {% if assessments %}
+    <div class="table-responsive">
+      <table class="table table-hover dash-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Assessment</th>
+            <th>Subject</th>
+            <th>Due Date</th>
+            <th>Score</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for assessment in assessments %}
+          <tr>
+            <td class="text-muted">{{ forloop.counter }}</td>
+            <td>{{ assessment.title }}</td>
+            <td>{{ assessment.subject }}</td>
+            <td>{{ assessment.due_date|date:"d M Y" }}</td>
+            <td>{{ assessment.score|default:'-' }}</td>
+            <td>
+              <span class="badge {% if assessment.status == 'Completed' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                {{ assessment.status }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div class="empty-state">
+        <i class="bi bi-clipboard-x"></i>
+        <p>No assessments found.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

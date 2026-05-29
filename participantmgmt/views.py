@@ -1,18 +1,17 @@
 import json
+import os
 import re
 from uuid import uuid4
 from datetime import date
+from functools import wraps
 
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
-from django.core.files.base import ContentFile
+from django.http import JsonResponse
 from django.core.files.storage import default_storage
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.text import get_valid_filename
-from django.utils.text import slugify
+from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 
 try:
@@ -29,11 +28,15 @@ from participantmgmt.forms import (
 	PersonalDetailsForm,
 	ParticipantProfileForm,
 )
-from participantmgmt.models import Participant, ParticipantGuardian, Course
+from participantmgmt.models import Participant, ParticipantGuardian, Course, Program
+import logging
+from django.db import DatabaseError, connections
+
+logger = logging.getLogger(__name__)
 
 
 ADMISSION_SESSION_KEY = 'admission_draft'
-TEMP_ADMISSION_FOLDER = 'admission_drafts'
+PARTICIPANT_SESSION_KEY = 'participant_id'
 DOCUMENT_TYPE_CHOICES = [
 	('aadhaar_card', 'Aadhaar Card'),
 	('pan_card', 'PAN Card'),
@@ -45,63 +48,7 @@ DOCUMENT_TYPE_CHOICES = [
 	('other_document', 'Other Document'),
 ]
 
-COURSE_CATALOG = {
-	'B.Tech CSE': {
-		'duration': '4 Years',
-		'fees': 'Rs. 1,20,000 per year',
-		'description': 'A hands-on software engineering track with programming, web development, databases, cloud, and placement-focused labs.',
-		'highlights': ['Full stack labs', 'Coding practice', 'Placement support'],
-	},
-	'B.Tech ECE': {
-		'duration': '4 Years',
-		'fees': 'Rs. 1,10,000 per year',
-		'description': 'Electronics and communication fundamentals with embedded systems, signals, and industry-relevant projects.',
-		'highlights': ['Embedded systems', 'Circuit design', 'Project work'],
-	},
-	'B.Tech ME': {
-		'duration': '4 Years',
-		'fees': 'Rs. 1,05,000 per year',
-		'description': 'Mechanical engineering covering design, manufacturing, thermal systems, and practical workshops.',
-		'highlights': ['CAD/CAM', 'Workshop practice', 'Industry projects'],
-	},
-	'B.Tech Civil': {
-		'duration': '4 Years',
-		'fees': 'Rs. 1,00,000 per year',
-		'description': 'Civil engineering basics, structural design, surveying, and site-based learning for future engineers.',
-		'highlights': ['Survey labs', 'Structure design', 'Site exposure'],
-	},
-	'BCA': {
-		'duration': '3 Years',
-		'fees': 'Rs. 75,000 per year',
-		'description': 'A computer applications program focused on programming, databases, networking, and application development.',
-		'highlights': ['Programming basics', 'Database skills', 'Application building'],
-	},
-	'MCA': {
-		'duration': '2 Years',
-		'fees': 'Rs. 90,000 per year',
-		'description': 'Advanced software development program for graduates who want deep application engineering skills.',
-		'highlights': ['Advanced software labs', 'System design', 'Project mentoring'],
-	},
-	'MBA': {
-		'duration': '2 Years',
-		'fees': 'Rs. 1,50,000 per year',
-		'description': 'A management-focused track with strategy, communication, operations, analytics, and leadership modules.',
-		'highlights': ['Business case studies', 'Analytics', 'Leadership training'],
-	},
-	'B.Sc': {
-		'duration': '3 Years',
-		'fees': 'Rs. 55,000 per year',
-		'description': 'Science foundation program with lab work, quantitative reasoning, and specialization options.',
-		'highlights': ['Lab sessions', 'Foundation subjects', 'Research exposure'],
-	},
-	'M.Sc': {
-		'duration': '2 Years',
-		'fees': 'Rs. 65,000 per year',
-		'description': 'Postgraduate science track with advanced theory, projects, and applied research exposure.',
-		'highlights': ['Advanced concepts', 'Research projects', 'Mentored learning'],
-	},
-}
-
+DOCUMENT_TYPE_LABELS = dict(DOCUMENT_TYPE_CHOICES)
 
 def _ensure_session_key(request):
 	if not request.session.session_key:
@@ -129,6 +76,44 @@ def _clear_admission_draft(request):
 	request.session.modified = True
 
 
+def _get_logged_in_participant(request):
+	participant_id = request.session.get(PARTICIPANT_SESSION_KEY)
+	if not participant_id:
+		return None
+	return Participant.objects.using('server').filter(participant_id=participant_id).first()
+
+
+def _login_participant(request, participant):
+	request.session[PARTICIPANT_SESSION_KEY] = participant.participant_id
+	request.session['participant_username'] = participant.username or ''
+	request.session.modified = True
+
+
+def _logout_participant(request):
+	request.session.pop(PARTICIPANT_SESSION_KEY, None)
+	request.session.pop('participant_username', None)
+	request.session.modified = True
+
+
+def participant_login_required(view_func):
+	@wraps(view_func)
+	def wrapped_view(request, *args, **kwargs):
+		participant = _get_logged_in_participant(request)
+		if not participant:
+			return redirect('participantmgmt:login')
+		status = (participant.status or '').strip().lower()
+		if status != 'approved':
+			_logout_participant(request)
+			if status == 'rejected':
+				messages.error(request, 'Rejected by admin.')
+			else:
+				messages.warning(request, 'Waiting for approval.')
+			return redirect('participantmgmt:login')
+		request.participant = participant
+		return view_func(request, *args, **kwargs)
+	return wrapped_view
+
+
 def _admission_doc_rows(draft):
 	documents = draft.get('documents') or []
 	if not documents:
@@ -143,16 +128,128 @@ def _admission_doc_rows(draft):
 	return rows
 
 
-def _save_temp_upload(uploaded_file, subfolder):
-	file_name = get_valid_filename(uploaded_file.name)
-	temp_key = uuid4().hex
-	temp_path = f'{TEMP_ADMISSION_FOLDER}/{subfolder}/{temp_key}_{file_name}'
-	return default_storage.save(temp_path, uploaded_file)
+def _post_document_to_api(api_url, api_key, title, file_type, related_module, related_id, uploaded_file, file_name):
+	if requests is None:
+		raise ValueError('Requests library is not available.')
+	try:
+		uploaded_file.seek(0)
+	except Exception:
+		pass
+	content_type = getattr(uploaded_file, 'content_type', None) or 'application/octet-stream'
+	if file_name.lower().endswith('.pdf'):
+		content_type = 'application/pdf'
+	elif file_name.lower().endswith(('.jpg', '.jpeg')):
+		content_type = 'image/jpeg'
+	elif file_name.lower().endswith('.png'):
+		content_type = 'image/png'
+	elif file_name.lower().endswith('.doc'):
+		content_type = 'application/msword'
+	elif file_name.lower().endswith('.docx'):
+		content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+
+	headers = {}
+	if api_key:
+		headers['Authorization'] = f'Bearer {api_key}'
+
+	response = requests.post(
+		api_url,
+		data={
+			'title': title,
+			'file_type': file_type,
+			'related_module': related_module,
+			'related_id': related_id,
+		},
+		files={
+			'file': (file_name, uploaded_file, content_type),
+		},
+		headers=headers,
+		timeout=15,
+	)
+	if response.status_code not in (200, 201):
+		raise ValueError(f'Document upload failed: {response.status_code} {response.text}')
+	try:
+		payload = response.json()
+	except Exception:
+		payload = {'status_code': response.status_code, 'response_text': response.text}
+	if not isinstance(payload, dict):
+		payload = {'status_code': response.status_code, 'response_text': response.text}
+	return payload
 
 
-def _read_temp_file(temp_path, final_name):
-	with default_storage.open(temp_path, 'rb') as temp_file:
-		return ContentFile(temp_file.read(), name=final_name)
+@csrf_exempt
+def document_upload_api(request):
+	if request.method != 'POST':
+		return JsonResponse({'detail': 'Method not allowed.'}, status=405)
+
+	title = (request.POST.get('title') or '').strip()
+	file_type = (request.POST.get('file_type') or '').strip()
+	related_module = (request.POST.get('related_module') or '').strip()
+	related_id = (request.POST.get('related_id') or '').strip()
+	uploaded_file = request.FILES.get('file')
+
+	if not title or not file_type or not related_module or not related_id or not uploaded_file:
+		return JsonResponse({'detail': 'title, file_type, related_module, related_id, and file are required.'}, status=400)
+
+	api_url = (os.environ.get('DOCUMENT_UPLOAD_API_URL') or getattr(settings, 'DOCUMENT_UPLOAD_API_URL', '')).strip()
+	api_key = os.environ.get('DOCUMENT_UPLOAD_API_KEY') or getattr(settings, 'DOCUMENT_UPLOAD_API_KEY', None)
+	if not api_url:
+		return JsonResponse({'detail': 'Document upload API is not configured.'}, status=503)
+
+	filename = get_valid_filename(uploaded_file.name)
+	payload = _post_document_to_api(
+		api_url,
+		api_key,
+		title,
+		file_type,
+		related_module,
+		related_id,
+		uploaded_file,
+		filename,
+	)
+	return JsonResponse(payload, status=201)
+
+
+def _upload_document_via_api(username, document):
+	api_url = (os.environ.get('DOCUMENT_UPLOAD_API_URL') or getattr(settings, 'DOCUMENT_UPLOAD_API_URL', '')).strip()
+	api_key = os.environ.get('DOCUMENT_UPLOAD_API_KEY') or getattr(settings, 'DOCUMENT_UPLOAD_API_KEY', None)
+	if not api_url:
+		raise ValueError('Document upload API is not configured.')
+	# Support either an in-memory uploaded file (document['temp_file'])
+	# or a path saved in storage (document['temp_path']). This lets callers
+	# upload immediately (without writing to admission_drafts) by passing
+	# the uploaded file object.
+	temp_file_obj = document.get('temp_file')
+	temp_path = document.get('temp_path', '')
+	if not temp_file_obj and not temp_path:
+		raise ValueError('Document file is missing.')
+
+	title = DOCUMENT_TYPE_LABELS.get(document.get('document_type', ''), document.get('document_type', '').replace('_', ' ').title())
+	file_name = get_valid_filename(document.get('original_name') or (os.path.basename(temp_path) if temp_path else 'document'))
+	if temp_file_obj:
+		file_ctx = None
+		upload_source = temp_file_obj
+	else:
+		file_ctx = default_storage.open(temp_path, 'rb')
+		upload_source = file_ctx
+
+	try:
+		response = _post_document_to_api(
+			api_url,
+			api_key,
+			title,
+			document.get('document_type', ''),
+			'participant_module',
+			username,
+			upload_source,
+			file_name,
+		)
+	finally:
+		if file_ctx:
+			try:
+				file_ctx.close()
+			except Exception:
+				pass
+	return response
 
 
 def _extract_document_rows(post_data, files_data):
@@ -198,28 +295,87 @@ def _posted_document_rows(post_data, files_data):
 	return rows or [{'index': 1, 'document_type': '', 'file_name': ''}]
 
 
-def _course_snapshot(course_name):
-	return COURSE_CATALOG.get(course_name, {})
+def _course_catalog_from_db():
+	catalog = {}
+	try:
+		qs = Program.objects.using('server').all().order_by('program_name')
+		for program in qs:
+			catalog[program.course_code] = {
+				'program_id': program.course_id,
+				'program_code': program.course_code,
+				'program_name': program.course_name,
+				'program_image': program.course_image or '',
+				'description': program.description or '',
+				'duration_days': program.duration_hours,
+				'duration_display': f'{program.duration_hours} Days',
+				'category_id': program.category_id,
+				'category_label': program.level,
+				'start_date': program.start_date.isoformat() if program.start_date else '',
+				'end_date': program.end_date.isoformat() if program.end_date else '',
+				'enrollment_open': program.enrollment_open,
+				'status': program.status,
+				'fees': '',
+				'fees_display': 'To be decided',
+				# Compatibility keys used by existing templates/scripts.
+				'course_id': program.course_id,
+				'course_code': program.course_code,
+				'course_name': program.course_name,
+				'course_image': program.course_image or '',
+				'duration_hours': program.duration_hours,
+				'level': program.level,
+			}
+	except DatabaseError as e:
+		logger.warning('Could not load program catalog from DB: %s', e)
+		# Return empty catalog so UI can still function while DB is down.
+		return {}
+	return catalog
 
 
-def _course_defaults(course_name):
-	snapshot = _course_snapshot(course_name)
-	duration_text = snapshot.get('duration', '')
-	duration_years = 0
-	match = re.search(r'(\d+)', duration_text)
-	if match:
-		duration_years = int(match.group(1))
-	level = 'Academic'
-	if course_name.startswith('B.Tech') or course_name in ('BCA', 'B.Sc'):
-		level = 'Undergraduate'
-	elif course_name in ('MCA', 'MBA', 'M.Sc'):
-		level = 'Postgraduate'
-	return {
-		'level': level,
-		'duration_years': duration_years,
-		'description': snapshot.get('description', ''),
-		'status': 'active',
+def _course_snapshot(course_code):
+	return _course_catalog_from_db().get(course_code, {})
+
+
+def _attendance_data_for_participant(participant):
+	stats = {
+		'total': 0,
+		'present': 0,
+		'absent': 0,
+		'other': 0,
+		'percentage': 0,
 	}
+	if not participant or participant.user_id is None:
+		return [], stats
+
+	try:
+		with connections['server'].cursor() as cursor:
+			cursor.execute(
+				'SELECT enrollment_id, status FROM attendance WHERE enrollment_id = %s',
+				[participant.user_id],
+			)
+			rows = cursor.fetchall()
+	except DatabaseError as error:
+		logger.warning('Could not load attendance for participant %s: %s', participant.user_id, error)
+		return [], stats
+
+	records = []
+	for enrollment_id, status in rows:
+		status_text = (status or '').strip() or 'Unknown'
+		status_key = status_text.lower()
+		if status_key == 'present':
+			stats['present'] += 1
+		elif status_key == 'absent':
+			stats['absent'] += 1
+		else:
+			stats['other'] += 1
+		records.append({
+			'enrollment_id': enrollment_id,
+			'status': status_text,
+		})
+
+	stats['total'] = len(records)
+	if stats['total']:
+		stats['percentage'] = round((stats['present'] / stats['total']) * 100)
+	return records, stats
 
 
 def _generate_local_admission_no():
@@ -229,12 +385,6 @@ def _generate_local_admission_no():
 		if not Participant.objects.using('server').filter(admission_no=candidate).exists():
 			return candidate
 	raise ValueError('Unable to generate a unique admission number.')
-
-
-def _get_participant_for_user(user):
-	if not user.is_authenticated:
-		return None
-	return Participant.objects.using('server').filter(user_id=user.id).first()
 
 
 def _personal_initial_data(personal_data):
@@ -264,11 +414,12 @@ def _manifest_for_draft(request, draft):
 		'username': draft.get('course', {}).get('username', ''),
 		'email': draft.get('personal', {}).get('email', ''),
 		'course': draft.get('course', {}).get('course', ''),
+		'course_code': draft.get('course', {}).get('course_code', ''),
 		'academic_year': draft.get('academic', {}).get('academic_year', ''),
 		'payment': draft.get('payment', {}),
 		'documents': draft.get('documents', []),
 		'submitted_at': timezone.now().isoformat(),
-		'course_snapshot': _course_snapshot(draft.get('course', {}).get('course', '')),
+		'course_snapshot': _course_snapshot(draft.get('course', {}).get('course_code', '')),
 		'session_key': request.session.session_key,
 	}
 
@@ -280,52 +431,48 @@ def _finalize_admission(request, draft, receipt_file=None):
 	payment = draft.get('payment', {})
 	documents = draft.get('documents', [])
 
-	if User.objects.filter(username=course.get('username')).exists():
+	username = (course.get('username') or '').strip()
+	password1 = course.get('password1') or ''
+	if not username:
+		raise ValueError('Username is required.')
+	if not password1:
+		raise ValueError('Password is required.')
+	if Participant.objects.using('server').filter(username=username).exists():
 		raise ValueError('That username is already taken.')
 
-	user = User.objects.create_user(
-		username=course['username'],
-		password=course['password1'],
-		email=personal.get('email', ''),
-		first_name=personal.get('first_name', ''),
-		last_name=personal.get('last_name', ''),
-	)
-
-	# Resolve or create course record
-	course_obj = None
-	if course.get('course'):
-		course_obj, created = Course.objects.using('server').get_or_create(
-			course_name=course['course'],
-			defaults=_course_defaults(course['course']),
-		)
-		if not created:
-			updated = False
-			for field_name, field_value in _course_defaults(course['course']).items():
-				if getattr(course_obj, field_name) != field_value:
-					setattr(course_obj, field_name, field_value)
-					updated = True
-			if updated:
-				course_obj.save(using='server')
+	selected_program_code = course.get('program_code') or course.get('course_code', '')
+	if not selected_program_code:
+		raise ValueError('Please select a program.')
+	program_obj = Program.objects.using('server').filter(program_code=selected_program_code).first()
+	if not program_obj:
+		raise ValueError('Selected program is not available.')
 
 	admission_no = _generate_local_admission_no()
 
 	participant = Participant.objects.using('server').create(
-		user_id=user.id,
 		admission_no=admission_no,
+		username=username,
+		password_hash='',
 		first_name=personal.get('first_name', ''),
 		last_name=personal.get('last_name', ''),
 		dob=date.fromisoformat(personal['dob']) if personal.get('dob') else None,
 		gender=personal.get('gender', ''),
 		mobile=personal.get('mobile', ''),
 		email=personal.get('email', ''),
-		course=course_obj,
+		course=None,
 		academic_year_id=academic.get('academic_year', ''),
 		status='pending',
 	)
+	if participant.user_id is None:
+		participant.user_id = participant.participant_id
+		participant.save(using='server', update_fields=['user_id'])
+	participant.set_password(password1)
+	participant.save(using='server', update_fields=['password_hash'])
 
 	guardian_name = personal.get('guardian_name', '').strip()
+	guardian = None
 	if guardian_name:
-		ParticipantGuardian.objects.using('server').create(
+		guardian = ParticipantGuardian.objects.using('server').create(
 			participant=participant,
 			guardian_name=guardian_name,
 			relationship=personal.get('relationship', ''),
@@ -335,42 +482,46 @@ def _finalize_admission(request, draft, receipt_file=None):
 		)
 
 	final_documents = []
-	for document in documents:
-		stored_name = get_valid_filename(document['original_name'])
-		final_path = f'student_documents/{user.username}/{document["document_type"]}_{stored_name}'
-		default_storage.save(final_path, _read_temp_file(document['temp_path'], stored_name))
-		final_documents.append({
-			'document_type': document['document_type'],
-			'file_path': final_path,
-		})
+	try:
+		for document in documents:
+			if document.get('upload_response'):
+				uploaded_document = document.get('upload_response')
+			else:
+				uploaded_document = _upload_document_via_api(participant.username, document)
+			final_documents.append({
+				'document_type': document['document_type'],
+				'title': DOCUMENT_TYPE_LABELS.get(document.get('document_type', ''), document.get('document_type', '')),
+				'upload_response': uploaded_document,
+			})
+	except Exception:
+		if guardian is not None:
+			guardian.delete(using='server')
+		participant.delete(using='server')
+		raise
 
-	receipt_path = payment.get('receipt_path', '')
 	if receipt_file is not None:
 		stored_receipt_name = get_valid_filename(getattr(receipt_file, 'name', 'receipt'))
-		final_receipt_path = f'student_documents/{user.username}/payment_{stored_receipt_name}'
-		default_storage.save(final_receipt_path, receipt_file)
-		payment['receipt_final_path'] = final_receipt_path
-	elif receipt_path:
-		stored_receipt_name = get_valid_filename(receipt_path.split('/')[-1])
-		final_receipt_path = f'student_documents/{user.username}/payment_{stored_receipt_name}'
-		default_storage.save(final_receipt_path, _read_temp_file(receipt_path, stored_receipt_name))
-		payment['receipt_final_path'] = final_receipt_path
+		api_response = _upload_document_via_api(participant.username, {
+			'document_type': 'payment_receipt',
+			'original_name': stored_receipt_name,
+			'temp_file': receipt_file,
+		})
+		payment['receipt_upload_response'] = api_response
 
-	manifest = _manifest_for_draft(request, draft)
-	manifest['documents'] = final_documents
-	manifest_path = f'student_documents/{user.username}/application_summary.json'
-	default_storage.save(manifest_path, ContentFile(json.dumps(manifest, indent=2), name='application_summary.json'))
+	# Keep the document upload results inside the draft/session data only.
+	draft['documents'] = final_documents
+	draft['payment'] = payment
 
 	# Try to obtain/generate an admission_no override from external API if configured.
-	def _generate_enrollment_id(user, participant):
+	def _generate_enrollment_id(participant):
 		# If API URL provided in settings, call it
 		api_url = getattr(settings, 'ENROLLMENT_API_URL', None)
 		api_key = getattr(settings, 'ENROLLMENT_API_KEY', None)
 		payload = {
-			'username': user.username,
-			'first_name': user.first_name,
-			'last_name': user.last_name,
-			'email': user.email,
+			'username': participant.username,
+			'first_name': participant.first_name,
+			'last_name': participant.last_name,
+			'email': participant.email,
 			'course': getattr(participant.course, 'course_name', None),
 			'academic_year': participant.academic_year,
 		}
@@ -391,7 +542,7 @@ def _finalize_admission(request, draft, receipt_file=None):
 		# Fallback: generate a local enrollment id
 		return f"ENR{timezone.now().strftime('%Y%m%d')}{uuid4().hex[:8].upper()}"
 
-	api_admission_no = _generate_enrollment_id(user, participant)
+	api_admission_no = _generate_enrollment_id(participant)
 	if api_admission_no and api_admission_no != participant.admission_no:
 		if not Participant.objects.using('server').filter(admission_no=api_admission_no).exists():
 			participant.admission_no = api_admission_no
@@ -405,7 +556,7 @@ def landing(request):
 
 
 def register_view(request):
-	if request.user.is_authenticated:
+	if _get_logged_in_participant(request):
 		return redirect('participantmgmt:home')
 	draft = _get_admission_draft(request)
 	initial_data = _personal_initial_data(draft.get('personal', {}))
@@ -428,7 +579,12 @@ def register_view(request):
 				'guardian_address': form.cleaned_data['guardian_address'],
 			}
 			if form.cleaned_data.get('photo'):
-				draft['personal']['photo_path'] = _save_temp_upload(form.cleaned_data['photo'], _ensure_session_key(request))
+				photo_response = _upload_document_via_api(_ensure_session_key(request), {
+					'document_type': 'passport_photo',
+					'original_name': getattr(form.cleaned_data['photo'], 'name', 'passport_photo'),
+					'temp_file': form.cleaned_data['photo'],
+				})
+				draft['personal']['photo_upload_response'] = photo_response
 			_save_admission_draft(request, draft)
 			return redirect('participantmgmt:register_documents')
 	else:
@@ -439,7 +595,7 @@ def register_view(request):
 
 
 def register_documents_view(request):
-	if request.user.is_authenticated:
+	if _get_logged_in_participant(request):
 		return redirect('participantmgmt:home')
 	draft = _get_admission_draft(request)
 	if not draft.get('personal'):
@@ -450,21 +606,42 @@ def register_documents_view(request):
 	if request.method == 'POST':
 		academic_form = AcademicDetailsForm(request.POST)
 		documents, incomplete_rows = _extract_document_rows(request.POST, request.FILES)
-		if academic_form.is_valid() and not incomplete_rows and documents:
+		if academic_form.is_valid() and not incomplete_rows:
+			# Do not persist files to local admission_drafts; upload each document
+			# immediately to the configured document API and store only the API
+			# responses in the draft's documents list.
 			draft['academic'] = academic_form.cleaned_data
 			draft_documents = []
+			session_key = _ensure_session_key(request)
 			for document in documents:
+				# Attempt to upload directly using the in-memory uploaded file
+				try:
+					document_payload = {
+						'document_type': document['document_type'],
+						'original_name': document['original_name'],
+						'temp_file': document.get('temp_file'),
+					}
+					upload_response = _upload_document_via_api(session_key, document_payload)
+				except Exception as e:
+					# If upload fails, add an error and stop processing
+					academic_form.add_error(None, f"Uploading document '{document.get('original_name')}' failed: {e}")
+					document_rows = _posted_document_rows(request.POST, request.FILES)
+					return render(request, 'accounts/register_step2.html', {
+						'form': academic_form,
+						'document_rows': document_rows,
+						'document_choices': DOCUMENT_TYPE_CHOICES,
+					})
+
 				draft_documents.append({
 					'document_type': document['document_type'],
 					'original_name': document['original_name'],
-					'temp_path': _save_temp_upload(document['temp_file'], _ensure_session_key(request)),
+					'upload_response': upload_response,
 				})
+
 			draft['documents'] = draft_documents
 			_save_admission_draft(request, draft)
 			return redirect('participantmgmt:register_course')
-		if not documents:
-			academic_form.add_error(None, 'Please upload at least one document.')
-		elif incomplete_rows:
+		if incomplete_rows:
 			academic_form.add_error(None, 'Each document row must include both a document type and a file.')
 		document_rows = _posted_document_rows(request.POST, request.FILES)
 	return render(request, 'accounts/register_step2.html', {
@@ -475,33 +652,68 @@ def register_documents_view(request):
 
 
 def register_course_view(request):
-	if request.user.is_authenticated:
+	if _get_logged_in_participant(request):
 		return redirect('participantmgmt:home')
 	draft = _get_admission_draft(request)
-	if not draft.get('personal') or not draft.get('academic') or not draft.get('documents'):
+	if not draft.get('personal') or not draft.get('academic'):
 		return redirect('participantmgmt:register')
 
-	form = CourseSelectionForm(initial=draft.get('course', {}))
+	course_catalog = _course_catalog_from_db()
+	course_choices = [(code, item['course_name']) for code, item in course_catalog.items()]
+	initial_course = dict(draft.get('course', {}))
+	if initial_course.get('course_code'):
+		initial_course['course'] = initial_course['course_code']
+	form = CourseSelectionForm(initial=initial_course, course_choices=course_choices)
 	if request.method == 'POST':
-		form = CourseSelectionForm(request.POST)
+		form = CourseSelectionForm(request.POST, course_choices=course_choices)
 		if form.is_valid():
-			if User.objects.filter(username=form.cleaned_data['username']).exists():
+			selected_course_code = form.cleaned_data['course']
+			selected_course = course_catalog.get(selected_course_code)
+			if not selected_course:
+				form.add_error('course', 'Selected course is not available.')
+			elif Participant.objects.using('server').filter(username=form.cleaned_data['username']).exists():
 				form.add_error('username', 'This username is already taken.')
 			else:
-				draft['course'] = form.cleaned_data
+				draft['course'] = {
+					'program': selected_course['program_name'],
+					'program_code': selected_course['program_code'],
+					'program_image': selected_course['program_image'],
+					'description': selected_course['description'],
+					'duration_days': selected_course['duration_days'],
+					'duration_display': selected_course['duration_display'],
+					'fees': selected_course['fees'],
+					'fees_display': selected_course['fees_display'],
+					'category_id': selected_course['category_id'],
+					'category_label': selected_course['category_label'],
+					'start_date': selected_course['start_date'],
+					'end_date': selected_course['end_date'],
+					'enrollment_open': selected_course['enrollment_open'],
+					'status': selected_course['status'],
+					# Compatibility keys used by current templates/scripts.
+					'course': selected_course['program_name'],
+					'course_code': selected_course['program_code'],
+					'course_image': selected_course['program_image'],
+					'duration_hours': selected_course['duration_days'],
+					'level': selected_course['category_label'],
+					'username': form.cleaned_data['username'],
+					'password1': form.cleaned_data['password1'],
+					'password2': form.cleaned_data['password2'],
+				}
+				draft['program'] = dict(draft['course'])
 				_save_admission_draft(request, draft)
 				return redirect('participantmgmt:register_payment')
 	return render(request, 'accounts/register_step3.html', {
 		'form': form,
-		'course_catalog': COURSE_CATALOG,
+		'course_catalog': course_catalog,
+		'program_catalog': course_catalog,
 	})
 
 
 def register_payment_view(request):
-	if request.user.is_authenticated:
+	if _get_logged_in_participant(request):
 		return redirect('participantmgmt:home')
 	draft = _get_admission_draft(request)
-	if not draft.get('personal') or not draft.get('academic') or not draft.get('documents') or not draft.get('course'):
+	if not draft.get('personal') or not draft.get('academic') or not draft.get('course'):
 		return redirect('participantmgmt:register')
 
 	form = PaymentForm(initial=draft.get('payment', {}))
@@ -528,64 +740,82 @@ def register_payment_view(request):
 	return render(request, 'accounts/register_payment.html', {
 		'form': form,
 		'draft': draft,
-		'course_summary': _course_snapshot(draft.get('course', {}).get('course', '')),
+		'course_summary': _course_snapshot(draft.get('course', {}).get('course_code', '')),
+		'program_summary': _course_snapshot(draft.get('program', {}).get('course_code', draft.get('course', {}).get('course_code', ''))),
 		'payment_methods': PAYMENT_METHOD_CHOICES,
 	})
 
 
 def login_view(request):
-	if request.user.is_authenticated:
+	if _get_logged_in_participant(request):
 		return redirect('participantmgmt:home')
 	if request.method == 'POST':
 		form = LoginForm(request.POST)
 		if form.is_valid():
 			username = form.cleaned_data['username']
 			password = form.cleaned_data['password']
-			user = authenticate(request, username=username, password=password)
-			if user:
-				if user.is_superuser:
-					login(request, user)
-					return redirect('/admin/')
-				login(request, user)
-				return redirect('participantmgmt:home')
-			messages.error(request, 'Invalid username or password.')
+			participant = Participant.objects.using('server').filter(username=username).first()
+			if participant:
+				status = (participant.status or '').strip().lower()
+				if status == 'pending':
+					messages.warning(request, 'Waiting for approval.')
+				elif status == 'rejected':
+					messages.error(request, 'Rejected by admin.')
+				elif status != 'approved':
+					messages.error(request, 'Your account is not approved yet.')
+				elif participant.check_password(password):
+					_login_participant(request, participant)
+					return redirect('participantmgmt:home')
+				else:
+					messages.error(request, 'Invalid username or password.')
+			else:
+				messages.error(request, 'Invalid username or password.')
 	else:
 		form = LoginForm()
 	return render(request, 'accounts/login.html', {'form': form})
 
 
 def logout_view(request):
-	logout(request)
+	_logout_participant(request)
 	messages.success(request, 'You have been logged out successfully.')
 	return redirect('participantmgmt:landing')
 
 
-@login_required
+@participant_login_required
 def home(request):
-	participant = _get_participant_for_user(request.user)
+	participant = getattr(request, 'participant', None)
 	if not participant:
 		return redirect('participantmgmt:landing')
-	# Attendance, results and notifications tables were removed in the new schema.
+	attendance_records, attendance_stats = _attendance_data_for_participant(participant)
 	return render(request, 'dashboard/home.html', {
 		'student': participant,
-		'attendance_pct': 0,
-		'recent_attendance': [],
+		'attendance_pct': attendance_stats['percentage'],
+		'recent_attendance': attendance_records[:5],
+		'recent_assessments': [],
 		'recent_results': [],
 		'notifications': [],
 		'total_subjects': 0,
-		'total_attendance_days': 0,
+		'total_attendance_days': attendance_stats['total'],
+		'assessment_avg': 0,
+		'result_overall_pct': 0,
+		'pending_assessments': 0,
 	})
 
 
-@login_required
+@participant_login_required
 def profile_view(request):
-	participant = get_object_or_404(Participant.objects.using('server'), user_id=request.user.id)
-	return render(request, 'students/profile.html', {'student': participant})
+	participant = getattr(request, 'participant', None)
+	attendance_records, attendance_stats = _attendance_data_for_participant(participant)
+	return render(request, 'students/profile.html', {
+		'student': participant,
+		'attendance_pct': attendance_stats['percentage'],
+		'attendance_records': attendance_records,
+	})
 
 
-@login_required
+@participant_login_required
 def profile_edit(request):
-	participant = get_object_or_404(Participant.objects.using('server'), user_id=request.user.id)
+	participant = getattr(request, 'participant', None)
 	if request.method == 'POST':
 		form = ParticipantProfileForm(request.POST, request.FILES, instance=participant)
 		if form.is_valid():
@@ -598,20 +828,36 @@ def profile_edit(request):
 	return render(request, 'students/profile_edit.html', {'form': form, 'student': participant})
 
 
-@login_required
+@participant_login_required
 def attendance_view(request):
-	participant = get_object_or_404(Participant.objects.using('server'), user_id=request.user.id)
+	participant = getattr(request, 'participant', None)
+	attendance_records, attendance_stats = _attendance_data_for_participant(participant)
 	return render(request, 'students/attendance.html', {
 		'student': participant,
-		'attendance_records': [],
-		'percentage': 0,
-		'month_filter': '',
+		'attendance_records': attendance_records,
+		'percentage': attendance_stats['percentage'],
+		'present_count': attendance_stats['present'],
+		'absent_count': attendance_stats['absent'],
+		'other_count': attendance_stats['other'],
+		'total_count': attendance_stats['total'],
 	})
 
 
-@login_required
+@participant_login_required
+def assessment_view(request):
+	participant = getattr(request, 'participant', None)
+	return render(request, 'students/assessment.html', {
+		'student': participant,
+		'assessments': [],
+		'completed_count': 0,
+		'pending_count': 0,
+		'average_score': 0,
+	})
+
+
+@participant_login_required
 def results_view(request):
-	participant = get_object_or_404(Participant.objects.using('server'), user_id=request.user.id)
+	participant = getattr(request, 'participant', None)
 	return render(request, 'students/results.html', {
 		'student': participant,
 		'results': [],

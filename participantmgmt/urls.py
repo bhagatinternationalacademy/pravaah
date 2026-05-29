@@ -6,6 +6,7 @@ app_name = 'participantmgmt'
 
 urlpatterns = [
     path('', views.landing, name='landing'),
+    path('api/documents/upload/', views.document_upload_api, name='document_upload_api'),
     path('accounts/login/', views.login_view, name='login'),
     path('accounts/register/', views.register_view, name='register'),
     path('accounts/register/documents/', views.register_documents_view, name='register_documents'),
@@ -16,5 +17,6 @@ urlpatterns = [
     path('students/profile/', views.profile_view, name='profile'),
     path('students/profile/edit/', views.profile_edit, name='profile_edit'),
     path('students/attendance/', views.attendance_view, name='attendance'),
+    path('students/assessment/', views.assessment_view, name='assessment'),
     path('students/results/', views.results_view, name='results'),
 ]

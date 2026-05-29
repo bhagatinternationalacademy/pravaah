@@ -15,7 +15,7 @@
           <div class="profile-avatar-xl mb-3"><i class="bi bi-person-fill"></i></div>
         {% endif %}
         <h4 class="mb-1">{{ student.get_full_name }}</h4>
-        <p class="text-muted">@{{ request.user.username }}</p>
+        <p class="text-muted">@{{ student.username }}</p>
         <span class="badge {% if student.is_approved %}bg-success{% else %}bg-warning{% endif %} mb-3">
           {% if student.is_approved %}Approved{% else %}Pending Approval{% endif %}
         </span>
@@ -83,8 +83,8 @@
         <div class="row g-3">
           <div class="col-md-6">
             <div class="info-group">
-              <label class="info-label">Course</label>
-              <div class="info-value">{{ student.course }}</div>
+              <label class="info-label">Program</label>
+              <div class="info-value">{{ student.program_name|default:student.course }}</div>
             </div>
           </div>
           <div class="col-md-6">
@@ -96,7 +96,7 @@
           <div class="col-md-6">
             <div class="info-group">
               <label class="info-label">Attendance</label>
-              <div class="info-value">{{ student.attendance_percentage }}%</div>
+                <div class="info-value">{{ attendance_pct }}%</div>
             </div>
           </div>
           <div class="col-md-6">

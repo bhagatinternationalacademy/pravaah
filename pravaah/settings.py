@@ -75,11 +75,14 @@ WSGI_APPLICATION = 'pravaah.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'pravaah',
+        'USER': 'test',
+        'PASSWORD': 'Laptop@123',
+        'HOST': '192.168.0.95',
+        'PORT': '3306',
     }
 }
-
 # Keep the existing `.using('server')` code paths working by pointing the
 # legacy alias at the same SQLite database during local development.
 DATABASES['server'] = DATABASES['default'].copy()

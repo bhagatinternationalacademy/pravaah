@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'pravaah.reports',
     'pravaah.batch',
     'pravaah.assessment',
+    'pravaah.availability',
 ]
 
 MIDDLEWARE = [

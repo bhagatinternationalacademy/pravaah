@@ -202,7 +202,8 @@
             <div class="row mb-4">
                 <div class="col-12">
                     {% for message in messages %}
-                        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show border-0 rounded-3 shadow" role="alert" style="background-color: {% if message.tags == 'error' %}rgba(239, 68, 68, 0.2){% else %}rgba(16, 185, 129, 0.2){% endif %}; color: var(--text-main);">
+                            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show border-0 rounded-3 shadow" role="alert"
+                                {% if message.tags == 'error' %}style="background-color: rgba(239, 68, 68, 0.2); color:var(--text-main);"{% else %}style="background-color: rgba(16, 185, 129, 0.2); color:var(--text-main);"{% endif %}>
                             <i class="bi {% if message.tags == 'error' %}bi-exclamation-triangle-fill{% else %}bi-check-circle-fill{% endif %} me-2"></i>
                             {{ message }}
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>

@@ -19,7 +19,7 @@ class LeaveRequest(models.Model):
     reason = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=50)
     requested_at = models.DateTimeField(null=True)
-    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE)
+    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE, related_name='leave_requests')
     processed_at = models.DateTimeField(null=True)
     extra1 = models.TextField(blank=True, null=True)
     extra2 = models.TextField(blank=True, null=True)

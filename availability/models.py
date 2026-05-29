@@ -6,7 +6,7 @@ class Availability(models.Model):
     date = models.DateField()
     status = models.CharField(max_length=50)
     reason = models.TextField(blank=True, null=True)
-    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE)
+    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE, related_name='availability_entries')
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
 
@@ -30,7 +30,7 @@ class LeaveRequest(models.Model):
 
 class AvailableAvailability(models.Model):
     date = models.DateField()
-    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE)
+    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE, related_name='available_entries')
 
     def __str__(self):
         return f'{self.trainer} - {self.date}'

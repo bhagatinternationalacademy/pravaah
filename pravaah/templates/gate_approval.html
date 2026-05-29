@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+
+{% block title %} PRAVAAH - Gate Approval Data Entry Sheet {% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'pravaah_landing' %}" class="text-decoration-none text-secondary"><i class="fa-solid fa-house me-1"></i> Pravaah Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'pravaah_future_proposals' %}" class="text-decoration-none text-secondary">Future Proposals</a></li>
+            <li class="breadcrumb-item active fw-semibold" aria-current="page">Gate Approval Sheet</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="mb-4 d-flex justify-content-between align-items-start">
+        <div>
+            <h2 class="fw-bold text-dark mb-1">
+                <i class="fa-solid fa-file-signature text-warning me-2"></i>
+                Gate Approval Data Entry Sheet
+            </h2>
+            <p class="text-secondary mb-0">Record remarks, checks, and parameters across all operational segments for review authorization.</p>
+        </div>
+        
+        {% if existing_approval %}
+            <span class="badge bg-opacity-25 px-3 py-2 text-uppercase tracking-wider fs-6 bg-{{ existing_approval.status|yesno:'success,danger' }}"
+                  style="color: {% if existing_approval.status == 'Approved' %}#198754{% elif existing_approval.status == 'Rejected' %}#dc3545{% else %}#fd7e14{% endif %}; background-color: {% if existing_approval.status == 'Approved' %}rgba(25, 135, 84, 0.1){% elif existing_approval.status == 'Rejected' %}rgba(220, 53, 69, 0.1){% else %}rgba(253, 126, 20, 0.1){% endif %};">
+                Status: {{ existing_approval.status }}
+            </span>
+        {% endif %}
+    </div>
+
+    <!-- Rejection Alerts if Rejected -->
+    {% if existing_approval and existing_approval.status == 'Rejected' %}
+    <div class="alert alert-danger border-0 rounded-4 shadow-sm p-4 mb-4">
+        <h5 class="fw-bold"><i class="fa-solid fa-circle-xmark me-2"></i> Re-submission Required: Rejected by Marketing</h5>
+        <hr>
+        <p class="mb-0"><strong>Marketing Feedback Remarks:</strong></p>
+        <blockquote class="blockquote small bg-white p-3 rounded-3 mt-2 border-start border-danger border-4 font-monospace">
+            {{ existing_approval.marketing_remarks }}
+        </blockquote>
+    </div>
+    {% endif %}
+
+    <!-- Data Entry Form Container -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <form method="POST" action="{% url 'pravaah_gate_approval' %}" class="needs-validation">
+                    {% csrf_token %}
+
+                    <!-- Header Segment: Proposal selection -->
+                    <div class="card-header bg-light border-0 p-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-7">
+                                <h5 class="fw-bold text-dark mb-1"><i class="fa-solid fa-circle-info text-warning me-2 small"></i> Target Proposal Pipeline</h5>
+                                <p class="text-secondary small mb-0">Select the program workspace for which checkpoints are registered.</p>
+                            </div>
+                            <div class="col-md-5">
+                                {% if selected_proposal %}
+                                    <div class="p-2.5 bg-white border rounded-3 d-flex justify-content-between align-items-center">
+                                        <div class="small">
+                                            <h6 class="fw-bold text-dark mb-0">{{ selected_proposal.program_name }}</h6>
+                                            <span class="text-muted">{{ selected_proposal.institute_name }}</span>
+                                        </div>
+                                        <input type="hidden" name="proposal_id" value="{{ selected_proposal.id }}">
+                                        <span class="badge bg-warning text-dark px-2.5 py-1">Locked</span>
+                                    </div>
+                                {% else %}
+                                    {% if eligible_proposals %}
+                                        <select name="proposal_id" class="form-select border-0 bg-white shadow-sm py-2 rounded-3" required>
+                                            <option value="" disabled selected>Choose a proposal...</option>
+                                            {% for prop in eligible_proposals %}
+                                                <option value="{{ prop.id }}">{{ prop.program_name }} ({{ prop.institute_name }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    {% else %}
+                                        <div class="alert alert-warning border-0 rounded-3 mb-0 p-2 text-center small">
+                                            <i class="fa-solid fa-triangle-exclamation me-1"></i> No eligible proposals waiting for approvals.
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if selected_proposal or eligible_proposals %}
+                    <div class="card-body p-4">
+                        <!-- Navigation Tabs for Premium Wizard Layout -->
+                        <ul class="nav nav-pills nav-fill mb-4 p-1.5 bg-light rounded-3 shadow-inner" id="gateTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active py-2.5 fw-bold rounded-2 text-uppercase tracking-wider small" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab" aria-controls="details" aria-selected="true">
+                                    <i class="fa-solid fa-file-lines me-1"></i> 1. Training Details
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link py-2.5 fw-bold rounded-2 text-uppercase tracking-wider small" id="proposal-tab" data-bs-toggle="tab" data-bs-target="#proposal" type="button" role="tab" aria-controls="proposal" aria-selected="false">
+                                    <i class="fa-solid fa-flask me-1"></i> 2. Technical Check
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link py-2.5 fw-bold rounded-2 text-uppercase tracking-wider small" id="session-tab" data-bs-toggle="tab" data-bs-target="#session" type="button" role="tab" aria-controls="session" aria-selected="false">
+                                    <i class="fa-solid fa-network-wired me-1"></i> 3. Session &amp; Value
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link py-2.5 fw-bold rounded-2 text-uppercase tracking-wider small" id="assessments-tab" data-bs-toggle="tab" data-bs-target="#assessments" type="button" role="tab" aria-controls="assessments" aria-selected="false">
+                                    <i class="fa-solid fa-receipt me-1"></i> 4. Assessments &amp; Fees
+                                </button>
+                            </li>
+                        </ul>
+
+                        <!-- Tab Content Grid -->
+                        <div class="tab-content pt-2" id="gateTabsContent">
+                            
+                            <!-- TAB 1: Name of Client, Training details & Need Identification -->
+                            <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+                                <h5 class="fw-bold text-dark border-bottom pb-2 mb-4">Name of Client &amp; Training Details</h5>
+                                <div class="row g-4 mb-5">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary">Name of Client</label>
+                                        <input type="text" name="name_of_client" class="form-control bg-light border-0 py-2.5 rounded-3" 
+                                               placeholder="e.g., MSBTE" value="{{ existing_approval.name_of_client|default:'' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary">MT for Course Registration</label>
+                                        <input type="text" name="mt_course_registration" class="form-control bg-light border-0 py-2.5 rounded-3" 
+                                               placeholder="e.g., Mrs. Shini Saji" value="{{ existing_approval.mt_course_registration|default:'' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary">Number of Participants</label>
+                                        <input type="number" name="number_of_participants" class="form-control bg-light border-0 py-2.5 rounded-3" 
+                                               placeholder="e.g., 24" value="{{ existing_approval.number_of_participants|default:0 }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary">One-off/Recurring Online/Offline</label>
+                                        <input type="text" name="training_type_online_offline" class="form-control bg-light border-0 py-2.5 rounded-3" 
+                                               placeholder="e.g., Offline (Recurring)" value="{{ existing_approval.training_type_online_offline|default:'' }}">
+                                    </div>
+                                </div>
+
+                                <h5 class="fw-bold text-dark border-bottom pb-2 mb-4">Training Need Identification</h5>
+                                <div class="row g-4">
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold text-secondary">Type of Training (Remarks)</label>
+                                        <textarea name="training_need_type" class="form-control bg-light border-0 py-2 rounded-3" rows="3" 
+                                                  placeholder="e.g., Industrial Training Programme for Diploma Engineering Faculty...">{{ existing_approval.training_need_type|default:'' }}</textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold text-secondary">Course Content (Remarks)</label>
+                                        <textarea name="training_need_content" class="form-control bg-light border-0 py-2 rounded-3" rows="3" 
+                                                  placeholder="e.g., MSBTE Course syllabus review, 5 days structured training schedules...">{{ existing_approval.training_need_content|default:'' }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- TAB 2: Preparation Of Technical Proposal -->
+                            <div class="tab-pane fade" id="proposal" role="tabpanel" aria-labelledby="proposal-tab">
+                                <h5 class="fw-bold text-dark border-bottom pb-2 mb-4">Preparation Of Technical Proposal</h5>
+                                <div class="row g-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary">Availability of STA Infrastructure</label>
+                                        <textarea name="prep_sta_infra" class="form-control bg-light border-0 py-2 rounded-3" rows="2" 
+                                                  placeholder="e.g., Internet checks, uninterrupted router availability...">{{ existing_approval.prep_sta_infra|default:'' }}</textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary">Availability of Consumables</label>
+                                        <textarea name="prep_consumables" class="form-control bg-light border-0 py-2 rounded-3" rows="2" 
+                                                  placeholder="e.g., Paper sheets, printed logs, markers, etc.">{{ existing_approval.prep_consumables|default:'' }}</textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary">Availability of CTEA Infra</label>
+                                        <textarea name="prep_ctea_infra" class="form-control bg-light border-0 py-2 rounded-3" rows="2" 
+                                                  placeholder="e.g., Safety gallery confirmations, laboratory clearances...">{{ existing_approval.prep_ctea_infra|default:'' }}</textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary">Master Trainer Availability</label>
+                                        <textarea name="prep_mt_availability" class="form-control bg-light border-0 py-2 rounded-3" rows="2" 
+                                                  placeholder="e.g., Trainer engagement sheets, mapped schedule blocks...">{{ existing_approval.prep_mt_availability|default:'' }}</textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary">Availability of Training Material</label>
+                                        <textarea name="prep_material" class="form-control bg-light border-0 py-2 rounded-3" rows="2" 
+                                                  placeholder="e.g., syllabus handouts, printed copies...">{{ existing_approval.prep_material|default:'' }}</textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary">Availability of Training Material (PPT)</label>
+                                        <textarea name="prep_material_ppt" class="form-control bg-light border-0 py-2 rounded-3" rows="2" 
+                                                  placeholder="e.g., Presentation decks completed, soft skills slides mapped...">{{ existing_approval.prep_material_ppt|default:'' }}</textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold text-secondary">Feedback of previous programmes to Master Trainers</label>
+                                        <textarea name="prep_feedback" class="form-control bg-light border-0 py-2 rounded-3" rows="2" 
+                                                  placeholder="e.g., Reviewed with senior team, previous evaluations mapped...">{{ existing_approval.prep_feedback|default:'' }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- TAB 3: Session Plan & Value Addition -->
+                            <div class="tab-pane fade" id="session" role="tabpanel" aria-labelledby="session-tab">
+                                <h5 class="fw-bold text-dark border-bottom pb-2 mb-4">Session Plan &amp; Coverage</h5>
+                                <div class="row g-4 mb-5">
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold text-secondary">Availability (Remarks)</label>
+                                        <textarea name="session_plan_availability" class="form-control bg-light border-0 py-2 rounded-3" rows="3" 
+                                                  placeholder="e.g., Sent and reviewed by management team...">{{ existing_approval.session_plan_availability|default:'' }}</textarea>
+                                    </div>
+                                </div>
+
+                                <h5 class="fw-bold text-dark border-bottom pb-2 mb-4">Value Addition</h5>
+                                <div class="row g-4">
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold text-secondary">Teach Back/ Mock Assessment, Soft Skills, Assessment Feedback (Remarks)</label>
+                                        <textarea name="value_addition" class="form-control bg-light border-0 py-2 rounded-3" rows="3" 
+                                                  placeholder="e.g., Formative checks, closing ceremonies, motivational briefings...">{{ existing_approval.value_addition|default:'' }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- TAB 4: Assessments, Invoicing, Professional Fees & Challenges -->
+                            <div class="tab-pane fade" id="assessments" role="tabpanel" aria-labelledby="assessments-tab">
+                                <h5 class="fw-bold text-dark border-bottom pb-2 mb-4">Assessments, Certification</h5>
+                                <div class="row g-4 mb-5">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary">Formative</label>
+                                        <textarea name="assessment_formative" class="form-control bg-light border-0 py-2 rounded-3" rows="2" 
+                                                  placeholder="e.g., Daily tests, weights, MCQs checks...">{{ existing_approval.assessment_formative|default:'' }}</textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary">Summative Assessment - By STA</label>
+                                        <textarea name="assessment_summative" class="form-control bg-light border-0 py-2 rounded-3" rows="2" 
+                                                  placeholder="e.g., Mock evaluations, final projects criteria...">{{ existing_approval.assessment_summative|default:'' }}</textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary">Certification</label>
+                                        <textarea name="assessment_certification" class="form-control bg-light border-0 py-2 rounded-3" rows="2" 
+                                                  placeholder="e.g., Coordinator certificates, timeline mappings...">{{ existing_approval.assessment_certification|default:'' }}</textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary">Assessor(s)</label>
+                                        <textarea name="assessment_assessors" class="form-control bg-light border-0 py-2 rounded-3" rows="2" 
+                                                  placeholder="e.g., Evaluator mappings, third-party auditor lists...">{{ existing_approval.assessment_assessors|default:'' }}</textarea>
+                                    </div>
+                                </div>
+
+                                <h5 class="fw-bold text-dark border-bottom pb-2 mb-4">Invoicing &amp; Professional Fees</h5>
+                                <div class="row g-4 mb-5">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary">Invoicing (Documents Remarks)</label>
+                                        <textarea name="invoicing_documents" class="form-control bg-light border-0 py-2 rounded-3" rows="3" 
+                                                  placeholder="e.g., Attendance sheets copies, group photographs validation...">{{ existing_approval.invoicing_documents|default:'' }}</textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary">Professional Fees (Standard/Deviations)</label>
+                                        <textarea name="fees_standard_deviations" class="form-control bg-light border-0 py-2 rounded-3" rows="3" 
+                                                  placeholder="e.g., Agreement rates, commercial terms outlines...">{{ existing_approval.fees_standard_deviations|default:'' }}</textarea>
+                                    </div>
+                                </div>
+
+                                <h5 class="fw-bold text-dark border-bottom pb-2 mb-4">Challenges &amp; Mitigation Plan</h5>
+                                <div class="row g-4">
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold text-secondary">If any (Remarks)</label>
+                                        <textarea name="challenges_mitigation" class="form-control bg-light border-0 py-2 rounded-3" rows="3" 
+                                                  placeholder="e.g., Laboratory requirements, laptop/computer inventory availability checks...">{{ existing_approval.challenges_mitigation|default:'' }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-end gap-3 pt-3 border-top mt-5">
+                            <a href="{% url 'pravaah_landing' %}" class="btn btn-light fw-bold px-4 py-2.5 rounded-3 border-0">
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-warning fw-bold px-5 py-2.5 rounded-3 text-dark shadow-sm">
+                                <i class="fa-solid fa-paper-plane me-2"></i> Submit and Route to Marketing
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .nav-pills .nav-link {
+        color: #6c757d;
+        background-color: transparent;
+        transition: all 0.2s ease-in-out;
+    }
+    .nav-pills .nav-link.active {
+        color: #212529 !important;
+        background-color: #ffc107 !important;
+        box-shadow: 0 4px 10px rgba(255, 193, 7, 0.25);
+    }
+    .nav-pills .nav-link:hover:not(.active) {
+        background-color: rgba(0, 0, 0, 0.04);
+        color: #212529;
+    }
+</style>
+{% endblock %}

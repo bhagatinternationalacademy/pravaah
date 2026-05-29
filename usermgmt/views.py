@@ -369,7 +369,7 @@ def verify_email_view(request, uidb64=None, token=None):
 
 @login_required
 def home(request):
-    return render(request, 'profile/user_dashboard.html')
+    return redirect('pravaah_landing')
 
 
 @login_required

@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     # Unified Module Registration Workspace
     'usermgmt',
     'trainermgmt',
+    'pravaah',
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %} PRAVAAH - Gate 0 Feasibility Check {% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'pravaah_landing' %}" class="text-decoration-none text-secondary"><i class="fa-solid fa-house me-1"></i> Pravaah Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'pravaah_future_proposals' %}" class="text-decoration-none text-secondary">Future Proposals</a></li>
+            <li class="breadcrumb-item active fw-semibold" aria-current="page">Gate 0 Check</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="mb-4">
+        <h2 class="fw-bold text-dark mb-1">
+            <i class="fa-solid fa-toggle-on text-success me-2"></i>
+            Gate 0 Feasibility Check
+        </h2>
+        <p class="text-secondary mb-0">Quick availability and feasibility validation of standard institutional parameters before launching deep checkpoints.</p>
+    </div>
+
+    <!-- Form Container -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden" style="border-top: 5px solid #198754 !important;">
+                <div class="card-body p-4">
+                    <form method="POST" action="{% url 'pravaah_gate_zero' %}">
+                        {% csrf_token %}
+                        
+                        <!-- 1. Proposal Selection -->
+                        <div class="mb-5">
+                            <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">
+                                <i class="fa-solid fa-circle-info text-success me-2 small"></i>
+                                Selected Future Proposal
+                            </h5>
+                            
+                            {% if selected_proposal %}
+                                <!-- Preset Proposal Display -->
+                                <div class="p-3 bg-success bg-opacity-10 border border-success border-opacity-20 rounded-3 d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-bold text-success mb-1">{{ selected_proposal.program_name }}</h6>
+                                        <p class="text-secondary small mb-0">
+                                            <i class="fa-solid fa-school me-1"></i> {{ selected_proposal.institute_name }} | 
+                                            <i class="fa-regular fa-calendar me-1"></i> {{ selected_proposal.start_date|date:"d M Y" }} - {{ selected_proposal.end_date|date:"d M Y" }}
+                                        </p>
+                                    </div>
+                                    <input type="hidden" name="proposal_id" value="{{ selected_proposal.id }}">
+                                    <span class="badge bg-success px-3 py-2 text-uppercase tracking-wider">Locked</span>
+                                </div>
+                            {% else %}
+                                <!-- Dropdown Selection -->
+                                <div class="col-12">
+                                    <label for="proposal_id" class="form-label fw-semibold text-secondary">Select Proposal <span class="text-danger">*</span></label>
+                                    {% if eligible_proposals %}
+                                        <select name="proposal_id" id="proposal_id" class="form-select bg-light border-0 py-2.5 rounded-3" required>
+                                            <option value="" disabled selected>Choose a proposal needing feasibility check...</option>
+                                            {% for prop in eligible_proposals %}
+                                                <option value="{{ prop.id }}">
+                                                    {{ prop.program_name }} ({{ prop.institute_name }})
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    {% else %}
+                                        <div class="alert alert-warning border-0 rounded-3 mb-0">
+                                            <i class="fa-solid fa-triangle-exclamation me-2"></i> All registered proposals have completed Gate 0.
+                                            <a href="{% url 'pravaah_add_proposal' %}" class="alert-link ms-2">Register a new proposal first.</a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- 2. Feasibility Questions (Yes/No Toggles) -->
+                        {% if selected_proposal or eligible_proposals %}
+                        <div class="mb-4">
+                            <h5 class="fw-bold text-dark mb-4 border-bottom pb-2">
+                                <i class="fa-solid fa-list-question text-success me-2 small"></i>
+                                Feasibility Validation Grid
+                            </h5>
+
+                            <!-- Question 1 -->
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 p-3 mb-3 border rounded-3 bg-light bg-opacity-50">
+                                <div>
+                                    <h6 class="fw-bold text-dark mb-1">1. Is the training room available?</h6>
+                                    <p class="text-secondary small mb-0">Check physical capacity, ventilation, projector, and network resources.</p>
+                                </div>
+                                <div class="btn-group" role="group" aria-label="Training Room">
+                                    <input type="radio" class="btn-check" name="is_training_room_available" id="room_yes" value="Yes" autocomplete="off" {% if not existing_gate_zero or existing_gate_zero.is_training_room_available == 'Yes' %}checked{% endif %}>
+                                    <label class="btn btn-outline-success px-4 py-2 fw-bold" for="room_yes"><i class="fa-solid fa-check me-1"></i> Yes</label>
+                                    
+                                    <input type="radio" class="btn-check" name="is_training_room_available" id="room_no" value="No" autocomplete="off" {% if existing_gate_zero.is_training_room_available == 'No' %}checked{% endif %}>
+                                    <label class="btn btn-outline-danger px-4 py-2 fw-bold" for="room_no"><i class="fa-solid fa-xmark me-1"></i> No</label>
+                                </div>
+                            </div>
+
+                            <!-- Question 2 -->
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 p-3 mb-3 border rounded-3 bg-light bg-opacity-50">
+                                <div>
+                                    <h6 class="fw-bold text-dark mb-1">2. Is the hostel facility available?</h6>
+                                    <p class="text-secondary small mb-0">Verify rooms, beds, cleanliness, and security setups for participants.</p>
+                                </div>
+                                <div class="btn-group" role="group" aria-label="Hostel Facility">
+                                    <input type="radio" class="btn-check" name="is_hostel_facility_available" id="hostel_yes" value="Yes" autocomplete="off" {% if not existing_gate_zero or existing_gate_zero.is_hostel_facility_available == 'Yes' %}checked{% endif %}>
+                                    <label class="btn btn-outline-success px-4 py-2 fw-bold" for="hostel_yes"><i class="fa-solid fa-check me-1"></i> Yes</label>
+                                    
+                                    <input type="radio" class="btn-check" name="is_hostel_facility_available" id="hostel_no" value="No" autocomplete="off" {% if existing_gate_zero.is_hostel_facility_available == 'No' %}checked{% endif %}>
+                                    <label class="btn btn-outline-danger px-4 py-2 fw-bold" for="hostel_no"><i class="fa-solid fa-xmark me-1"></i> No</label>
+                                </div>
+                            </div>
+
+                            <!-- Question 3 -->
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 p-3 mb-3 border rounded-3 bg-light bg-opacity-50">
+                                <div>
+                                    <h6 class="fw-bold text-dark mb-1">3. Is the trainer available?</h6>
+                                    <p class="text-secondary small mb-0">Confirm scheduling calendar, transport, and availability slot alignments.</p>
+                                </div>
+                                <div class="btn-group" role="group" aria-label="Trainer Availability">
+                                    <input type="radio" class="btn-check" name="is_trainer_available" id="trainer_yes" value="Yes" autocomplete="off" {% if not existing_gate_zero or existing_gate_zero.is_trainer_available == 'Yes' %}checked{% endif %}>
+                                    <label class="btn btn-outline-success px-4 py-2 fw-bold" for="trainer_yes"><i class="fa-solid fa-check me-1"></i> Yes</label>
+                                    
+                                    <input type="radio" class="btn-check" name="is_trainer_available" id="trainer_no" value="No" autocomplete="off" {% if existing_gate_zero.is_trainer_available == 'No' %}checked{% endif %}>
+                                    <label class="btn btn-outline-danger px-4 py-2 fw-bold" for="trainer_no"><i class="fa-solid fa-xmark me-1"></i> No</label>
+                                </div>
+                            </div>
+
+                            <!-- Question 4 -->
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 p-3 mb-4 border rounded-3 bg-light bg-opacity-50">
+                                <div>
+                                    <h6 class="fw-bold text-dark mb-1">4. Is the proposal financially feasible?</h6>
+                                    <p class="text-secondary small mb-0">Evaluate costs, participant margins, budget allocations, and commercial grids.</p>
+                                </div>
+                                <div class="btn-group" role="group" aria-label="Financial Feasible">
+                                    <input type="radio" class="btn-check" name="is_proposal_financially_feasible" id="finance_yes" value="Yes" autocomplete="off" {% if not existing_gate_zero or existing_gate_zero.is_proposal_financially_feasible == 'Yes' %}checked{% endif %}>
+                                    <label class="btn btn-outline-success px-4 py-2 fw-bold" for="finance_yes"><i class="fa-solid fa-check me-1"></i> Yes</label>
+                                    
+                                    <input type="radio" class="btn-check" name="is_proposal_financially_feasible" id="finance_no" value="No" autocomplete="off" {% if existing_gate_zero.is_proposal_financially_feasible == 'No' %}checked{% endif %}>
+                                    <label class="btn btn-outline-danger px-4 py-2 fw-bold" for="finance_no"><i class="fa-solid fa-xmark me-1"></i> No</label>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-end gap-3 pt-3 border-top">
+                            <a href="{% url 'pravaah_landing' %}" class="btn btn-light fw-bold px-4 py-2.5 rounded-3 border-0">
+                                Cancel
+                            </a>
+                            {% if selected_proposal or eligible_proposals %}
+                                <button type="submit" class="btn btn-success fw-bold px-5 py-2.5 rounded-3 shadow-sm">
+                                    <i class="fa-solid fa-circle-check me-2"></i> Submit Gate 0 Answers
+                                </button>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

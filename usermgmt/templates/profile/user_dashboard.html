@@ -92,11 +92,11 @@
         </div>
 
         <!-- Analytical Dashboards Module Card -->
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden card-hover">
                 <div class="card-body p-4 d-flex flex-column" style="border-top: 5px solid #0dcaf0;">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold text-dark mb-0">Analytics & Activity</h5>
+                        <h5 class="fw-bold text-dark mb-0">Analytics &amp; Activity</h5>
                         <span class="badge bg-info bg-opacity-10 text-dark px-3 py-1 rounded-pill">Analytics</span>
                     </div>
                     <p class="text-secondary small flex-grow-1">
@@ -110,7 +110,7 @@
         </div>
 
         <!-- Reports Module Card -->
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden card-hover">
                 <div class="card-body p-4 d-flex flex-column" style="border-top: 5px solid #ffc107;">
                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -122,6 +122,24 @@
                     </p>
                     <a href="{% url 'usermgmt:reports' %}" class="btn btn-outline-warning text-dark w-100 fw-bold rounded-3 mt-3">
                         <i class="fa-solid fa-file-invoice me-1"></i> Generate Reports
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pravaah Workflow Portal Card -->
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden card-hover" style="background-color: rgba(111, 66, 193, 0.01);">
+                <div class="card-body p-4 d-flex flex-column" style="border-top: 5px solid #6f42c1;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-dark mb-0">Pravaah Portal</h5>
+                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-1 rounded-pill" style="color: #6f42c1 !important; background-color: rgba(111, 66, 193, 0.1) !important;">Workflow</span>
+                    </div>
+                    <p class="text-secondary small flex-grow-1">
+                        Manage course proposals, execute quick Gate 0 checks, and route technical approvals to Marketing.
+                    </p>
+                    <a href="{% url 'pravaah_landing' %}" class="btn btn-outline-primary w-100 fw-bold rounded-3 mt-3" style="color: #6f42c1; border-color: #6f42c1;">
+                        <i class="fa-solid fa-water me-1"></i> Enter Portal
                     </a>
                 </div>
             </div>

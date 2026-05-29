@@ -1,0 +1,213 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Backup & Restore{% endblock %}
+
+{% block content %}
+
+<link rel="stylesheet"
+      href="{% static 'dashboard/css/backup_restore.css' %}">
+
+<div class="backup-page">
+
+    <!-- ================================================= -->
+    <!-- PAGE HEADER -->
+    <!-- ================================================= -->
+
+    <div class="backup-header">
+
+        <div>
+            <h1>Backup & Restore Center</h1>
+
+            <p>
+                Manage system backups, restore ERP data,
+                and monitor recovery operations.
+            </p>
+        </div>
+
+        <div class="backup-badge">
+            <i class="fa-solid fa-shield-halved"></i>
+            System Recovery
+        </div>
+
+    </div>
+
+    <!-- ================================================= -->
+    <!-- ACTION BUTTONS -->
+    <!-- ================================================= -->
+
+    <div class="backup-actions">
+
+        <button class="backup-btn create"
+                onclick="createBackup()">
+
+            <i class="fa-solid fa-database"></i>
+
+            Create Backup
+
+        </button>
+
+        <button class="backup-btn auto"
+                onclick="scheduleBackup()">
+
+            <i class="fa-solid fa-clock"></i>
+
+            Schedule Backup
+
+        </button>
+
+        <button class="backup-btn download"
+                onclick="downloadBackup()">
+
+            <i class="fa-solid fa-download"></i>
+
+            Download Backup
+
+        </button>
+
+    </div>
+
+    <!-- ================================================= -->
+    <!-- STATUS CARDS -->
+    <!-- ================================================= -->
+
+    <div class="status-grid">
+
+        <div class="status-card">
+
+            <h3>Last Backup</h3>
+
+            <h2>Today</h2>
+
+            <p>02:00 AM</p>
+
+        </div>
+
+        <div class="status-card">
+
+            <h3>Backup Health</h3>
+
+            <h2>Healthy</h2>
+
+            <p>No issues detected</p>
+
+        </div>
+
+        <div class="status-card">
+
+            <h3>Total Backups</h3>
+
+            <h2>12</h2>
+
+            <p>Stored safely</p>
+
+        </div>
+
+    </div>
+
+    <!-- ================================================= -->
+    <!-- BACKUP HISTORY -->
+    <!-- ================================================= -->
+
+    <div class="backup-table-card">
+
+        <div class="table-header">
+
+            <h2>Backup History</h2>
+
+        </div>
+
+        <table class="backup-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Backup File</th>
+                    <th>Date</th>
+                    <th>Size</th>
+                    <th>Status</th>
+                    <th>Action</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                <tr>
+
+                    <td>backup_2026_05_29.sql</td>
+                    <td>29 May 2026</td>
+                    <td>24 MB</td>
+                    <td>
+                        <span class="status success">
+                            Success
+                        </span>
+                    </td>
+
+                    <td>
+                        <button class="mini-btn">
+                            Download
+                        </button>
+                    </td>
+
+                </tr>
+
+                <tr>
+
+                    <td>backup_2026_05_28.sql</td>
+                    <td>28 May 2026</td>
+                    <td>22 MB</td>
+
+                    <td>
+                        <span class="status success">
+                            Success
+                        </span>
+                    </td>
+
+                    <td>
+                        <button class="mini-btn">
+                            Download
+                        </button>
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <!-- ================================================= -->
+    <!-- RESTORE SECTION -->
+    <!-- ================================================= -->
+
+    <div class="restore-card">
+
+        <h2>Restore Database</h2>
+
+        <p>
+            Upload a backup file and restore the
+            complete ERP database.
+        </p>
+
+        <input type="file" class="restore-input">
+
+        <button class="restore-btn"
+                onclick="restoreBackup()">
+
+            <i class="fa-solid fa-rotate-left"></i>
+
+            Restore System
+
+        </button>
+
+    </div>
+
+</div>
+
+<script src="{% static 'dashboard/js/backup_restore.js' %}"></script>
+
+{% endblock %}

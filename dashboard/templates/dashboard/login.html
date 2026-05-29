@@ -1,0 +1,254 @@
+{# ============================================================= #}
+{# PRAVAAH ERP - Shared Services Dashboard                       #}
+{# File: dashboard/templates/dashboard/login.html               #}
+{# Purpose: Role-based login page                               #}
+{# ============================================================= #}
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Login – PRAVAAH ERP{% endblock %}
+{% block body_class %}login-page{% endblock %}
+
+{% block content %}
+
+{# ── Decorative background particles ─────────────────────────── #}
+<div class="login-bg">
+  <div class="login-particle p1"></div>
+  <div class="login-particle p2"></div>
+  <div class="login-particle p3"></div>
+  <div class="login-particle p4"></div>
+  <div class="login-orb orb-left"></div>
+  <div class="login-orb orb-right"></div>
+</div>
+
+<div class="login-wrapper">
+
+  {# ── Brand Panel (left) ─────────────────────────────────────── #}
+  <div class="login-brand-panel">
+    <div class="login-brand-inner">
+      <div class="brand-logo-wrap">
+        <div class="brand-icon">
+          <i class="fa-solid fa-water-ladder"></i>
+        </div>
+        <h1 class="brand-name">PRAVAAH</h1>
+        <span class="brand-tagline">Educational ERP Platform</span>
+      </div>
+
+      <div class="brand-features">
+        <div class="brand-feature-item">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>Role-Based Access Control</span>
+        </div>
+        <div class="brand-feature-item">
+          <i class="fa-solid fa-layer-group"></i>
+          <span>Modular ERP Architecture</span>
+        </div>
+        <div class="brand-feature-item">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Centralised Analytics</span>
+        </div>
+        <div class="brand-feature-item">
+          <i class="fa-solid fa-link"></i>
+          <span>Seamless Team Integration</span>
+        </div>
+      </div>
+
+      <p class="brand-footnote">
+        Shared Services Dashboard v1.0 &mdash; Powered by Django
+      </p>
+    </div>
+  </div>
+
+  {# ── Login Form Panel (right) ──────────────────────────────── #}
+  <div class="login-form-panel">
+    <div class="login-card">
+
+      {# ─ Header ─ #}
+      <div class="login-card-header">
+        <div class="login-card-icon">
+          <i class="fa-solid fa-right-to-bracket"></i>
+        </div>
+        <h2 class="login-card-title">Welcome Back</h2>
+        <p class="login-card-subtitle">Sign in to your PRAVAAH workspace</p>
+      </div>
+
+      {# ─ Quick Role Buttons ─ #}
+      <div class="role-quick-section">
+        <p class="role-quick-label">Quick Login As</p>
+        <div class="role-buttons-grid">
+
+          <button
+            type="button"
+            class="role-btn role-btn-admin {% if role == 'admin' %}active{% endif %}"
+            data-role="admin"
+            onclick="setRole('admin')"
+          >
+            <i class="fa-solid fa-user-shield"></i>
+            <span>Admin</span>
+          </button>
+
+          <button
+            type="button"
+            class="role-btn role-btn-trainer {% if role == 'trainer' %}active{% endif %}"
+            data-role="trainer"
+            onclick="setRole('trainer')"
+          >
+            <i class="fa-solid fa-chalkboard-teacher"></i>
+            <span>Trainer</span>
+          </button>
+
+          <button
+            type="button"
+            class="role-btn role-btn-student {% if role == 'student' %}active{% endif %}"
+            data-role="student"
+            onclick="setRole('student')"
+          >
+            <i class="fa-solid fa-user-graduate"></i>
+            <span>Student</span>
+          </button>
+
+          <button
+            type="button"
+            class="role-btn role-btn-user {% if role == 'user' or not role %}active{% endif %}"
+            data-role="user"
+            onclick="setRole('user')"
+          >
+            <i class="fa-solid fa-user"></i>
+            <span>User</span>
+          </button>
+
+        </div>
+        {# Active role badge #}
+        <div class="role-active-badge" id="roleActiveBadge">
+          <i class="fa-solid fa-circle-check"></i>
+          Logging in as: <strong id="roleActiveName">User</strong>
+        </div>
+      </div>
+
+      {# ─ Divider ─ #}
+      <div class="login-divider"><span>Enter Credentials</span></div>
+
+      {# ─ Django Form ─ #}
+      <form method="POST" action="{% url 'dashboard:login' %}" class="login-form" id="loginForm" novalidate>
+        {% csrf_token %}
+
+        {# Hidden role field – updated by JS #}
+        <input type="hidden" name="role" id="roleInput" value="{{ role|default:'user' }}" />
+
+        {# Username #}
+        <div class="form-floating-custom">
+          <label for="username">
+            <i class="fa-solid fa-user me-1"></i> Username
+          </label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            class="custom-input"
+            placeholder="Enter your username"
+            autocomplete="username"
+            required
+          />
+        </div>
+
+        {# Password #}
+        <div class="form-floating-custom">
+          <label for="password">
+            <i class="fa-solid fa-lock me-1"></i> Password
+          </label>
+          <div class="password-wrapper">
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="custom-input"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+              required
+            />
+            <button type="button" class="password-toggle" onclick="togglePassword()" tabindex="-1">
+              <i class="fa-solid fa-eye" id="pwdToggleIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        {# Remember me #}
+        <div class="login-options">
+          <label class="custom-checkbox">
+            <input type="checkbox" name="remember" />
+            <span class="checkmark"></span>
+            Remember me
+          </label>
+          <a href="#" class="forgot-link">Forgot password?</a>
+        </div>
+
+        {# Submit #}
+        <button type="submit" class="btn-login" id="loginBtn">
+          <span class="btn-login-text">
+            <i class="fa-solid fa-right-to-bracket me-2"></i>Sign In to PRAVAAH
+          </span>
+          <span class="btn-login-spinner d-none">
+            <i class="fa-solid fa-circle-notch fa-spin me-2"></i>Authenticating…
+          </span>
+        </button>
+
+      </form>
+
+      {# ─ Footer ─ #}
+      <p class="login-footer-note">
+        <i class="fa-solid fa-circle-info me-1"></i>
+        Contact your system administrator for account issues.
+      </p>
+
+    </div>{# /.login-card #}
+  </div>{# /.login-form-panel #}
+
+</div>{# /.login-wrapper #}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Role selection logic
+  const roleLabels = {
+    admin:   'Admin',
+    trainer: 'Trainer',
+    student: 'Student',
+    user:    'User',
+  };
+
+  function setRole(role) {
+    // Update hidden input
+    document.getElementById('roleInput').value = role;
+
+    // Update badge
+    document.getElementById('roleActiveName').textContent = roleLabels[role] || role;
+
+    // Toggle active class on buttons
+    document.querySelectorAll('.role-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.role === role);
+    });
+  }
+
+  // Password toggle
+  function togglePassword() {
+    const pwd  = document.getElementById('password');
+    const icon = document.getElementById('pwdToggleIcon');
+    const show = pwd.type === 'password';
+    pwd.type   = show ? 'text' : 'password';
+    icon.className = show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+  }
+
+  // Show spinner on submit
+  document.getElementById('loginForm').addEventListener('submit', function () {
+    const btn = document.getElementById('loginBtn');
+    btn.querySelector('.btn-login-text').classList.add('d-none');
+    btn.querySelector('.btn-login-spinner').classList.remove('d-none');
+    btn.disabled = true;
+  });
+
+  // Initialise badge from current selection
+  const currentRole = document.getElementById('roleInput').value || 'user';
+  setRole(currentRole);
+</script>
+{% endblock %}

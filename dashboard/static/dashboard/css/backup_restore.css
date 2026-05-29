@@ -1,0 +1,196 @@
+body{
+    background:#0f172a;
+    color:white;
+    font-family:'Poppins',sans-serif;
+}
+
+.backup-page{
+    padding:35px;
+}
+
+.backup-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:35px;
+}
+
+.backup-header h1{
+    font-size:34px;
+    margin-bottom:10px;
+}
+
+.backup-header p{
+    color:#94a3b8;
+}
+
+.backup-badge{
+    background:linear-gradient(135deg,#2563eb,#7c3aed);
+    padding:14px 22px;
+    border-radius:14px;
+    font-weight:600;
+}
+
+.backup-actions{
+    display:flex;
+    gap:20px;
+    margin-bottom:35px;
+    flex-wrap:wrap;
+}
+
+.backup-btn{
+
+    border:none;
+    padding:16px 24px;
+
+    border-radius:14px;
+
+    color:white;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:0.3s;
+}
+
+.backup-btn:hover{
+    transform:translateY(-4px);
+}
+
+.create{
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
+}
+
+.auto{
+    background:linear-gradient(135deg,#7c3aed,#8b5cf6);
+}
+
+.download{
+    background:linear-gradient(135deg,#16a34a,#22c55e);
+}
+
+.status-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:25px;
+    margin-bottom:35px;
+}
+
+.status-card{
+
+    background:rgba(255,255,255,0.05);
+
+    border:1px solid rgba(255,255,255,0.08);
+
+    border-radius:22px;
+
+    padding:28px;
+}
+
+.status-card h3{
+    color:#94a3b8;
+    margin-bottom:12px;
+}
+
+.status-card h2{
+    font-size:34px;
+}
+
+.backup-table-card{
+
+    background:rgba(255,255,255,0.05);
+
+    border-radius:22px;
+
+    padding:30px;
+
+    margin-bottom:35px;
+}
+
+.table-header{
+    margin-bottom:20px;
+}
+
+.backup-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.backup-table th,
+.backup-table td{
+    padding:18px;
+    text-align:left;
+}
+
+.backup-table tr{
+    border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+.status.success{
+    color:#22c55e;
+    font-weight:600;
+}
+
+.mini-btn{
+
+    border:none;
+
+    padding:10px 16px;
+
+    border-radius:10px;
+
+    background:#2563eb;
+
+    color:white;
+
+    cursor:pointer;
+}
+
+.restore-card{
+
+    background:rgba(255,255,255,0.05);
+
+    border-radius:22px;
+
+    padding:30px;
+}
+
+.restore-card h2{
+    margin-bottom:12px;
+}
+
+.restore-card p{
+    color:#94a3b8;
+    margin-bottom:20px;
+}
+
+.restore-input{
+
+    width:100%;
+
+    padding:14px;
+
+    border-radius:12px;
+
+    border:none;
+
+    margin-bottom:20px;
+}
+
+.restore-btn{
+
+    border:none;
+
+    padding:16px 24px;
+
+    border-radius:14px;
+
+    background:linear-gradient(135deg,#dc2626,#ef4444);
+
+    color:white;
+
+    font-weight:600;
+
+    cursor:pointer;
+}

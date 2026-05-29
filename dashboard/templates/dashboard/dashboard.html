@@ -1,0 +1,320 @@
+{# ============================================================= #}
+{# PRAVAAH ERP - Shared Services Dashboard                       #}
+{# File: dashboard/templates/dashboard/dashboard.html            #}
+{# Purpose: Main navigation hub – renders role-specific cards    #}
+{# ============================================================= #}
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Dashboard – PRAVAAH ERP{% endblock %}
+{% block body_class %}dashboard-page{% endblock %}
+
+{% block content %}
+
+
+<div class="erp-shell" id="erpShell">
+
+  {# ── LEFT SIDEBAR ──────────────────────────────────────────── #}
+  <aside class="erp-sidebar" id="erpSidebar">
+
+    {# Brand #}
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">
+        <i class="fa-solid fa-water-ladder"></i>
+      </div>
+      <div class="sidebar-brand-text">
+        <span class="sidebar-brand-name">PRAVAAH</span>
+        <span class="sidebar-brand-sub">ERP Platform</span>
+      </div>
+    </div>
+
+    {# Navigation Links #}
+    <nav class="sidebar-nav">
+      <p class="sidebar-nav-label">Main Menu</p>
+      <ul class="sidebar-nav-list">
+
+       <p class="sidebar-nav-label">Main Menu</p>
+
+<ul class="sidebar-nav-list">
+
+    <!-- Overview -->
+    <li class="sidebar-nav-item active">
+        <a href="{% url 'dashboard:main' %}" class="sidebar-nav-link">
+            <i class="fa-solid fa-gauge-high"></i>
+            <span>Overview</span>
+        </a>
+    </li>
+
+    <!-- Admin Only Features -->
+    {% if role == 'admin' %}
+
+    <li class="sidebar-nav-item">
+        <a href="#" class="sidebar-nav-link">
+            <i class="fa-solid fa-clipboard-check"></i>
+            <span>Audit & Logs</span>
+        </a>
+    </li>
+
+    <li class="sidebar-nav-item">
+        <a href="#" class="sidebar-nav-link">
+            <i class="fa-solid fa-folder-open"></i>
+            <span>File Storage</span>
+        </a>
+    </li>
+
+    <li class="sidebar-nav-item">
+        <a href="{% url 'dashboard:backup_restore' %}" class="sidebar-nav-link">
+            <i class="fa-solid fa-database"></i>
+            <span>Backup & Restore</span>
+        </a>
+    </li>
+
+    {% endif %}
+
+</ul> 
+
+      <p class="sidebar-nav-label mt-3">Account</p>
+      <ul class="sidebar-nav-list">
+        <li class="sidebar-nav-item">
+          <a href="#" class="sidebar-nav-link">
+            <i class="fa-solid fa-circle-user"></i>
+            <span>Profile</span>
+          </a>
+        </li>
+        <li class="sidebar-nav-item">
+          <a href="{% url 'dashboard:logout' %}" class="sidebar-nav-link sidebar-nav-logout">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Logout</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    {# Sidebar role badge #}
+    <div class="sidebar-role-badge">
+      <i class="fa-solid fa-id-badge"></i>
+      <span>{{ role_display }}</span>
+    </div>
+
+  </aside>{# /.erp-sidebar #}
+
+  {# ── MAIN CONTENT AREA ─────────────────────────────────────── #}
+  <div class="erp-main" id="erpMain">
+
+    {# ── TOP NAVBAR ────────────────────────────────────────────── #}
+    <header class="erp-topbar">
+      <div class="topbar-left">
+        {# Sidebar toggle (mobile) #}
+        <button class="topbar-toggle" id="sidebarToggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="topbar-breadcrumb">
+          <span class="breadcrumb-home">
+            <i class="fa-solid fa-house"></i>
+          </span>
+          <i class="fa-solid fa-chevron-right breadcrumb-sep"></i>
+          <span class="breadcrumb-current">Shared Services Dashboard</span>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        {# Search #}
+        <div class="topbar-search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Search modules…" id="moduleSearch" oninput="filterCards(this.value)" />
+        </div>
+
+        {# Notifications #}
+        <button class="topbar-icon-btn" title="Notifications">
+          <i class="fa-solid fa-bell"></i>
+          <span class="topbar-badge">3</span>
+        </button>
+
+        {# User profile dropdown #}
+        <div class="topbar-profile dropdown">
+          <button
+            class="topbar-profile-btn dropdown-toggle"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            <div class="topbar-avatar">
+              {{ full_name|slice:":1"|upper }}
+            </div>
+            <div class="topbar-profile-info">
+              <span class="topbar-profile-name">{{ full_name }}</span>
+              <span class="topbar-profile-role">{{ role_display }}</span>
+            </div>
+            <i class="fa-solid fa-chevron-down ms-1"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end erp-dropdown">
+            <li>
+              <a class="dropdown-item" href="#">
+                <i class="fa-solid fa-circle-user"></i> My Profile
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="#">
+                <i class="fa-solid fa-gear"></i> Settings
+              </a>
+            </li>
+            <li><hr class="dropdown-divider" /></li>
+            <li>
+              <a class="dropdown-item text-danger" href="{% url 'dashboard:logout' %}">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </header>{# /.erp-topbar #}
+
+    {# ── PAGE BODY ─────────────────────────────────────────────── #}
+    <div class="erp-body">
+
+      {# ── WELCOME SECTION ─────────────────────────────────────── #}
+      <section class="welcome-section">
+        <div class="welcome-text">
+          <h2 class="welcome-greeting">
+            Good day,
+            <span class="welcome-name">{{ full_name }}</span>
+            <span class="welcome-wave">👋</span>
+          </h2>
+          <p class="welcome-subtitle">
+            You are logged in as
+            <span class="welcome-role-pill welcome-role-{{ role }}">
+              <i class="fa-solid fa-circle-dot me-1"></i>{{ role_display }}
+            </span>
+            
+          </p>
+        </div>
+        <div class="welcome-meta">
+          <div class="welcome-date" id="currentDateTime"></div>
+          <div class="welcome-module-count">
+            <i class="fa-solid fa-grid-2"></i>
+            {{ total_cards }} module{{ total_cards|pluralize }} available
+          </div>
+        </div>
+      </section>
+
+      {# ── STATISTICS CARDS ROW ────────────────────────────────── #}
+      {% if role == 'admin' or role == 'trainer' %}
+      <section class="stats-section">
+        <div class="stats-grid">
+          {% for stat in stats %}
+          <div class="stat-card {{ stat.color }}">
+            <div class="stat-card-icon">
+              <i class="fa-solid {{ stat.icon }}"></i>
+            </div>
+            <div class="stat-card-body">
+              <span class="stat-card-value">{{ stat.value }}</span>
+              <span class="stat-card-label">{{ stat.label }}</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+      {% endif %}
+
+      {# ── DASHBOARD CARDS GRID ─────────────────────────────────── #}
+      <section class="modules-section">
+        <div class="modules-header">
+          <h3 class="modules-title">
+            <i class="fa-solid fa-grid-2 me-2"></i>Available Modules
+          </h3>
+          <span class="modules-count-badge">{{ total_cards }}</span>
+        </div>
+
+        {# Cards Grid – rendered dynamically from Django context #}
+        <div class="modules-grid" id="modulesGrid">
+
+          {% for card in cards %}
+          <div
+            class="module-card {{ card.color }}"
+            data-card-id="{{ card.id }}"
+            data-card-title="{{ card.title|lower }}"
+          >
+            {# Decorative corner accent #}
+            <div class="module-card-accent"></div>
+
+            {# Badge #}
+            <div class="module-card-badge">{{ card.badge }}</div>
+
+            {# Icon area #}
+            <div class="module-card-icon-wrap">
+              <div class="module-card-icon">
+                <i class="fa-solid {{ card.icon }}"></i>
+              </div>
+            </div>
+
+            {# Content #}
+            <div class="module-card-body">
+              <h4 class="module-card-title">{{ card.title }}</h4>
+              <p class="module-card-desc">{{ card.description }}</p>
+            </div>
+
+            {# Action Button – redirects to the team's own dashboard #}
+            <div class="module-card-footer">
+              <a
+                href="{{ card.url }}"
+                class="btn-open-module"
+                title="Open {{ card.title }}"
+              >
+                <span>Open Dashboard</span>
+                <i class="fa-solid fa-arrow-right ms-2"></i>
+              </a>
+            </div>
+
+          </div>
+          {% empty %}
+          <div class="no-modules-msg">
+            <i class="fa-solid fa-lock fa-2x mb-2"></i>
+            <p>No modules are assigned to your role. Contact an administrator.</p>
+          </div>
+          {% endfor %}
+
+        </div>{# /.modules-grid #}
+
+        {# Empty state when search returns nothing #}
+        <div class="search-empty d-none" id="searchEmpty">
+          <i class="fa-solid fa-magnifying-glass fa-2x mb-2"></i>
+          <p>No modules matched your search.</p>
+        </div>
+
+      </section>{# /.modules-section #}
+
+    </div>{# /.erp-body #}
+
+    {# ── FOOTER ────────────────────────────────────────────────── #}
+    <footer class="erp-footer">
+      <span>
+        &copy; {% now "Y" %} PRAVAAH Educational ERP &mdash; Shared Services Dashboard
+      </span>
+      <span class="erp-footer-right">
+        Role: <strong>{{ role_display }}</strong> &nbsp;|&nbsp; Django&nbsp;+&nbsp;Bootstrap&nbsp;5
+      </span>
+    </footer>
+
+  </div>{# /.erp-main #}
+
+</div>{# /.erp-shell #}
+
+{# Sidebar overlay for mobile #}
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Live clock in welcome section
+  function updateClock() {
+    const el = document.getElementById('currentDateTime');
+    if (!el) return;
+    const now = new Date();
+    el.textContent = now.toLocaleDateString('en-IN', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    }) + ' • ' + now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  }
+  updateClock();
+  setInterval(updateClock, 60000);
+</script>
+{% endblock %}

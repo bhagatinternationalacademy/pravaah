@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Overview</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:'Poppins', sans-serif;
+        }
+
+        body{
+            background:#0f172a;
+            min-height:100vh;
+            padding:35px;
+            color:white;
+        }
+
+        /* ------------------------------------------------ */
+        /* TOP HEADER */
+        /* ------------------------------------------------ */
+
+        .top-bar{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:35px;
+        }
+
+        .page-title h1{
+            font-size:34px;
+            font-weight:700;
+        }
+
+        .page-title p{
+            color:#94a3b8;
+            margin-top:6px;
+        }
+
+        .admin-badge{
+            background:linear-gradient(135deg,#2563eb,#7c3aed);
+            padding:12px 20px;
+            border-radius:14px;
+            font-size:14px;
+            font-weight:600;
+            box-shadow:0 6px 20px rgba(37,99,235,0.3);
+        }
+
+        /* ------------------------------------------------ */
+        /* OVERVIEW GRID */
+        /* ------------------------------------------------ */
+
+        .overview-grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+            gap:28px;
+        }
+
+        /* ------------------------------------------------ */
+        /* CARD */
+        /* ------------------------------------------------ */
+
+        .overview-card{
+            position:relative;
+            overflow:hidden;
+
+            background:rgba(255,255,255,0.06);
+            backdrop-filter:blur(18px);
+
+            border:1px solid rgba(255,255,255,0.08);
+
+            border-radius:24px;
+            padding:28px;
+
+            transition:0.35s ease;
+
+            box-shadow:
+            0 10px 30px rgba(0,0,0,0.25);
+        }
+
+        .overview-card:hover{
+            transform:translateY(-8px) scale(1.02);
+
+            box-shadow:
+            0 15px 35px rgba(0,0,0,0.35);
+        }
+
+        /* Glow Effect */
+
+        .overview-card::before{
+            content:'';
+            position:absolute;
+            width:220px;
+            height:220px;
+            background:rgba(255,255,255,0.04);
+            border-radius:50%;
+            top:-90px;
+            right:-90px;
+        }
+
+        /* ------------------------------------------------ */
+        /* CARD HEADER */
+        /* ------------------------------------------------ */
+
+        .card-header{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:30px;
+        }
+
+        .card-title{
+            font-size:17px;
+            color:#cbd5e1;
+            font-weight:500;
+        }
+
+        .card-icon{
+            width:62px;
+            height:62px;
+            border-radius:18px;
+
+            display:flex;
+            justify-content:center;
+            align-items:center;
+
+            font-size:24px;
+            color:white;
+        }
+
+        .blue{
+            background:linear-gradient(135deg,#2563eb,#3b82f6);
+        }
+
+        .green{
+            background:linear-gradient(135deg,#059669,#10b981);
+        }
+
+        .red{
+            background:linear-gradient(135deg,#dc2626,#ef4444);
+        }
+
+        /* ------------------------------------------------ */
+        /* CARD CONTENT */
+        /* ------------------------------------------------ */
+
+        .card-value{
+            font-size:48px;
+            font-weight:700;
+            margin-bottom:10px;
+        }
+
+        .card-description{
+            color:#94a3b8;
+            font-size:14px;
+            line-height:1.6;
+        }
+
+        /* ------------------------------------------------ */
+        /* BOTTOM SECTION */
+        /* ------------------------------------------------ */
+
+        .bottom-section{
+            margin-top:40px;
+
+            display:grid;
+            grid-template-columns:2fr 1fr;
+            gap:28px;
+        }
+
+        .activity-box,
+        .quick-stats{
+            background:rgba(255,255,255,0.06);
+            border:1px solid rgba(255,255,255,0.08);
+
+            border-radius:24px;
+            padding:28px;
+
+            backdrop-filter:blur(18px);
+        }
+
+        .section-title{
+            font-size:22px;
+            margin-bottom:22px;
+        }
+
+        .activity-item{
+            display:flex;
+            justify-content:space-between;
+            padding:16px 0;
+            border-bottom:1px solid rgba(255,255,255,0.06);
+        }
+
+        .activity-item:last-child{
+            border:none;
+        }
+
+        .activity-name{
+            color:#e2e8f0;
+        }
+
+        .activity-status{
+            color:#22c55e;
+            font-weight:600;
+        }
+
+        .quick-box{
+            margin-bottom:22px;
+        }
+
+        .quick-box h2{
+            font-size:32px;
+            margin-bottom:6px;
+        }
+
+        .quick-box p{
+            color:#94a3b8;
+            font-size:14px;
+        }
+
+        /* ------------------------------------------------ */
+        /* RESPONSIVE */
+        /* ------------------------------------------------ */
+
+        @media(max-width:900px){
+
+            .bottom-section{
+                grid-template-columns:1fr;
+            }
+
+            .top-bar{
+                flex-direction:column;
+                align-items:flex-start;
+                gap:20px;
+            }
+
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- ================================================= -->
+    <!-- TOP BAR -->
+    <!-- ================================================= -->
+
+    <div class="top-bar">
+
+        <div class="page-title">
+            <h1>User Management Overview</h1>
+            <p>Analytics and statistics for system users</p>
+        </div>
+
+        <div class="admin-badge">
+            <i class="fa-solid fa-shield-halved"></i>
+            Administrator Panel
+        </div>
+
+    </div>
+
+    <!-- ================================================= -->
+    <!-- OVERVIEW CARDS -->
+    <!-- ================================================= -->
+
+    <div class="overview-grid">
+
+        <!-- TOTAL USERS -->
+
+        <div class="overview-card">
+
+            <div class="card-header">
+
+                <div class="card-title">
+                    Total Users
+                </div>
+
+                <div class="card-icon blue">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+
+            </div>
+
+            <div class="card-value">
+                {{ total_users }}
+            </div>
+
+            <div class="card-description">
+                Total registered users across all modules
+                in the ERP platform.
+            </div>
+
+        </div>
+
+        <!-- ACTIVE USERS -->
+
+        <div class="overview-card">
+
+            <div class="card-header">
+
+                <div class="card-title">
+                    Active Users
+                </div>
+
+                <div class="card-icon green">
+                    <i class="fa-solid fa-user-check"></i>
+                </div>
+
+            </div>
+
+            <div class="card-value">
+                {{ active_users }}
+            </div>
+
+            <div class="card-description">
+                Users currently active and using
+                the system platform.
+            </div>
+
+        </div>
+
+        <!-- INACTIVE USERS -->
+
+        <div class="overview-card">
+
+            <div class="card-header">
+
+                <div class="card-title">
+                    Inactive Users
+                </div>
+
+                <div class="card-icon red">
+                    <i class="fa-solid fa-user-xmark"></i>
+                </div>
+
+            </div>
+
+            <div class="card-value">
+                {{ inactive_users }}
+            </div>
+
+            <div class="card-description">
+                Accounts currently disabled or
+                inactive in the ERP system.
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ================================================= -->
+    <!-- BOTTOM SECTION -->
+    <!-- ================================================= -->
+
+    <div class="bottom-section">
+
+        <!-- RECENT ACTIVITY -->
+
+        <div class="activity-box">
+
+            <h2 class="section-title">
+                Recent Activity
+            </h2>
+
+            <div class="activity-item">
+                <span class="activity-name">
+                    New admin account created
+                </span>
+
+                <span class="activity-status">
+                    Active
+                </span>
+            </div>
+
+            <div class="activity-item">
+                <span class="activity-name">
+                    Trainer permissions updated
+                </span>
+
+                <span class="activity-status">
+                    Completed
+                </span>
+            </div>
+
+            <div class="activity-item">
+                <span class="activity-name">
+                    Student login verification
+                </span>
+
+                <span class="activity-status">
+                    Running
+                </span>
+            </div>
+
+            <div class="activity-item">
+                <span class="activity-name">
+                    Security audit completed
+                </span>
+
+                <span class="activity-status">
+                    Success
+                </span>
+            </div>
+
+        </div>
+
+        <!-- QUICK STATS -->
+
+        <div class="quick-stats">
+
+            <h2 class="section-title">
+                Quick Stats
+            </h2>
+
+            <div class="quick-box">
+                <h2>92%</h2>
+                <p>System Efficiency</p>
+            </div>
+
+            <div class="quick-box">
+                <h2>24</h2>
+                <p>New Registrations</p>
+            </div>
+
+            <div class="quick-box">
+                <h2>8</h2>
+                <p>Pending Approvals</p>
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+</html>

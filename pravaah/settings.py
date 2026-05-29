@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'hostelmgmt',
+    'dashboard',
 ]
 
 MIDDLEWARE = [
@@ -76,15 +77,13 @@ WSGI_APPLICATION = 'pravaah.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'pravaah_db',
-        'USER': 'root',
-        'PASSWORD': 'admin',
-        'HOST': 'localhost',
+        'NAME': 'pravaah',
+        'USER': 'test',
+        'PASSWORD':'Laptop@123',
+        'HOST': '192.168.0.95',
         'PORT': '3306',
     }
 }
-
-
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 

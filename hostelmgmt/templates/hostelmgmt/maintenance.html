@@ -1,194 +1,367 @@
+```html
 {% extends 'hostelmgmt/base.html' %}
 {% block title %}Maintenance{% endblock %}
 {% block page_title %}Maintenance Dashboard{% endblock %}
 
 {% block content %}
+
 <div class="page-header" style="background:linear-gradient(135deg,#fa709a,#fee140);">
     <div class="d-flex align-items-center justify-content-between">
         <div>
-            <h4 class="mb-1"><i class="fas fa-tools me-2"></i>Maintenance Dashboard</h4>
-            <p class="mb-0 opacity-75">Room status, occupancy overview and maintenance requests</p>
+            <h4 class="mb-1">
+                <i class="fas fa-tools me-2"></i>
+                Maintenance Dashboard
+            </h4>
+
+            <p class="mb-0 opacity-75">
+                Room status, occupancy overview and maintenance requests
+            </p>
         </div>
     </div>
 </div>
 
 <!-- Stats -->
 <div class="row g-3 mb-4">
+
     <div class="col-6 col-md-3">
         <div class="stat-card text-center">
+
             <div style="background:#ede9fe;border-radius:12px;padding:14px;display:inline-block;margin-bottom:10px;">
                 <i class="fas fa-building fa-lg text-primary"></i>
             </div>
+
             <h3 class="fw-bold mb-0">{{ total }}</h3>
             <small class="text-muted">Total Rooms</small>
+
         </div>
     </div>
+
     <div class="col-6 col-md-3">
         <div class="stat-card text-center">
+
             <div style="background:#d1fae5;border-radius:12px;padding:14px;display:inline-block;margin-bottom:10px;">
                 <i class="fas fa-check-circle fa-lg text-success"></i>
             </div>
+
             <h3 class="fw-bold mb-0 text-success">{{ available }}</h3>
             <small class="text-muted">Available</small>
+
         </div>
     </div>
+
     <div class="col-6 col-md-3">
         <div class="stat-card text-center">
+
             <div style="background:#fee2e2;border-radius:12px;padding:14px;display:inline-block;margin-bottom:10px;">
                 <i class="fas fa-users fa-lg text-danger"></i>
             </div>
+
             <h3 class="fw-bold mb-0 text-danger">{{ full }}</h3>
             <small class="text-muted">Fully Occupied</small>
+
         </div>
     </div>
+
     <div class="col-6 col-md-3">
         <div class="stat-card text-center">
+
             <div style="background:#fef3c7;border-radius:12px;padding:14px;display:inline-block;margin-bottom:10px;">
                 <i class="fas fa-wrench fa-lg text-warning"></i>
             </div>
+
             <h3 class="fw-bold mb-0 text-warning">{{ under_maintenance }}</h3>
             <small class="text-muted">Under Maintenance</small>
+
         </div>
     </div>
+
 </div>
 
-<!-- Occupancy Bar -->
+<!-- Occupancy Overview -->
 {% if total > 0 %}
 <div class="form-card mb-4">
+
     <h5 class="fw-semibold mb-3">Occupancy Overview</h5>
+
     <div class="d-flex gap-2 mb-2" style="font-size:0.85rem;">
         <span class="text-success fw-500">● Available: {{ available }}</span>
         <span class="text-danger fw-500">● Full: {{ full }}</span>
         <span class="text-warning fw-500">● Maintenance: {{ under_maintenance }}</span>
     </div>
+
     <div class="progress" style="height:20px;border-radius:10px;">
-        <div class="progress-bar bg-danger" style="width:{% widthratio full total 100 %}%;border-radius:10px 0 0 10px;">
+
+        <div class="progress-bar bg-danger"
+             style="width:{% widthratio full total 100 %}%;border-radius:10px 0 0 10px;">
             {{ full }}
         </div>
-        <div class="progress-bar bg-warning" style="width:{% widthratio under_maintenance total 100 %}%;">
+
+        <div class="progress-bar bg-warning"
+             style="width:{% widthratio under_maintenance total 100 %}%;">
             {{ under_maintenance }}
         </div>
-        <div class="progress-bar bg-success" style="width:{% widthratio available total 100 %}%;border-radius:0 10px 10px 0;">
+
+        <div class="progress-bar bg-success"
+             style="width:{% widthratio available total 100 %}%;border-radius:0 10px 10px 0;">
             {{ available }}
         </div>
+
     </div>
+
 </div>
 {% endif %}
 
 <div class="row g-4">
-    <!-- Room Status Table -->
+
+    <!-- ROOM GRID -->
     <div class="col-lg-7">
-        <div class="form-card h-100">
-            <div class="d-flex align-items-center gap-2 mb-3">
-                <div style="background:linear-gradient(135deg,#fa709a,#fee140);border-radius:10px;padding:10px 14px;">
-                    <i class="fas fa-door-open text-white"></i>
+
+        <div class="form-card mb-4">
+
+            <div class="d-flex align-items-center justify-content-between mb-3">
+
+                <h5 class="fw-semibold mb-0">
+                    <i class="fas fa-door-open me-2 text-primary"></i>
+                    All Rooms
+                </h5>
+
+                <div class="d-flex gap-2 flex-wrap">
+
+                    <span class="badge"
+                          style="background:#d1fae5;color:#065f46;">
+                        ● Available
+                    </span>
+
+                    <span class="badge"
+                          style="background:#fef3c7;color:#92400e;">
+                        ● Partial
+                    </span>
+
+                    <span class="badge"
+                          style="background:#fee2e2;color:#991b1b;">
+                        ● Full
+                    </span>
+
+                    <span class="badge"
+                          style="background:#e5e7eb;color:#374151;">
+                        ● Maintenance
+                    </span>
+
                 </div>
-                <h5 class="fw-semibold mb-0">Room Status</h5>
+
             </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle" style="font-size:0.88rem;">
-                    <thead>
-                        <tr style="background:#f8f7ff;">
-                            <th class="text-muted fw-500">ROOM</th>
-                            <th class="text-muted fw-500">FLOOR</th>
-                            <th class="text-muted fw-500">CAPACITY</th>
-                            <th class="text-muted fw-500">OCCUPIED</th>
-                            <th class="text-muted fw-500">GENDER</th>
-                            <th class="text-muted fw-500">STATUS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for room in rooms %}
-                        <tr>
-                            <td><strong>{{ room.room_number }}</strong></td>
-                            <td>Floor {{ room.floor.floor_no }}</td>
-                            <td>{{ room.capacity }}</td>
-                            <td>
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="progress flex-grow-1" style="height:8px;border-radius:4px;">
-                                        <div class="progress-bar
-                                            {% if room.occupied == room.capacity %}bg-danger
-                                            {% elif room.occupied > 0 %}bg-warning
-                                            {% else %}bg-success{% endif %}"
-                                            style="width:{% widthratio room.occupied room.capacity 100 %}%">
-                                        </div>
-                                    </div>
-                                    <span style="font-size:0.8rem;">{{ room.occupied }}/{{ room.capacity }}</span>
-                                </div>
-                            </td>
-                            <td>
-                                {% if room.gender %}
-                                    <span class="badge {% if room.gender == 'male' %}bg-primary{% else %}bg-danger{% endif %} bg-opacity-15
-                                          {% if room.gender == 'male' %}text-primary{% else %}text-danger{% endif %}">
-                                        {% if room.gender == 'male' %}♂ Male{% else %}♀ Female{% endif %}
-                                    </span>
-                                {% else %}
-                                    <span class="text-muted">—</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if room.status == 'available' %}
-                                    <span class="badge" style="background:#d1fae5;color:#065f46;">Available</span>
-                                {% elif room.status == 'full' %}
-                                    <span class="badge" style="background:#fee2e2;color:#991b1b;">Full</span>
-                                {% else %}
-                                    <span class="badge" style="background:#fef3c7;color:#92400e;">Maintenance</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr><td colspan="6" class="text-center text-muted py-4">No rooms found.</td></tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+
+            <div class="row g-2">
+
+                {% for room in rooms %}
+
+                <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+
+                    <div class="room-card p-2 text-center rounded-3 border
+
+                        {% if room.status == 'maintenance' %}
+                            room-maintenance
+
+                        {% elif room.status == 'full' %}
+                            room-full
+
+                        {% elif room.occupied > 0 %}
+                            room-partial
+
+                        {% else %}
+                            room-available
+                        {% endif %}"
+
+                        style="cursor:pointer;transition:transform 0.2s;"
+
+                        title="Room {{ room.room_number }} | {{ room.occupied }}/{{ room.capacity }} occupied">
+
+                        <div class="fw-bold" style="font-size:1rem;">
+                            {{ room.room_number }}
+                        </div>
+
+                        <div style="font-size:0.7rem;" class="text-muted">
+                            {{ room.occupied }}/{{ room.capacity }}
+                        </div>
+
+                        <div style="font-size:0.65rem;">
+
+                            {% if room.status == 'maintenance' %}
+
+                                <span class="badge bg-secondary">
+                                    Maint.
+                                </span>
+
+                            {% elif room.status == 'full' %}
+
+                                <span class="badge bg-danger">
+                                    Full
+                                </span>
+
+                            {% elif room.occupied > 0 %}
+
+                                <span class="badge bg-warning text-dark">
+                                    Partial
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-success">
+                                    Free
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {% empty %}
+
+                <div class="col-12">
+                    <div class="text-center text-muted py-5">
+                        No rooms found.
+                    </div>
+                </div>
+
+                {% endfor %}
+
             </div>
+
         </div>
+
     </div>
 
     <!-- Maintenance Requests -->
     <div class="col-lg-5">
+
         <div class="form-card h-100">
+
             <div class="d-flex align-items-center gap-2 mb-3">
-                <div style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:10px;padding:10px 14px;">
+
+                <div style="background:linear-gradient(135deg,#667eea,#764ba2);
+                            border-radius:10px;
+                            padding:10px 14px;">
+
                     <i class="fas fa-wrench text-white"></i>
+
                 </div>
-                <h5 class="fw-semibold mb-0">Maintenance Requests</h5>
+
+                <h5 class="fw-semibold mb-0">
+                    Maintenance Requests
+                </h5>
+
             </div>
 
             {% if maintenance_requests %}
+
                 <div class="d-flex flex-column gap-3">
-                {% for req in maintenance_requests %}
-                    <div class="p-3 rounded-3" style="background:#f8f9fa;border:1px solid #e9ecef;">
+
+                    {% for req in maintenance_requests %}
+
+                    <div class="p-3 rounded-3"
+                         style="background:#f8f9fa;border:1px solid #e9ecef;">
+
                         <div class="d-flex justify-content-between align-items-start">
+
                             <div>
+
                                 <p class="fw-500 mb-1" style="font-size:0.88rem;">
                                     Room {{ req.room.room_number }}
                                 </p>
+
                                 <p class="text-muted mb-1" style="font-size:0.8rem;">
                                     {{ req.description|truncatechars:60 }}
                                 </p>
-                                <small class="text-muted">{{ req.request_date }}</small>
+
+                                <small class="text-muted">
+                                    {{ req.request_date }}
+                                </small>
+
                             </div>
+
                             <div>
+
                                 {% if req.status == 'pending' %}
-                                    <span class="badge bg-warning text-dark">Pending</span>
+
+                                    <span class="badge bg-warning text-dark">
+                                        Pending
+                                    </span>
+
                                 {% elif req.status == 'in_progress' %}
-                                    <span class="badge bg-info text-white">In Progress</span>
+
+                                    <span class="badge bg-info text-white">
+                                        In Progress
+                                    </span>
+
                                 {% else %}
-                                    <span class="badge bg-success">Resolved</span>
+
+                                    <span class="badge bg-success">
+                                        Resolved
+                                    </span>
+
                                 {% endif %}
+
                             </div>
+
                         </div>
+
                     </div>
-                {% endfor %}
+
+                    {% endfor %}
+
                 </div>
+
             {% else %}
+
                 <div class="text-center py-5">
+
                     <i class="fas fa-tools fa-3x text-muted mb-3"></i>
-                    <p class="text-muted">No maintenance requests.</p>
+
+                    <p class="text-muted">
+                        No maintenance requests.
+                    </p>
+
                 </div>
+
             {% endif %}
+
         </div>
+
     </div>
+
 </div>
+
+<style>
+
+.room-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 4px 12px rgba(0,0,0,0.08);
+}
+
+.room-available{
+    background:#ecfdf5;
+    border-color:#10b981 !important;
+}
+
+.room-partial{
+    background:#fffbeb;
+    border-color:#f59e0b !important;
+}
+
+.room-full{
+    background:#fef2f2;
+    border-color:#ef4444 !important;
+}
+
+.room-maintenance{
+    background:#f3f4f6;
+    border-color:#6b7280 !important;
+}
+
+</style>
+
 {% endblock %}
+```

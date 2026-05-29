@@ -8,6 +8,11 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+
+        .room-available { background: #d1fae5; border-color: #6ee7b7 !important; }
+        .room-partial   { background: #fef3c7; border-color: #fcd34d !important; }
+        .room-full      { background: #fee2e2; border-color: #fca5a5 !important; }
+        .room-maintenance { background: #e5e7eb; border-color: #9ca3af !important; }
         :root {
             --primary: #4f46e5;
             --secondary: #7c3aed;
@@ -154,6 +159,9 @@
         </a>
         <a href="{% url 'hostelmgmt:reports' %}" class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
             <i class="fas fa-chart-bar"></i> Reports
+        </a>
+        <a href="{% url 'hostelmgmt:security' %}" class="nav-link {% if request.resolver_match.url_name == 'security' %}active{% endif %}">
+            <i class="fas fa-shield-alt"></i> Security
         </a>
     </nav>
 </div>

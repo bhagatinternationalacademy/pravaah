@@ -1,163 +1,367 @@
 {% extends 'hostelmgmt/base.html' %}
 {% block title %}Room Transfer{% endblock %}
-{% block page_title %}Room Transfer{% endblock %}
+{% block page_title %}Drag & Drop Room Transfer{% endblock %}
+
+{% block extra_css %}
+<style>
+  .room-transfer-card {
+    background: white;
+    border-radius: 14px;
+    border: 2px solid #e5e7eb;
+    padding: 14px;
+    transition: all 0.25s;
+    min-height: 120px;
+    position: relative;
+  }
+  .room-transfer-card:hover { box-shadow: 0 6px 20px rgba(79,70,229,0.12); }
+  .room-transfer-card.drag-over {
+    border-color: #10b981 !important;
+    background: #f0fdf4 !important;
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.25);
+  }
+  .room-transfer-card.status-full   { border-color: #fca5a5; background: #fff5f5; }
+  .room-transfer-card.status-maint  { border-color: #9ca3af; background: #f9fafb; opacity: 0.7; }
+  .room-transfer-card.status-avail  { border-color: #6ee7b7; }
+  .room-transfer-card.status-partial{ border-color: #fcd34d; }
+
+  .occupant-chip {
+    background: #ede9fe;
+    color: #4f46e5;
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: grab;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+    margin-bottom: 4px;
+  }
+  .occupant-chip.trainer-chip { background: #f3e8ff; color: #6b21a8; }
+  .occupant-chip:hover { transform: scale(1.03); box-shadow: 0 3px 8px rgba(79,70,229,0.2); }
+  .occupant-chip.dragging { opacity: 0.5; cursor: grabbing; }
+
+  .room-label {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+  .room-meta { font-size: 0.72rem; color: #6b7280; margin-bottom: 8px; }
+  .status-pill {
+    font-size: 0.65rem; font-weight: 600;
+    padding: 2px 8px; border-radius: 20px;
+    position: absolute; top: 10px; right: 10px;
+  }
+  .pill-available   { background:#d1fae5;color:#065f46; }
+  .pill-partial     { background:#fef3c7;color:#92400e; }
+  .pill-full        { background:#fee2e2;color:#991b1b; }
+  .pill-maintenance { background:#e5e7eb;color:#374151; }
+
+  .drop-hint {
+    font-size: 0.72rem; color: #9ca3af;
+    text-align: center; padding: 8px 0;
+    border: 1.5px dashed #d1d5db;
+    border-radius: 8px;
+    margin-top: 6px;
+  }
+
+  #toast-container {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+  }
+  .toast-msg {
+    padding: 12px 20px; border-radius: 10px;
+    font-size: 0.88rem; font-weight: 500;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    animation: slideIn 0.3s ease;
+    margin-top: 8px;
+  }
+  .toast-success { background: #d1fae5; color: #065f46; }
+  .toast-error   { background: #fee2e2; color: #991b1b; }
+  @keyframes slideIn { from { transform: translateX(100px); opacity:0; } to { transform: translateX(0); opacity:1; } }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div class="d-flex align-items-center justify-content-between">
-        <div>
-            <h4 class="mb-1"><i class="fas fa-exchange-alt me-2"></i>Room Transfer</h4>
-            <p class="mb-0 opacity-75">Request a room change with reason and approval workflow</p>
-        </div>
-        <span class="badge bg-white text-primary fs-6 px-3 py-2">
-            <i class="fas fa-door-open me-1"></i> Transfer Module
+
+<div class="page-header" style="background:linear-gradient(135deg,#4f46e5,#10b981);">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div>
+      <h4 class="mb-1"><i class="fas fa-arrows-alt me-2"></i>Drag & Drop Room Transfer</h4>
+      <p class="mb-0 opacity-75">Drag a student/trainer chip from one room and drop onto another room to transfer.</p>
+    </div>
+    <span class="badge bg-white text-primary fs-6 px-3 py-2">
+      <i class="fas fa-hand-rock me-1"></i>Drag to Transfer
+    </span>
+  </div>
+</div>
+
+<!-- Instructions -->
+<div class="alert mb-4" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;color:#1e40af;">
+  <i class="fas fa-info-circle me-2"></i>
+  <strong>How to use:</strong> Drag the colored name chip from a room card and drop it onto any other room card.
+  Transfers are validated for gender, vacancy, and maintenance status automatically.
+</div>
+
+<!-- Room Grid -->
+<div class="form-card mb-4">
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <h5 class="fw-semibold mb-0"><i class="fas fa-th-large me-2 text-primary"></i>All Rooms</h5>
+    <div class="d-flex gap-2 flex-wrap" style="font-size:0.78rem;">
+      <span style="background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:20px;">● Available</span>
+      <span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:20px;">● Partial</span>
+      <span style="background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:20px;">● Full</span>
+      <span style="background:#e5e7eb;color:#374151;padding:3px 10px;border-radius:20px;">● Maintenance</span>
+    </div>
+  </div>
+
+  <div class="row g-3" id="roomsGrid">
+    {% for item in rooms_data %}
+    {% with room=item.room occupants=item.occupants %}
+    <div class="col-sm-6 col-md-4 col-lg-3">
+      <div class="room-transfer-card
+        {% if room.status == 'maintenance' %}status-maint
+        {% elif room.status == 'full' %}status-full
+        {% elif room.occupied > 0 %}status-partial
+        {% else %}status-avail{% endif %}"
+        data-room-id="{{ room.room_id }}"
+        data-room-status="{{ room.status }}"
+        data-room-gender="{{ room.gender|default:'' }}"
+        data-room-occupied="{{ room.occupied }}"
+        data-room-capacity="{{ room.capacity }}"
+        ondragover="handleDragOver(event)"
+        ondragleave="handleDragLeave(event)"
+        ondrop="handleDrop(event, {{ room.room_id }})">
+
+        <!-- Status pill -->
+        <span class="status-pill
+          {% if room.status == 'maintenance' %}pill-maintenance
+          {% elif room.status == 'full' %}pill-full
+          {% elif room.occupied > 0 %}pill-partial
+          {% else %}pill-available{% endif %}">
+          {% if room.status == 'maintenance' %}🔧 Maint
+          {% elif room.status == 'full' %}Full
+          {% elif room.occupied > 0 %}Partial
+          {% else %}Free{% endif %}
         </span>
+
+        <div class="room-label">Room {{ room.room_number }}</div>
+        <div class="room-meta">
+          {{ room.occupied }}/{{ room.capacity }} beds
+          {% if room.gender %} · {% if room.gender == 'male' %}♂ Male{% else %}♀ Female{% endif %}{% endif %}
+        </div>
+
+        <!-- Occupant chips (draggable) -->
+        <div class="occupants-container" id="room-{{ room.room_id }}-occupants">
+          {% for occ in occupants %}
+          <div class="occupant-chip {% if occ.person_type == 'trainer' %}trainer-chip{% endif %}"
+               draggable="true"
+               data-allocation-id="{{ occ.allocation_id }}"
+               data-student-name="{{ occ.student_name }}"
+               data-student-id="{{ occ.student_id }}"
+               data-gender="{{ occ.gender }}"
+               data-person-type="{{ occ.person_type }}"
+               data-from-room="{{ room.room_id }}"
+               ondragstart="handleDragStart(event)"
+               ondragend="handleDragEnd(event)">
+            <i class="fas {% if occ.person_type == 'trainer' %}fa-chalkboard-teacher{% else %}fa-user-graduate{% endif %}"></i>
+            {{ occ.student_name }}
+          </div>
+          {% endfor %}
+        </div>
+
+        {% if room.status != 'maintenance' and room.occupied < room.capacity %}
+        <div class="drop-hint" id="hint-{{ room.room_id }}">Drop here</div>
+        {% endif %}
+      </div>
     </div>
+    {% endwith %}
+    {% endfor %}
+  </div>
 </div>
 
-<div class="row g-4">
-    <!-- Transfer Form -->
-    <div class="col-lg-5">
-        <div class="form-card h-100">
-            <div class="d-flex align-items-center gap-2 mb-4">
-                <div style="background:linear-gradient(135deg,#f093fb,#f5576c);border-radius:10px;padding:10px 14px;">
-                    <i class="fas fa-exchange-alt text-white"></i>
-                </div>
-                <h5 class="fw-semibold mb-0">New Transfer Request</h5>
-            </div>
-
-            <form method="post" id="transferForm">
-                {% csrf_token %}
-                <div class="mb-3">
-                    <label class="form-label fw-500">
-                        <i class="fas fa-id-badge me-1 text-primary"></i> Student ID
-                    </label>
-                    <input type="text" name="student_id" class="form-control form-control-lg"
-                           placeholder="e.g. STU2024001" required
-                           value="{{ form.student_id.value|default:'' }}">
-                    {% if form.student_id.errors %}
-                        <small class="text-danger">{{ form.student_id.errors }}</small>
-                    {% endif %}
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label fw-500">
-                        <i class="fas fa-door-closed me-1 text-danger"></i> Current Room
-                    </label>
-                    <select name="from_room" class="form-select form-select-lg" required>
-                        <option value="">-- Select Current Room --</option>
-                        {% for room in all_rooms %}
-                            <option value="{{ room.room_id }}"
-                                {% if form.from_room.value == room.room_id|stringformat:"s" %}selected{% endif %}>
-                                Room {{ room.room_number }} ({{ room.occupied }}/{{ room.capacity }} occupied)
-                            </option>
-                        {% endfor %}
-                    </select>
-                    {% if form.from_room.errors %}
-                        <small class="text-danger">{{ form.from_room.errors }}</small>
-                    {% endif %}
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label fw-500">
-                        <i class="fas fa-door-open me-1 text-success"></i> Requested Room
-                    </label>
-                    <select name="to_room" class="form-select form-select-lg" required>
-                        <option value="">-- Select Requested Room --</option>
-                        {% for room in available_rooms %}
-                            <option value="{{ room.room_id }}"
-                                {% if form.to_room.value == room.room_id|stringformat:"s" %}selected{% endif %}>
-                                Room {{ room.room_number }} — {{ room.capacity|add:"-"|add:room.occupied }} beds free
-                            </option>
-                        {% endfor %}
-                    </select>
-                    {% if form.to_room.errors %}
-                        <small class="text-danger">{{ form.to_room.errors }}</small>
-                    {% endif %}
-                </div>
-
-                <div class="mb-4">
-                    <label class="form-label fw-500">
-                        <i class="fas fa-comment-alt me-1 text-warning"></i> Reason for Transfer
-                    </label>
-                    <textarea name="reason" class="form-control" rows="4"
-                              placeholder="Explain why you want to transfer rooms..."
-                              required>{{ form.reason.value|default:'' }}</textarea>
-                    {% if form.reason.errors %}
-                        <small class="text-danger">{{ form.reason.errors }}</small>
-                    {% endif %}
-                </div>
-
-                <button type="submit" class="btn btn-primary w-100 py-3 fw-semibold"
-                        style="background:linear-gradient(135deg,#f093fb,#f5576c);border:none;border-radius:12px;">
-                    <i class="fas fa-paper-plane me-2"></i>Submit Transfer Request
-                </button>
-            </form>
-        </div>
+<!-- Transfer Log -->
+{% if transfers %}
+<div class="form-card">
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <div style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:10px;padding:10px 14px;">
+      <i class="fas fa-history text-white"></i>
     </div>
-
-    <!-- Transfer History -->
-    <div class="col-lg-7">
-        <div class="form-card h-100">
-            <div class="d-flex align-items-center gap-2 mb-4">
-                <div style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:10px;padding:10px 14px;">
-                    <i class="fas fa-history text-white"></i>
-                </div>
-                <h5 class="fw-semibold mb-0">Transfer History</h5>
-            </div>
-
-            {% if transfers %}
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
-                        <tr style="background:#f8f7ff;">
-                            <th class="text-muted fw-500" style="font-size:0.8rem;">STUDENT ID</th>
-                            <th class="text-muted fw-500" style="font-size:0.8rem;">FROM</th>
-                            <th class="text-muted fw-500" style="font-size:0.8rem;">TO</th>
-                            <th class="text-muted fw-500" style="font-size:0.8rem;">DATE</th>
-                            <th class="text-muted fw-500" style="font-size:0.8rem;">STATUS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for t in transfers %}
-                        <tr>
-                            <td>
-                                <span class="badge bg-primary bg-opacity-10 text-primary fw-500">
-                                    {{ t.student_id }}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge" style="background:#fee2e2;color:#991b1b;">
-                                    <i class="fas fa-arrow-right me-1"></i>{{ t.from_room.room_number }}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge" style="background:#d1fae5;color:#065f46;">
-                                    <i class="fas fa-check me-1"></i>{{ t.to_room.room_number }}
-                                </span>
-                            </td>
-                            <td class="text-muted" style="font-size:0.85rem;">{{ t.request_date }}</td>
-                            <td>
-                                {% if t.status == 'approved' %}
-                                    <span class="badge bg-success">✓ Approved</span>
-                                {% elif t.status == 'rejected' %}
-                                    <span class="badge bg-danger">✗ Rejected</span>
-                                {% else %}
-                                    <span class="badge bg-warning text-dark">⏳ Pending</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
-                    <p class="text-muted">No transfer requests yet.</p>
-                </div>
-            {% endif %}
-        </div>
-    </div>
+    <h5 class="fw-semibold mb-0">Recent Transfers</h5>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle" style="font-size:0.86rem;">
+      <thead style="background:#f8f7ff;">
+        <tr>
+          <th class="text-muted fw-500">STUDENT</th>
+          <th class="text-muted fw-500">FROM</th>
+          <th class="text-muted fw-500">TO</th>
+          <th class="text-muted fw-500">DATE</th>
+          <th class="text-muted fw-500">STATUS</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for t in transfers %}
+      <tr>
+        <td class="fw-500">{{ t.student_name|default:t.student_id }}</td>
+        <td><span class="badge" style="background:#fee2e2;color:#991b1b;">Room {{ t.from_room.room_number }}</span></td>
+        <td><span class="badge" style="background:#d1fae5;color:#065f46;">Room {{ t.to_room.room_number }}</span></td>
+        <td class="text-muted">{{ t.request_date }}</td>
+        <td><span class="badge bg-success">✓ Approved</span></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
+{% endif %}
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const CSRF_TOKEN = '{{ csrf_token }}';
+  const TRANSFER_URL = '{% url "hostelmgmt:drag_drop_transfer" %}';
+
+  let draggedChip = null;
+
+  function handleDragStart(e) {
+    draggedChip = e.currentTarget;
+    draggedChip.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', draggedChip.dataset.allocationId);
+  }
+
+  function handleDragEnd(e) {
+    if (draggedChip) draggedChip.classList.remove('dragging');
+    draggedChip = null;
+    document.querySelectorAll('.room-transfer-card').forEach(c => c.classList.remove('drag-over'));
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const card = e.currentTarget;
+    if (card.dataset.roomStatus !== 'maintenance') {
+      card.classList.add('drag-over');
+    }
+  }
+
+  function handleDragLeave(e) {
+    e.currentTarget.classList.remove('drag-over');
+  }
+
+  function handleDrop(e, toRoomId) {
+    e.preventDefault();
+    const card = e.currentTarget;
+    card.classList.remove('drag-over');
+
+    if (!draggedChip) return;
+
+    const allocationId = draggedChip.dataset.allocationId;
+    const fromRoomId   = parseInt(draggedChip.dataset.fromRoom);
+
+    if (fromRoomId === toRoomId) {
+      showToast('Same room — no transfer needed.', 'error');
+      return;
+    }
+
+    // Optimistic UI: move chip immediately, revert on error
+    const originalContainer = document.getElementById(`room-${fromRoomId}-occupants`);
+    const targetContainer   = document.getElementById(`room-${toRoomId}-occupants`);
+
+    if (!targetContainer) return;
+
+    // Update chip's from-room attribute
+    const chipClone = draggedChip;
+    targetContainer.appendChild(chipClone);
+    chipClone.dataset.fromRoom = toRoomId;
+
+    fetch(TRANSFER_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': CSRF_TOKEN,
+      },
+      body: JSON.stringify({ allocation_id: allocationId, to_room_id: toRoomId }),
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        showToast(data.message, 'success');
+        updateRoomCard(data.from_room_id, data.from_room_occupied, data.from_room_capacity, data.from_room_status);
+        updateRoomCard(data.to_room_id,   data.to_room_occupied,   data.to_room_capacity,   data.to_room_status);
+      } else {
+        showToast(data.message, 'error');
+        // Revert chip
+        originalContainer.appendChild(chipClone);
+        chipClone.dataset.fromRoom = fromRoomId;
+      }
+    })
+    .catch(() => {
+      showToast('Network error. Please try again.', 'error');
+      originalContainer.appendChild(chipClone);
+      chipClone.dataset.fromRoom = fromRoomId;
+    });
+  }
+
+  function updateRoomCard(roomId, occupied, capacity, status) {
+    const card = document.querySelector(`[data-room-id="${roomId}"]`);
+    if (!card) return;
+
+    card.dataset.roomOccupied = occupied;
+    card.dataset.roomStatus   = status;
+
+    // Update status classes
+    card.classList.remove('status-avail','status-partial','status-full','status-maint');
+    const pill = card.querySelector('.status-pill');
+    pill.className = 'status-pill ';
+
+    if (status === 'maintenance') {
+      card.classList.add('status-maint');
+      pill.classList.add('pill-maintenance');
+      pill.textContent = '🔧 Maint';
+    } else if (status === 'full') {
+      card.classList.add('status-full');
+      pill.classList.add('pill-full');
+      pill.textContent = 'Full';
+    } else if (occupied > 0) {
+      card.classList.add('status-partial');
+      pill.classList.add('pill-partial');
+      pill.textContent = 'Partial';
+    } else {
+      card.classList.add('status-avail');
+      pill.classList.add('pill-available');
+      pill.textContent = 'Free';
+    }
+
+    // Update meta text
+    const meta = card.querySelector('.room-meta');
+    if (meta) {
+      const genderPart = card.dataset.roomGender
+        ? ` · ${card.dataset.roomGender === 'male' ? '♂ Male' : '♀ Female'}`
+        : '';
+      meta.textContent = `${occupied}/${capacity} beds${genderPart}`;
+    }
+
+    // Update drop hint
+    const hint = document.getElementById(`hint-${roomId}`);
+    if (hint) {
+      hint.style.display = (status !== 'maintenance' && occupied < capacity) ? 'block' : 'none';
+    }
+  }
+
+  function showToast(msg, type) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast-msg toast-${type}`;
+    toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${msg}`;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500);
+  }
+</script>
 {% endblock %}

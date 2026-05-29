@@ -3,6 +3,7 @@ from .models import (
     Hostel, Block, Floor, Room, RoomAllocation,
     RoomTransfer, Visitor, Complaint, MaintenanceRequest, FeePayment
 )
+from .models import WaitingList
 
 
 @admin.register(Hostel)
@@ -81,3 +82,10 @@ class FeePaymentAdmin(admin.ModelAdmin):
                     'payment_date', 'payment_status']
     list_filter = ['payment_status', 'payment_mode']
     search_fields = ['receipt_no']
+
+@admin.register(WaitingList)
+class WaitingListAdmin(admin.ModelAdmin):
+    list_display = ['person_name', 'person_id', 'person_type', 'gender', 'checkin_date', 'checkout_date', 'status', 'added_on']
+    list_filter = ['status', 'person_type', 'gender']
+    search_fields = ['person_name', 'person_id']
+    list_editable = ['status']

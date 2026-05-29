@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Availability Calendar</title>
+
+    <style>
+
+        body{
+            font-family: Arial;
+            padding:20px;
+        }
+
+        .calendar{
+            display:grid;
+            grid-template-columns:repeat(7,1fr);
+            gap:10px;
+            margin-top:20px;
+        }
+
+        .day{
+            padding:25px;
+            text-align:center;
+            border-radius:10px;
+            color:white;
+            font-size:20px;
+            font-weight:bold;
+        }
+
+        .available{
+            background-color:green;
+        }
+
+        .unavailable{
+            background-color:red;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <h1>Trainer Availability</h1>
+
+    {% if messages %}
+
+    {% for message in messages %}
+
+        <p style="
+            color:white;
+            background:red;
+            padding:10px;
+            border-radius:5px;
+        ">
+            {{ message }}
+        </p>
+
+    {% endfor %}
+
+{% endif %}
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <button type="submit">
+            Mark Unavailable
+        </button>
+
+    </form>
+
+    <div class="calendar">
+
+        {% for day in days %}
+
+            {% if day in unavailable_days %}
+
+                <div class="day unavailable">
+                    {{ day }}
+                </div>
+
+            {% else %}
+
+                <div class="day available">
+                    {{ day }}
+                </div>
+
+            {% endif %}
+
+        {% endfor %}
+
+    </div>
+
+</body>
+
+</html>

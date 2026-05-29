@@ -1,0 +1,24 @@
+<h1>Trainer Availability</h1>
+
+<table border="1" cellpadding="10">
+    <tr>
+        <th>Trainer</th>
+        <th>Date</th>
+        <th>Status</th>
+    </tr>
+
+    {% for item in availability %}
+    <tr>
+        <td>{{ item.trainer }}</td>
+        <td>{{ item.date }}</td>
+
+        <td>
+            {% if item.is_available %}
+                <span style="color:green;">Available</span>
+            {% else %}
+                <span style="color:red;">Unavailable</span>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>

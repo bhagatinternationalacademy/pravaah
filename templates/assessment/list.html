@@ -1,0 +1,46 @@
+<h1>Assessments</h1>
+
+<a href="/assessment/create/">
+    Create New Assessment
+</a>
+
+<hr>
+
+{% for assessment in assessments %}
+
+    <div>
+
+    <h3>
+        {{ assessment.assessment_name }}
+    </h3>
+
+    <p>
+        {{ assessment.assessment_type }}
+    </p>
+
+    <p>
+        Total Marks:
+        {{ assessment.total_marks }}
+    </p>
+
+    <p>
+        Due Date:
+        {{ assessment.due_date }}
+    </p>
+
+    <a href="/assessment/edit/{{ assessment.id }}/">
+        Edit
+    </a>
+
+    |
+
+    <a href="/assessment/delete/{{ assessment.id }}/">
+        Delete
+    </a>
+
+</div>
+
+<hr>
+    <hr>
+
+{% endfor %}

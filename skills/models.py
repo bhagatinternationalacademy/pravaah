@@ -1,5 +1,5 @@
 from django.db import models
-from trainers.models import Trainer
+from pravaah.trainers.models import Trainer
 
 
 class Skill(models.Model):
@@ -17,3 +17,4 @@ class TrainerSkill(models.Model):
 
     def __str__(self):
         return f"{self.trainer} - {self.skill} ({self.proficiency_level})"
+

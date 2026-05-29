@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from trainers.models import Trainer
-from skills.models import Skill
-from certifications.models import Certification
+from pravaah.trainers.models import Trainer
+from pravaah.skills.models import Skill
+from pravaah.certifications.models import Certification
 from django.utils import timezone
 from datetime import timedelta
 
@@ -35,3 +35,4 @@ def dashboard_view(request):
         'skills_distribution': list(skills_distribution),
     }
     return render(request, 'dashboard/dashboard.html', context)
+

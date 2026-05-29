@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.utils.crypto import get_random_string
 from django.urls import reverse
-from accounts.decorators import trainer_required
+from pravaah.accounts.decorators import trainer_required
 
 
 @login_required
@@ -229,7 +229,7 @@ def approve_trainer(request, pk):
     # set explicit permissions for Trainer group: allow viewing trainers/skills/certifications and limited change_trainer
     perms_to_add = []
     try:
-        from trainers.models import Trainer as TrainerModel
+        from pravaah.trainers.models import Trainer as TrainerModel
         ct_tr = ContentType.objects.get_for_model(TrainerModel)
         for codename in ['view_trainer', 'change_trainer']:
             try:
@@ -250,7 +250,7 @@ def approve_trainer(request, pk):
         pass
 
     try:
-        from certifications.models import Certification as CertificationModel
+        from pravaah.certifications.models import Certification as CertificationModel
         ct_cert = ContentType.objects.get_for_model(CertificationModel)
         try:
             perms_to_add.append(Permission.objects.get(codename='view_certification', content_type=ct_cert))
@@ -317,3 +317,4 @@ def trainer_delete(request, pk):
         trainer.delete()
         return redirect('trainers:list')
     return render(request, 'trainers/trainer_delete.html', {'trainer': trainer})
+

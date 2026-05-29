@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from trainers.models import Trainer
-from skills.models import TrainerSkill, Skill
-from certifications.models import Certification
+from pravaah.trainers.models import Trainer
+from pravaah.skills.models import TrainerSkill, Skill
+from pravaah.certifications.models import Certification
 from django.http import HttpResponse
 import csv
 from django.utils import timezone
@@ -80,3 +80,4 @@ def export_certifications_csv(request):
     for c in certs:
         writer.writerow([str(c.trainer), c.certification_name, c.issuing_organization, c.issue_date, c.expiry_date, c.status()])
     return response
+

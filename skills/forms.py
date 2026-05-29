@@ -1,6 +1,6 @@
 from django import forms
 from .models import Skill, TrainerSkill
-from trainers.models import Trainer
+from pravaah.trainers.models import Trainer
 
 
 class SkillForm(forms.ModelForm):
@@ -18,3 +18,4 @@ class AssignSkillForm(forms.ModelForm):
         widgets = {
             'proficiency_level': forms.TextInput(attrs={'placeholder': 'e.g., Beginner / Intermediate / Expert'})
         }
+

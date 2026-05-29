@@ -1,5 +1,5 @@
 from django.db import models
-from trainers.models import Trainer
+from pravaah.trainers.models import Trainer
 
 
 class Certification(models.Model):
@@ -25,3 +25,4 @@ class Certification(models.Model):
 
     def __str__(self):
         return f"{self.certification_name} ({self.trainer})"
+

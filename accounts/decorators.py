@@ -21,7 +21,7 @@ def trainer_required(view_func):
         except Exception:
             has_profile = False
         if not has_profile:
-            from trainers.models import Trainer
+            from pravaah.trainers.models import Trainer
             if user.email and Trainer.objects.filter(email__iexact=user.email).exists():
                 has_profile = True
         if not has_profile:
@@ -29,3 +29,4 @@ def trainer_required(view_func):
             return redirect('dashboard:home')
         return view_func(request, *args, **kwargs)
     return _wrapped
+

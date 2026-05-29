@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from .models import Skill, TrainerSkill
-from trainers.models import Trainer
+from pravaah.trainers.models import Trainer
 from django.contrib.auth.decorators import login_required
 from .forms import SkillForm, AssignSkillForm
 
@@ -33,3 +33,4 @@ def assign_skill(request):
     else:
         form = AssignSkillForm()
     return render(request, 'skills/assign_skill.html', {'form': form})
+

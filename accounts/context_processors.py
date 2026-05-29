@@ -14,6 +14,7 @@ def role_flags(request):
             is_trainer = False
         if not is_trainer and getattr(user, 'email', None):
             # import here to avoid startup import issues
-            from trainers.models import Trainer
+            from pravaah.trainers.models import Trainer
             is_trainer = Trainer.objects.filter(email__iexact=user.email).exists()
     return {'is_admin': is_admin, 'is_trainer': is_trainer}
+

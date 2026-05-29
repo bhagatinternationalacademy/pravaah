@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Calendar Pro UI</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 250px;
+    background: #f8f9fa;
+    padding: 20px;
+    border-right: 1px solid #ddd;
+}
+
+.sidebar h2 { color: #4285f4; }
+
+.add-btn {
+    background: #4285f4;
+    color: white;
+    padding: 10px;
+    border: none;
+    width: 100%;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* MAIN */
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* HEADER */
+.topbar {
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* USER INFO */
+.user-info {
+    display: flex;
+    gap: 15px;
+    font-size: 14px;
+}
+
+/* CALENDAR */
+.calendar {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-auto-rows: 100px;
+}
+
+.day {
+    border: 1px solid #eee;
+    padding: 5px;
+}
+
+.event {
+    background: #4285f4;
+    color: white;
+    padding: 2px 5px;
+    margin-top: 3px;
+    border-radius: 3px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+/* 🔥 COLOR EVENTS */
+.event.success { background: #22c55e; }
+.event.fail { background: #ef4444; }
+
+/* POPUP */
+.popup {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+}
+
+.popup-box {
+    background: white;
+    width: 300px;
+    margin: 100px auto;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.msg-success { color: green; }
+.msg-error { color: red; }
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h2>Calendar</h2>
+
+    <form method="POST" action="{% url 'calendar_legacy_view' %}">
+        {% csrf_token %}
+        <input type="text" name="title" placeholder="Event" required><br><br>
+        <input type="date" name="date" required><br><br>
+        <button class="add-btn">Add Event</button>
+    </form>
+
+    <br>
+    <a href="/auth/logout/">Logout</a>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+    <div class="topbar">
+        <button onclick="prevMonth()">⬅</button>
+        <h2 id="monthYear"></h2>
+        <button onclick="nextMonth()">➡</button>
+
+        <!-- USER -->
+        <div class="user-info">
+            <span>👤 {{ request.user.username }}</span>
+            <span>🕒 <span id="time"></span></span>
+        </div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div style="padding:10px;">
+        {% if messages %}
+            {% for message in messages %}
+                <p class="{% if message.tags == 'error' %}msg-error{% else %}msg-success{% endif %}">
+                    {{ message }}
+                </p>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="calendar" id="calendar"></div>
+
+</div>
+
+<!-- POPUP -->
+<div id="popup" class="popup">
+    <div class="popup-box">
+        <h3>Edit Event</h3>
+
+        <input type="hidden" id="editId">
+        <input type="text" id="editTitle"><br><br>
+        <input type="date" id="editDate"><br><br>
+
+        <button onclick="updateEvent()">Update</button>
+        <button onclick="deleteEvent()">Delete</button>
+        <button onclick="closePopup()">Cancel</button>
+    </div>
+</div>
+
+<!-- JSON -->
+{{ events|json_script:"events-data" }}
+
+<script>
+let events = JSON.parse(document.getElementById("events-data").textContent);
+let currentDate = new Date();
+
+/* 🔥 LIVE TIME */
+function updateTime(){
+    document.getElementById("time").innerText = new Date().toLocaleTimeString();
+}
+setInterval(updateTime, 1000);
+updateTime();
+
+/* CALENDAR */
+function renderCalendar() {
+
+    let calendar = document.getElementById("calendar");
+    let monthYear = document.getElementById("monthYear");
+
+    let year = currentDate.getFullYear();
+    let month = currentDate.getMonth();
+
+    let firstDay = new Date(year, month, 1).getDay();
+    let lastDate = new Date(year, month+1, 0).getDate();
+
+    let months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    monthYear.innerText = months[month] + " " + year;
+
+    calendar.innerHTML = "";
+
+    for(let i=0;i<firstDay;i++){
+        calendar.innerHTML += `<div class="day"></div>`;
+    }
+
+    for(let d=1; d<=lastDate; d++){
+
+        let fullDate = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        let dayEvents = events.filter(e => e.date === fullDate);
+
+        let eventHtml = "";
+
+        dayEvents.forEach(e=>{
+
+            let safeTitle = e.title.replace(/"/g, '&quot;');
+
+            // 🔥 COLOR BASED ON TYPE
+            let cls = "event";
+            if(e.title.toLowerCase().includes("success")) cls += " success";
+            if(e.title.toLowerCase().includes("failed")) cls += " fail";
+
+            eventHtml += `
+                <div class="${cls}" onclick='openPopup(${e.id}, "${safeTitle}", "${e.date}")'>
+                    ${e.title}<br>
+                    👤 ${e.user_name || ''}<br>
+                    🕒 ${e.time || ''}
+                </div>
+            `;
+        });
+
+        calendar.innerHTML += `
+            <div class="day">
+                <b>${d}</b>
+                ${eventHtml}
+            </div>
+        `;
+    }
+}
+
+/* POPUP */
+function openPopup(id, title, date){
+    document.getElementById("popup").style.display="block";
+    document.getElementById("editId").value=id;
+    document.getElementById("editTitle").value=title;
+    document.getElementById("editDate").value=date;
+}
+
+/* POPUP CLOSE */
+function closePopup(){
+    document.getElementById("popup").style.display="none";
+}
+
+/* UPDATE */
+function updateEvent(){
+    let id=document.getElementById("editId").value;
+    let title=document.getElementById("editTitle").value;
+    let date=document.getElementById("editDate").value;
+
+    fetch(`/commonservices/calendar/view/update/${id}/`,{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/x-www-form-urlencoded",
+            "X-CSRFToken": getCSRF()
+        },
+        body:`title=${encodeURIComponent(title)}&date=${date}`
+    }).then(()=>location.reload());
+}
+
+/* DELETE */
+function deleteEvent(){
+    let id=document.getElementById("editId").value;
+
+    fetch(`/commonservices/calendar/view/delete/${id}/`,{
+        method:"POST",
+        headers:{
+            "X-CSRFToken": getCSRF()
+        }
+    }).then(()=>location.reload());
+}
+
+/* CSRF SAFE */
+function getCSRF() {
+    let cookies = document.cookie.split(';');
+    for (let c of cookies) {
+        c = c.trim();
+        if (c.startsWith('csrftoken=')) {
+            return c.substring('csrftoken='.length);
+        }
+    }
+    return "";
+}
+
+/* NAV */
+function prevMonth(){
+    currentDate.setMonth(currentDate.getMonth()-1);
+    renderCalendar();
+}
+
+function nextMonth(){
+    currentDate.setMonth(currentDate.getMonth()+1);
+    renderCalendar();
+}
+
+renderCalendar();
+</script>
+
+</body>
+</html>

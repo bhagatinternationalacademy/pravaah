@@ -1,358 +1,786 @@
 {% extends 'hostelmgmt/base.html' %}
-
 {% block title %}Complaints{% endblock %}
-{% block page_title %}Complaints{% endblock %}
+{% block breadcrumb %}Complaints{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Status colour tokens ── */
+:root {
+  --c-open:       #ef4444;
+  --c-open-lt:    #fee2e2;
+  --c-inprog:     #3b82f6;
+  --c-inprog-lt:  #dbeafe;
+  --c-resolved:   #22c55e;
+  --c-resolved-lt:#dcfce7;
+  --c-closed:     #94a3b8;
+  --c-closed-lt:  #f1f5f9;
+
+  --p-high:   #ef4444;
+  --p-medium: #f59e0b;
+  --p-low:    #22c55e;
+}
+
+/* ── Complaint card ── */
+.cmp-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--gray-200);
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all .2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+  position: relative;
+}
+.cmp-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(13,40,71,.10);
+  border-color: var(--navy-light);
+}
+.cmp-card-stripe {
+  height: 4px;
+  width: 100%;
+}
+.cmp-card-body { padding: 16px 18px; }
+
+/* status stripes */
+.stripe-open        { background: var(--c-open); }
+.stripe-in_progress { background: var(--c-inprog); }
+.stripe-resolved    { background: var(--c-resolved); }
+.stripe-closed      { background: var(--c-closed); }
+
+/* status badges */
+.cmp-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; letter-spacing: .02em;
+}
+.badge-open        { background: var(--c-open-lt);     color: var(--c-open); }
+.badge-in_progress { background: var(--c-inprog-lt);   color: var(--c-inprog); }
+.badge-resolved    { background: var(--c-resolved-lt); color: #16a34a; }
+.badge-closed      { background: var(--c-closed-lt);   color: var(--c-closed); }
+
+/* priority dots */
+.prio-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.prio-high   { background: var(--p-high); }
+.prio-medium { background: var(--p-medium); }
+.prio-low    { background: var(--p-low); }
+
+/* ── Filter tabs ── */
+.cmp-filter-tab {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--gray-200);
+  background: #fff;
+  font-size: 12px; font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  color: var(--gray-600);
+}
+.cmp-filter-tab.active,
+.cmp-filter-tab:hover { border-color: var(--navy); background: var(--navy); color: #fff; }
+
+/* ── Detail modal ── */
+.cmp-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(13,40,71,.45);
+  backdrop-filter: blur(3px);
+  z-index: 1050;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s ease;
+}
+.cmp-modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.cmp-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 760px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 48px);
+  display: flex; flex-direction: column;
+  box-shadow: 0 24px 60px rgba(0,0,0,.18);
+  transform: scale(.96) translateY(8px);
+  transition: transform .2s ease;
+  overflow: hidden;
+}
+.cmp-modal-overlay.open .cmp-modal { transform: scale(1) translateY(0); }
+
+.cmp-modal-header {
+  background: var(--navy);
+  padding: 18px 22px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.cmp-modal-header h3 { color: #fff; font-size: 16px; font-weight: 700; margin: 0; }
+
+.cmp-modal-body {
+  overflow-y: auto;
+  padding: 24px;
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media(max-width:600px){ .cmp-modal-body { grid-template-columns: 1fr; } }
+
+.cmp-modal-footer {
+  padding: 14px 22px;
+  border-top: 1px solid var(--gray-100);
+  flex-shrink: 0;
+  background: var(--gray-50);
+}
+
+/* info rows */
+.cmp-info-row {
+  display: flex; flex-direction: column; gap: 2px; margin-bottom: 14px;
+}
+.cmp-info-label {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--gray-400); font-weight: 700;
+}
+.cmp-info-value {
+  font-size: 13.5px; color: var(--gray-800); font-weight: 500; line-height: 1.5;
+}
+
+/* timeline */
+.cmp-timeline { list-style: none; padding: 0; margin: 0; }
+.cmp-timeline li {
+  display: flex; gap: 10px;
+  padding-bottom: 14px;
+  position: relative;
+}
+.cmp-timeline li::before {
+  content: '';
+  position: absolute; left: 11px; top: 22px;
+  width: 2px; bottom: 0;
+  background: var(--gray-200);
+}
+.cmp-timeline li:last-child::before { display: none; }
+.cmp-tl-dot {
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; flex-shrink: 0; margin-top: 2px;
+}
+.cmp-tl-text { font-size: 12px; color: var(--gray-600); line-height: 1.5; }
+.cmp-tl-time { font-size: 11px; color: var(--gray-400); }
+
+/* admin form */
+.cmp-admin-panel {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 10px;
+  padding: 16px;
+}
+.cmp-admin-panel h5 {
+  font-size: 12px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--navy); font-weight: 700; margin-bottom: 12px;
+}
+
+/* status select – coloured */
+.status-select {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--gray-200);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%2394a3b8' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+}
+.status-select:focus { outline: none; border-color: var(--navy); }
+.status-select[data-val="open"]        { color: var(--c-open);    background-color: var(--c-open-lt); border-color: var(--c-open); }
+.status-select[data-val="in_progress"] { color: var(--c-inprog);  background-color: var(--c-inprog-lt); border-color: var(--c-inprog); }
+.status-select[data-val="resolved"]    { color: #16a34a;           background-color: var(--c-resolved-lt); border-color: var(--c-resolved); }
+.status-select[data-val="closed"]      { color: var(--c-closed);  background-color: var(--c-closed-lt); border-color: var(--c-closed); }
+
+/* ── empty state ── */
+.cmp-empty {
+  text-align: center; padding: 48px 20px;
+  color: var(--gray-400);
+}
+
+/* ── save spinner ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { animation: spin .7s linear infinite; display: inline-block; }
+</style>
+{% endblock %}
+
 
 {% block content %}
-
-<div class="page-header" style="background:linear-gradient(135deg,#43e97b,#38f9d7);">
-    <div class="d-flex align-items-center justify-content-between">
-        <div>
-            <h4 class="mb-1">
-                <i class="fas fa-exclamation-circle me-2"></i>
-                Complaints
-            </h4>
-            <p class="mb-0 opacity-75">
-                Submit and track hostel complaints
-            </p>
-        </div>
-
-        <div class="d-flex gap-2">
-            <span class="badge bg-white text-success px-3 py-2 fw-semibold">
-                {{ complaint_list.count }} Total
-            </span>
-        </div>
-    </div>
+<div class="prv-page-header">
+  <div>
+    <h1>Complaints</h1>
+    <p>Submit, track and resolve hostel complaints</p>
+  </div>
 </div>
 
-<!-- Stats Row -->
-<div class="row g-3 mb-4">
-
-    <div class="col-md-4">
-        <div class="stat-card d-flex align-items-center gap-3">
-
-            <div style="background:#fee2e2;border-radius:12px;padding:14px;">
-                <i class="fas fa-exclamation-triangle fa-lg text-danger"></i>
-            </div>
-
-            <div>
-                <h4 class="mb-0 fw-bold text-danger">
-                    {{ open_count }}
-                </h4>
-                <small class="text-muted">Open Complaints</small>
-            </div>
-
-        </div>
+<!-- ── STAT CARDS ── -->
+<div class="row g-3 mb-4" id="statCards">
+  <div class="col-6 col-md-3">
+    <div class="prv-stat" style="--stat-accent:#ef4444">
+      <div class="prv-stat-icon"><i class="bi bi-exclamation-circle"></i></div>
+      <div class="prv-stat-label">Open</div>
+      <div class="prv-stat-value" id="sc-open">{{ open_count }}</div>
+      <div class="prv-stat-sub">Needs action</div>
     </div>
-
-    <div class="col-md-4">
-        <div class="stat-card d-flex align-items-center gap-3">
-
-            <div style="background:#fef3c7;border-radius:12px;padding:14px;">
-                <i class="fas fa-spinner fa-lg text-warning"></i>
-            </div>
-
-            <div>
-                <h4 class="mb-0 fw-bold text-warning">
-                    {{ inprogress_count }}
-                </h4>
-                <small class="text-muted">In Progress</small>
-            </div>
-
-        </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="prv-stat" style="--stat-accent:#3b82f6">
+      <div class="prv-stat-icon"><i class="bi bi-gear-wide-connected"></i></div>
+      <div class="prv-stat-label">In Progress</div>
+      <div class="prv-stat-value" id="sc-inprogress">{{ inprogress_count }}</div>
+      <div class="prv-stat-sub">Being handled</div>
     </div>
-
-    <div class="col-md-4">
-        <div class="stat-card d-flex align-items-center gap-3">
-
-            <div style="background:#d1fae5;border-radius:12px;padding:14px;">
-                <i class="fas fa-check-circle fa-lg text-success"></i>
-            </div>
-
-            <div>
-                <h4 class="mb-0 fw-bold text-success">
-                    {{ resolved_count }}
-                </h4>
-                <small class="text-muted">Resolved</small>
-            </div>
-
-        </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="prv-stat" style="--stat-accent:#22c55e">
+      <div class="prv-stat-icon"><i class="bi bi-check-circle"></i></div>
+      <div class="prv-stat-label">Resolved</div>
+      <div class="prv-stat-value" id="sc-resolved">{{ resolved_count }}</div>
+      <div class="prv-stat-sub">Fixed &amp; closed</div>
     </div>
-
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="prv-stat" style="--stat-accent:#94a3b8">
+      <div class="prv-stat-icon"><i class="bi bi-x-circle"></i></div>
+      <div class="prv-stat-label">Closed</div>
+      <div class="prv-stat-value" id="sc-closed">{{ closed_count }}</div>
+      <div class="prv-stat-sub">Won't fix / dup.</div>
+    </div>
+  </div>
 </div>
 
-<div class="row g-4">
+<div class="row g-3">
 
-    <!-- Complaint Form -->
-    <div class="col-lg-5">
+  <!-- ── LEFT: SUBMIT FORM ── -->
+  <div class="col-lg-4">
+    <div class="prv-card" style="position:sticky;top:80px">
+      <div class="prv-card-header" style="background:var(--navy);border-radius:12px 12px 0 0">
+        <span style="color:#fff">
+          <span style="width:28px;height:28px;background:var(--emerald);border-radius:8px;
+                       display:inline-flex;align-items:center;justify-content:center;margin-right:8px">
+            <i class="bi bi-plus" style="color:var(--navy);font-weight:700"></i>
+          </span>
+          Submit New Complaint
+        </span>
+      </div>
+      <div class="prv-card-body">
+        <form method="post" id="complaintForm">
+          {% csrf_token %}
 
-        <div class="form-card h-100">
+          <div class="prv-form-group">
+            <label class="prv-label"><i class="bi bi-person-badge me-1" style="color:var(--emerald)"></i> Student ID <span style="color:red">*</span></label>
+            <input name="student_id" class="prv-input" placeholder="Your Student ID" required>
+          </div>
 
-            <div class="d-flex align-items-center gap-2 mb-4">
-                <div style="background:linear-gradient(135deg,#43e97b,#38f9d7);border-radius:10px;padding:10px 14px;">
-                    <i class="fas fa-plus text-white"></i>
+          <div class="prv-form-group">
+            <label class="prv-label"><i class="bi bi-person me-1" style="color:var(--emerald)"></i> Student Name <span style="color:red">*</span></label>
+            <input name="student_name" class="prv-input" placeholder="Your full name" required>
+          </div>
+
+          <div class="prv-form-group">
+            <label class="prv-label"><i class="bi bi-door-closed me-1" style="color:var(--emerald)"></i> Room Number <span style="color:red">*</span></label>
+            <select name="room_id" class="prv-select" required>
+              <option value="">-- Select Your Room --</option>
+              {% for r in rooms %}
+              <option value="{{ r.room_id }}">Room {{ r.room_number }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="prv-form-group">
+            <label class="prv-label"><i class="bi bi-tag me-1" style="color:var(--emerald)"></i> Complaint Type <span style="color:red">*</span></label>
+            <select name="complaint_type" class="prv-select" required>
+              <option value="">-- Select Type --</option>
+              <option value="plumbing">Plumbing</option>
+              <option value="electrical">Electrical</option>
+              <option value="wifi">Wi-Fi / Network</option>
+              <option value="cleaning">Cleaning</option>
+              <option value="furniture">Furniture</option>
+              <option value="pest">Pest Control</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="prv-form-group">
+            <label class="prv-label"><i class="bi bi-flag me-1" style="color:var(--emerald)"></i> Priority</label>
+            <div style="display:flex;gap:8px;margin-top:4px">
+              {% for val,lbl in complaint.PRIORITY_CHOICES|default:"" %}{% endfor %}
+              <label style="flex:1;cursor:pointer">
+                <input type="radio" name="priority" value="low" style="display:none" class="prio-radio">
+                <div class="prio-btn" data-prio="low">
+                  <span class="prio-dot prio-low"></span> Low
                 </div>
-
-                <h5 class="fw-semibold mb-0">
-                    Submit New Complaint
-                </h5>
+              </label>
+              <label style="flex:1;cursor:pointer">
+                <input type="radio" name="priority" value="medium" checked style="display:none" class="prio-radio">
+                <div class="prio-btn" data-prio="medium">
+                  <span class="prio-dot prio-medium"></span> Medium
+                </div>
+              </label>
+              <label style="flex:1;cursor:pointer">
+                <input type="radio" name="priority" value="high" style="display:none" class="prio-radio">
+                <div class="prio-btn" data-prio="high">
+                  <span class="prio-dot prio-high"></span> High
+                </div>
+              </label>
             </div>
+          </div>
 
-            <form method="post">
+          <div class="prv-form-group">
+            <label class="prv-label"><i class="bi bi-chat-square-text me-1" style="color:var(--emerald)"></i> Description <span style="color:red">*</span></label>
+            <textarea name="description" class="prv-textarea" rows="4"
+                      placeholder="Describe the issue in detail..." required></textarea>
+          </div>
 
-                {% csrf_token %}
+          <button type="submit" class="prv-btn prv-btn-emerald w-100" style="font-size:14px;padding:11px">
+            <i class="bi bi-send me-2"></i>Submit Complaint
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
 
-                <!-- Student ID -->
-                <div class="mb-3">
+  <!-- ── RIGHT: COMPLAINTS LIST ── -->
+  <div class="col-lg-8">
 
-                    <label class="form-label fw-500">
-                        <i class="fas fa-id-badge me-1 text-primary"></i>
-                        Student ID *
-                    </label>
-
-                    <input
-                        type="text"
-                        name="student_id"
-                        class="form-control"
-                        placeholder="Your Student ID"
-                        required
-                        value="{{ form.student_id.value|default:'' }}"
-                    >
-
-                    {% if form.student_id.errors %}
-                        <small class="text-danger">
-                            {{ form.student_id.errors }}
-                        </small>
-                    {% endif %}
-
-                </div>
-
-                <!-- Room -->
-                <div class="mb-3">
-
-                    <label class="form-label fw-500">
-                        <i class="fas fa-door-open me-1 text-primary"></i>
-                        Room Number *
-                    </label>
-
-                    <select name="room" class="form-select" required>
-
-                        <option value="">
-                            -- Select Your Room --
-                        </option>
-
-                        {% for room in all_rooms %}
-
-                            <option value="{{ room.room_id }}">
-                                Room {{ room.room_number }}
-                            </option>
-
-                        {% endfor %}
-
-                    </select>
-
-                    {% if form.room.errors %}
-                        <small class="text-danger">
-                            {{ form.room.errors }}
-                        </small>
-                    {% endif %}
-
-                </div>
-
-                <!-- Complaint Type -->
-                <div class="mb-3">
-
-                    <label class="form-label fw-500">
-                        <i class="fas fa-tag me-1 text-warning"></i>
-                        Complaint Type *
-                    </label>
-
-                    <select name="complaint_type" class="form-select" required>
-
-                        <option value="">-- Select Type --</option>
-
-                        <option value="electrical">
-                            ⚡ Electrical
-                        </option>
-
-                        <option value="plumbing">
-                            🔧 Plumbing
-                        </option>
-
-                        <option value="furniture">
-                            🪑 Furniture
-                        </option>
-
-                        <option value="cleanliness">
-                            🧹 Cleanliness
-                        </option>
-
-                        <option value="other">
-                            📝 Other
-                        </option>
-
-                    </select>
-
-                    {% if form.complaint_type.errors %}
-                        <small class="text-danger">
-                            {{ form.complaint_type.errors }}
-                        </small>
-                    {% endif %}
-
-                </div>
-
-                <!-- Description -->
-                <div class="mb-4">
-
-                    <label class="form-label fw-500">
-                        <i class="fas fa-comment-dots me-1 text-info"></i>
-                        Description *
-                    </label>
-
-                    <textarea
-                        name="description"
-                        class="form-control"
-                        rows="4"
-                        placeholder="Describe the issue in detail..."
-                        required
-                    >{{ form.description.value|default:'' }}</textarea>
-
-                    {% if form.description.errors %}
-                        <small class="text-danger">
-                            {{ form.description.errors }}
-                        </small>
-                    {% endif %}
-
-                </div>
-
-                <!-- Submit Button -->
-                <button
-                    type="submit"
-                    class="btn w-100 py-3 fw-semibold text-white"
-                    style="background:linear-gradient(135deg,#43e97b,#38f9d7);border:none;border-radius:12px;color:#065f46 !important;"
-                >
-                    <i class="fas fa-paper-plane me-2"></i>
-                    Submit Complaint
-                </button>
-
-            </form>
-
-        </div>
-
+    <!-- Filter bar -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="cmp-filter-tab active" data-filter="all">All ({{ total_count }})</button>
+        <button class="cmp-filter-tab" data-filter="open">Open ({{ open_count }})</button>
+        <button class="cmp-filter-tab" data-filter="in_progress">In Progress ({{ inprogress_count }})</button>
+        <button class="cmp-filter-tab" data-filter="resolved">Resolved ({{ resolved_count }})</button>
+        <button class="cmp-filter-tab" data-filter="closed">Closed ({{ closed_count }})</button>
+      </div>
+      <div style="position:relative">
+        <i class="bi bi-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--gray-400);font-size:13px"></i>
+        <input class="prv-input" style="padding-left:32px;width:180px" placeholder="Search…" id="cmpSearch" oninput="filterSearch(this.value)">
+      </div>
     </div>
 
-    <!-- Complaints List -->
-    <div class="col-lg-7">
+    <!-- List -->
+    <div id="cmpList">
+      {% for c in complaint_list %}
+      <div class="cmp-card mb-2" data-status="{{ c.status }}" data-id="{{ c.pk }}"
+           data-search="{{ c.student_name|lower }} {{ c.student_id|lower }} {{ c.room }} {{ c.get_complaint_type_display|lower }}"
+           onclick="openDetail({{ c.pk }})">
+        <div class="cmp-card-stripe stripe-{{ c.status }}"></div>
+        <div class="cmp-card-body">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px">
+                <span style="font-family:var(--mono);font-size:11px;background:rgba(13,40,71,.07);
+                             color:var(--navy);padding:2px 8px;border-radius:4px;font-weight:700">
+                  CMP-{{ c.pk|stringformat:"04d" }}
+                </span>
+                {% if c.student_id %}
+                <span style="font-family:var(--mono);font-size:11px;background:#e0f2fe;
+                             color:#0369a1;padding:2px 8px;border-radius:4px;font-weight:600">
+                  {{ c.student_id }}
+                </span>
+                {% endif %}
+                <span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;
+                  {% if c.complaint_type == 'plumbing' %}background:#dbeafe;color:#1d4ed8
+                  {% elif c.complaint_type == 'electrical' %}background:#fef9c3;color:#854d0e
+                  {% elif c.complaint_type == 'wifi' %}background:#f0fdf4;color:#15803d
+                  {% elif c.complaint_type == 'cleaning' %}background:#fce7f3;color:#9d174d
+                  {% elif c.complaint_type == 'furniture' %}background:#fef3c7;color:#92400e
+                  {% elif c.complaint_type == 'pest' %}background:#fee2e2;color:#991b1b
+                  {% else %}background:var(--gray-100);color:var(--gray-600){% endif %}">
+                  {{ c.get_complaint_type_display }}
+                </span>
+                <!-- priority dot -->
+                <span title="{{ c.get_priority_display }} priority">
+                  <span class="prio-dot prio-{{ c.priority }}" style="display:inline-block"></span>
+                </span>
+              </div>
 
-        <div class="form-card h-100">
+              <div style="font-weight:600;font-size:14px;color:var(--navy);margin-bottom:3px">
+                {{ c.student_name }}
+                {% if c.room %}<span style="font-weight:400;color:var(--gray-400);font-size:13px"> · {{ c.room }}</span>{% endif %}
+              </div>
 
-            <div class="d-flex align-items-center gap-2 mb-4">
+              <div style="font-size:12.5px;color:var(--gray-600);
+                          overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:380px">
+                {{ c.description }}
+              </div>
 
-                <div style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:10px;padding:10px 14px;">
-                    <i class="fas fa-list text-white"></i>
-                </div>
-
-                <h5 class="fw-semibold mb-0">
-                    Recent Complaints
-                </h5>
-
+              <div style="margin-top:7px;font-size:11px;color:var(--gray-400);display:flex;gap:14px;flex-wrap:wrap">
+                <span><i class="bi bi-calendar3 me-1"></i>{{ c.created_at|date:"d M Y" }}</span>
+                {% if c.assigned_to %}
+                <span><i class="bi bi-person-gear me-1"></i>{{ c.assigned_to }}</span>
+                {% endif %}
+                <span><i class="bi bi-clock me-1"></i>{{ c.days_open }} day{{ c.days_open|pluralize }}</span>
+              </div>
             </div>
 
-            {% if complaint_list %}
-
-                <div class="d-flex flex-column gap-3">
-
-                    {% for c in complaint_list %}
-
-                        <div
-                            class="p-3 rounded-3"
-                            style="
-                                border-left:4px solid
-                                {% if c.status == 'open' %}
-                                    #ef4444
-                                {% elif c.status == 'in_progress' %}
-                                    #f59e0b
-                                {% else %}
-                                    #10b981
-                                {% endif %};
-                                background:#fafafa;
-                            "
-                        >
-
-                            <div class="d-flex justify-content-between align-items-start">
-
-                                <div>
-
-                                    <div class="d-flex align-items-center gap-2 mb-1">
-
-                                        <span class="badge bg-primary bg-opacity-10 text-primary fw-500">
-                                            {{ c.student_id }}
-                                        </span>
-
-                                        <span class="badge bg-secondary">
-                                            {{ c.get_complaint_type_display }}
-                                        </span>
-
-                                    </div>
-
-                                    <p class="mb-1 fw-500" style="font-size:0.9rem;">
-                                        Room {{ c.room.room_number }}
-                                    </p>
-
-                                    <p class="text-muted mb-0" style="font-size:0.82rem;">
-                                        {{ c.description|truncatechars:80 }}
-                                    </p>
-
-                                </div>
-
-                                <div class="text-end">
-
-                                    {% if c.status == 'open' %}
-                                        <span class="badge bg-danger">Open</span>
-
-                                    {% elif c.status == 'in_progress' %}
-                                        <span class="badge bg-warning text-dark">
-                                            In Progress
-                                        </span>
-
-                                    {% else %}
-                                        <span class="badge bg-success">
-                                            Resolved
-                                        </span>
-                                    {% endif %}
-
-                                    <p class="text-muted mt-1 mb-0" style="font-size:0.75rem;">
-                                        {{ c.complaint_date }}
-                                    </p>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    {% endfor %}
-
-                </div>
-
-            {% else %}
-
-                <div class="text-center py-5">
-
-                    <i class="fas fa-smile fa-3x text-success mb-3"></i>
-
-                    <p class="text-muted">
-                        No complaints submitted yet. Great!
-                    </p>
-
-                </div>
-
-            {% endif %}
-
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">
+              <span class="cmp-badge badge-{{ c.status }}">
+                {% if c.status == 'open' %}<i class="bi bi-circle-fill" style="font-size:7px"></i>
+                {% elif c.status == 'in_progress' %}<i class="bi bi-gear-fill" style="font-size:7px"></i>
+                {% elif c.status == 'resolved' %}<i class="bi bi-check-circle-fill" style="font-size:7px"></i>
+                {% else %}<i class="bi bi-x-circle-fill" style="font-size:7px"></i>{% endif %}
+                {{ c.get_status_display }}
+              </span>
+              <span style="font-size:11px;color:var(--emerald-dk);font-weight:600">
+                Click to view &rsaquo;
+              </span>
+            </div>
+          </div>
         </div>
-
-    </div>
-
+      </div>
+      {% empty %}
+      <div class="cmp-empty">
+        <i class="bi bi-chat-square-text" style="font-size:40px;display:block;margin-bottom:10px;opacity:.3"></i>
+        No complaints yet
+      </div>
+      {% endfor %}
+    </div><!-- /cmpList -->
+  </div>
 </div>
 
+
+<!-- ════════════════════════════════════════════════════════
+     DETAIL MODAL
+════════════════════════════════════════════════════════ -->
+<div class="cmp-modal-overlay" id="cmpOverlay" onclick="closeDetail(event)">
+  <div class="cmp-modal" id="cmpModal">
+
+    <!-- header -->
+    <div class="cmp-modal-header">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-family:var(--mono);font-size:13px;background:var(--emerald);
+                     color:var(--navy);padding:3px 10px;border-radius:6px;font-weight:700"
+              id="md-ref">CMP-0000</span>
+        <h3 id="md-type">Complaint</h3>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="md-status-badge" class="cmp-badge"></span>
+        <button onclick="document.getElementById('cmpOverlay').classList.remove('open')"
+                style="background:rgba(255,255,255,.15);border:none;color:#fff;
+                       width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;
+                       display:flex;align-items:center;justify-content:center">
+          &times;
+        </button>
+      </div>
+    </div>
+
+    <!-- body grid -->
+    <div class="cmp-modal-body" id="md-body">
+      <!-- populated by JS -->
+    </div>
+
+    <!-- footer -->
+    <div class="cmp-modal-footer" id="md-footer">
+      <!-- admin action form populated by JS -->
+    </div>
+
+  </div>
+</div><!-- /overlay -->
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+let currentId = null;
+
+/* ── priority radio styling ── */
+document.querySelectorAll('.prio-radio').forEach(radio => {
+  radio.addEventListener('change', () => refreshPrioBtns());
+});
+function refreshPrioBtns() {
+  document.querySelectorAll('.prio-btn').forEach(btn => {
+    btn.style.cssText = `
+      display:flex;align-items:center;gap:5px;justify-content:center;
+      padding:6px 0;border-radius:8px;border:1.5px solid var(--gray-200);
+      font-size:12px;font-weight:600;color:var(--gray-600);
+      transition:all .15s;`;
+  });
+  const sel = document.querySelector('.prio-radio:checked');
+  if (sel) {
+    const btn = document.querySelector(`.prio-btn[data-prio="${sel.value}"]`);
+    if (btn) {
+      const c = {low:'#22c55e',medium:'#f59e0b',high:'#ef4444'}[sel.value];
+      btn.style.borderColor = c;
+      btn.style.background  = c + '22';
+      btn.style.color       = c;
+    }
+  }
+}
+refreshPrioBtns();
+document.querySelectorAll('.prio-btn').forEach(btn => {
+  btn.style.cssText = `
+    display:flex;align-items:center;gap:5px;justify-content:center;
+    padding:6px 0;border-radius:8px;border:1.5px solid var(--gray-200);
+    font-size:12px;font-weight:600;color:var(--gray-600);transition:all .15s;`;
+});
+
+/* ── filter tabs ── */
+document.querySelectorAll('.cmp-filter-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.cmp-filter-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const f = tab.dataset.filter;
+    document.querySelectorAll('.cmp-card').forEach(card => {
+      card.style.display = (f === 'all' || card.dataset.status === f) ? '' : 'none';
+    });
+  });
+});
+
+/* ── search ── */
+function filterSearch(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('.cmp-card').forEach(card => {
+    const activeFilter = document.querySelector('.cmp-filter-tab.active').dataset.filter;
+    const matchStatus  = activeFilter === 'all' || card.dataset.status === activeFilter;
+    const matchSearch  = card.dataset.search.includes(q);
+    card.style.display = (matchStatus && matchSearch) ? '' : 'none';
+  });
+}
+
+/* ── status select colour sync ── */
+function syncStatusSelect(sel) {
+  sel.dataset.val = sel.value;
+}
+
+/* ── OPEN DETAIL MODAL ── */
+async function openDetail(id) {
+  currentId = id;
+  const overlay = document.getElementById('cmpOverlay');
+  overlay.classList.add('open');
+
+  // Show loading state
+  document.getElementById('md-body').innerHTML = `
+    <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--gray-400)">
+      <i class="bi bi-hourglass-split spinner" style="font-size:28px;display:block;margin-bottom:10px"></i>
+      Loading complaint details…
+    </div>`;
+  document.getElementById('md-footer').innerHTML = '';
+
+  const res  = await fetch(`/hostel/complaints/${id}/detail/`);
+  const data = await res.json();
+  renderModal(data);
+}
+
+/* ── RENDER modal content from JSON ── */
+function renderModal(d) {
+  // Header
+  document.getElementById('md-ref').textContent  = d.ref;
+  document.getElementById('md-type').textContent = d.complaint_type;
+
+  const badgeMap = {
+    open:        ['badge-open',        'Open'],
+    in_progress: ['badge-in_progress', 'In Progress'],
+    resolved:    ['badge-resolved',    'Resolved'],
+    closed:      ['badge-closed',      'Closed'],
+  };
+  const [badgeCls, badgeLbl] = badgeMap[d.status] || ['badge-open','Open'];
+  const badge = document.getElementById('md-status-badge');
+  badge.className = `cmp-badge ${badgeCls}`;
+  badge.textContent = badgeLbl;
+
+  // Priority colour
+  const prioCol = {high:'#ef4444',medium:'#f59e0b',low:'#22c55e'}[d.priority] || '#94a3b8';
+
+  // Timeline (always 3 items: submitted / last update / resolved?)
+  let tlHtml = `
+    <li>
+      <div class="cmp-tl-dot" style="background:#dbeafe;color:#1d4ed8"><i class="bi bi-plus" style="font-size:9px"></i></div>
+      <div><div class="cmp-tl-text">Complaint submitted</div><div class="cmp-tl-time">${d.created_at}</div></div>
+    </li>
+    <li>
+      <div class="cmp-tl-dot" style="background:#fef3c7;color:#92400e"><i class="bi bi-pencil" style="font-size:9px"></i></div>
+      <div><div class="cmp-tl-text">Last updated</div><div class="cmp-tl-time">${d.updated_at}</div></div>
+    </li>`;
+  if (d.resolved_at) {
+    tlHtml += `
+    <li>
+      <div class="cmp-tl-dot" style="background:#dcfce7;color:#15803d"><i class="bi bi-check" style="font-size:9px"></i></div>
+      <div><div class="cmp-tl-text">Resolved / Closed</div><div class="cmp-tl-time">${d.resolved_at}</div></div>
+    </li>`;
+  }
+
+  // Body (2-column grid)
+  document.getElementById('md-body').innerHTML = `
+    <!-- LEFT COLUMN: complaint info -->
+    <div>
+      <div class="cmp-info-row">
+        <span class="cmp-info-label">Student</span>
+        <span class="cmp-info-value" style="font-weight:700">${d.student_name}</span>
+      </div>
+      <div class="cmp-info-row">
+        <span class="cmp-info-label">Student ID</span>
+        <span class="cmp-info-value" style="font-family:var(--mono)">${d.student_id}</span>
+      </div>
+      <div class="cmp-info-row">
+        <span class="cmp-info-label">Room</span>
+        <span class="cmp-info-value">${d.room}</span>
+      </div>
+      <div class="cmp-info-row">
+        <span class="cmp-info-label">Priority</span>
+        <span class="cmp-info-value">
+          <span style="display:inline-flex;align-items:center;gap:5px;
+                       background:${prioCol}22;color:${prioCol};
+                       padding:3px 10px;border-radius:20px;font-weight:700;font-size:12px">
+            <span style="width:7px;height:7px;border-radius:50%;background:${prioCol}"></span>
+            ${d.priority_label}
+          </span>
+        </span>
+      </div>
+      <div class="cmp-info-row">
+        <span class="cmp-info-label">Days Open</span>
+        <span class="cmp-info-value" style="font-family:var(--mono);font-weight:700">${d.days_open} day${d.days_open !== 1 ? 's' : ''}</span>
+      </div>
+
+      <div style="margin-top:4px">
+        <span class="cmp-info-label" style="display:block;margin-bottom:6px">Description</span>
+        <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;
+                    padding:12px;font-size:13px;line-height:1.7;color:var(--gray-700)">
+          ${d.description}
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div style="margin-top:18px">
+        <span class="cmp-info-label" style="display:block;margin-bottom:10px">Activity Timeline</span>
+        <ul class="cmp-timeline">${tlHtml}</ul>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: admin panel -->
+    <div>
+      <div class="cmp-admin-panel">
+        <h5><i class="bi bi-shield-lock me-1"></i> Admin Actions</h5>
+
+        <form id="adminForm" onsubmit="saveStatus(event)">
+
+          <div style="margin-bottom:12px">
+            <label class="prv-label" style="margin-bottom:5px">Update Status</label>
+            <select class="status-select" name="status" data-val="${d.status}"
+                    onchange="syncStatusSelect(this)">
+              <option value="open"        ${d.status==='open'        ? 'selected':''}>Open</option>
+              <option value="in_progress" ${d.status==='in_progress' ? 'selected':''}>In Progress</option>
+              <option value="resolved"    ${d.status==='resolved'    ? 'selected':''}>Resolved</option>
+              <option value="closed"      ${d.status==='closed'      ? 'selected':''}>Closed</option>
+            </select>
+          </div>
+
+          <div style="margin-bottom:12px">
+            <label class="prv-label" style="margin-bottom:5px">Assign To</label>
+            <input name="assigned_to" class="prv-input" placeholder="Staff / warden name"
+                   value="${d.assigned_to}" style="font-size:13px">
+          </div>
+
+          <div style="margin-bottom:14px">
+            <label class="prv-label" style="margin-bottom:5px">Admin Notes / Action Taken</label>
+            <textarea name="admin_notes" class="prv-textarea" rows="5"
+                      placeholder="Describe what was done or any remarks…"
+                      style="font-size:13px">${d.admin_notes}</textarea>
+          </div>
+
+          <button type="submit" class="prv-btn prv-btn-primary w-100" id="saveBtn">
+            <i class="bi bi-floppy me-2"></i>Save Changes
+          </button>
+        </form>
+
+        ${d.admin_notes ? `
+        <div style="margin-top:14px;padding:10px 12px;background:var(--gray-100);
+                    border-radius:8px;font-size:12px;color:var(--gray-600);line-height:1.6">
+          <strong>Previous notes:</strong><br>${d.admin_notes}
+        </div>` : ''}
+
+      </div><!-- /admin-panel -->
+    </div>`;
+}
+
+/* ── SAVE STATUS (AJAX) ── */
+async function saveStatus(e) {
+  e.preventDefault();
+  const btn  = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="bi bi-hourglass-split spinner me-2"></i>Saving…';
+
+  const form = document.getElementById('adminForm');
+  const fd   = new FormData(form);
+
+  const res  = await fetch(`/hostel/complaints/${currentId}/update/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF },
+    body: fd,
+  });
+  const data = await res.json();
+
+  if (data.ok) {
+    // ── 1. Update stat cards without reload
+    document.getElementById('sc-open').textContent        = data.open_count;
+    document.getElementById('sc-inprogress').textContent  = data.inprogress_count;
+    document.getElementById('sc-resolved').textContent    = data.resolved_count;
+    document.getElementById('sc-closed').textContent      = data.closed_count;
+
+    // ── 2. Update the card in the list
+    const card = document.querySelector(`.cmp-card[data-id="${currentId}"]`);
+    if (card) {
+      card.dataset.status = data.new_status;
+      // recolour stripe
+      card.querySelector('.cmp-card-stripe').className = `cmp-card-stripe stripe-${data.new_status}`;
+      // recolour badge inside card
+      const badgeEl = card.querySelector('.cmp-badge');
+      if (badgeEl) {
+        badgeEl.className = `cmp-badge badge-${data.new_status}`;
+        badgeEl.textContent = data.status_label;
+      }
+    }
+
+    // ── 3. Update modal header badge
+    const badgeMap = {
+      open:'badge-open',in_progress:'badge-in_progress',
+      resolved:'badge-resolved',closed:'badge-closed'
+    };
+    const badge = document.getElementById('md-status-badge');
+    badge.className = `cmp-badge ${badgeMap[data.new_status]}`;
+    badge.textContent = data.status_label;
+
+    // ── 4. Flash success
+    btn.innerHTML   = '<i class="bi bi-check-lg me-2"></i>Saved!';
+    btn.style.background = 'var(--emerald)';
+    btn.style.color      = 'var(--navy)';
+    setTimeout(() => {
+      btn.disabled   = false;
+      btn.innerHTML  = '<i class="bi bi-floppy me-2"></i>Save Changes';
+      btn.style.background = '';
+      btn.style.color      = '';
+    }, 2000);
+
+  } else {
+    btn.disabled  = false;
+    btn.innerHTML = '<i class="bi bi-floppy me-2"></i>Save Changes';
+    alert('Error saving. Please try again.');
+  }
+}
+
+/* ── CLOSE MODAL ── */
+function closeDetail(e) {
+  if (e.target === document.getElementById('cmpOverlay')) {
+    document.getElementById('cmpOverlay').classList.remove('open');
+  }
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('cmpOverlay').classList.remove('open');
+});
+</script>
+
+<style>
+/* Make sure prio btns look right on load */
+.prio-btn {
+  display:flex;align-items:center;gap:5px;justify-content:center;
+  padding:6px 0;border-radius:8px;border:1.5px solid var(--gray-200);
+  font-size:12px;font-weight:600;color:var(--gray-600);transition:all .15s;
+}
+</style>
 {% endblock %}

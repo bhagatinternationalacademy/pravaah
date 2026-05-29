@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
 
         .room-available { background: #d1fae5; border-color: #6ee7b7 !important; }
@@ -19,6 +20,21 @@
             --accent: #06b6d4;
             --bg: #f0f2ff;
             --sidebar-width: 250px;
+            
+            /* Pravaah Custom Design System Tokens */
+            --navy: #1e1b4b;
+            --navy-light: #312e81;
+            --emerald: #10b981;
+            --emerald-dk: #047857;
+            --emerald-lt: #d1fae5;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-600: #475569;
+            --gray-800: #1e293b;
+            --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); }
 
@@ -127,6 +143,236 @@
             border-radius: 12px;
             margin-bottom: 25px;
         }
+
+        /* ── Pravaah Design System Styles ── */
+        .prv-page-header {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+            padding: 24px 28px;
+            border-radius: 16px;
+            color: #ffffff;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(30, 27, 75, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .prv-page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+        .prv-page-header p {
+            font-size: 0.88rem;
+            color: rgba(255, 255, 255, 0.75);
+            margin: 4px 0 0 0;
+        }
+        .prv-stat {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+            position: relative;
+            transition: all 0.25s ease;
+            border-left: 5px solid var(--stat-accent);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .prv-stat:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+        }
+        .prv-stat-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background-color: var(--stat-accent);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            box-shadow: 0 6px 16px -4px var(--stat-accent);
+        }
+        .prv-stat-label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .prv-stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.2;
+            margin: 4px 0;
+        }
+        .prv-stat-sub {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+        .prv-card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+        .prv-card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f1f5f9;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #1e1b4b;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .prv-card-body {
+            padding: 20px;
+            flex: 1;
+        }
+        .prv-form-group {
+            margin-bottom: 1.25rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .prv-label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 6px;
+            display: inline-flex;
+            align-items: center;
+        }
+        .prv-input, .prv-select, .prv-textarea {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 0.88rem;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            background-color: #f8fafc;
+            color: #0f172a;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+        .prv-input:focus, .prv-select:focus, .prv-textarea:focus {
+            border-color: #4f46e5;
+            background-color: #ffffff;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+        .prv-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            outline: none;
+        }
+        .prv-btn-emerald {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white !important;
+        }
+        .prv-btn-emerald:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+        .prv-btn-primary {
+            background: linear-gradient(135deg, #4f46e5, #4338ca);
+            color: white !important;
+        }
+        .prv-btn-primary:hover {
+            background: linear-gradient(135deg, #4338ca, #3730a3);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+        }
+        .prv-btn-outline {
+            background: transparent;
+            border: 1.5px solid #cbd5e1;
+            color: #475569;
+        }
+        .prv-btn-outline:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+            border-color: #94a3b8;
+        }
+        .prv-btn-sm {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+        .prv-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: left;
+        }
+        .prv-table th {
+            padding: 12px 16px;
+            font-weight: 700;
+            color: #475569;
+            background: #f8fafc;
+            border-bottom: 2px solid #e2e8f0;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+        .prv-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+            vertical-align: middle;
+        }
+        .prv-table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+        .prv-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+        .prv-badge-navy {
+            background-color: #e0e7ff;
+            color: #4338ca;
+        }
+        .prv-badge-blue {
+            background-color: #e0f2fe;
+            color: #0369a1;
+        }
+        .prv-progress {
+            height: 8px;
+            background-color: #f1f5f9;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+        }
+        .prv-progress-bar {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.4s ease;
+        }
+
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -153,9 +399,6 @@
         </a>
         <a href="{% url 'hostelmgmt:complaints' %}" class="nav-link {% if request.resolver_match.url_name == 'complaints' %}active{% endif %}">
             <i class="fas fa-exclamation-circle"></i> Complaints
-        </a>
-        <a href="{% url 'hostelmgmt:maintenance' %}" class="nav-link {% if request.resolver_match.url_name == 'maintenance' %}active{% endif %}">
-            <i class="fas fa-tools"></i> Maintenance
         </a>
         <a href="{% url 'hostelmgmt:reports' %}" class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
             <i class="fas fa-chart-bar"></i> Reports

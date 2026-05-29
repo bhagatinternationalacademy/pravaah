@@ -4,7 +4,7 @@ from datetime import date, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import JsonResponse
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from django.db.models.functions import Cast
 from django.db.models import IntegerField, Count, Q
 from django.db import transaction
@@ -718,116 +718,278 @@ def security_checkout_bulk(request):
 # VISITORS
 # ═════════════════════════════════════════════════════════════
 
+# def visitors(request):
+#     visitor_list = Visitor.objects.all().order_by('-visitor_id')[:30]
+#     return render(request, 'hostelmgmt/visitors.html', {'visitor_list': visitor_list})
+
+
+# def book_gate_pass(request):
+#     if request.method == 'POST':
+#         form = VisitorForm(request.POST)
+#         if form.is_valid():
+#             form.save()
+#             messages.success(request, 'Gate pass booked successfully.')
+#             return redirect('hostelmgmt:visitors')
+#     else:
+#         form = VisitorForm()
+#     return render(request, 'hostelmgmt/book_gate_pass.html', {'form': form})
+
+# ═════════════════════════════════════════════════════════════
+# VISITORS
+# ═════════════════════════════════════════════════════════════
+
+
 def visitors(request):
-    visitor_list = Visitor.objects.all().order_by('-visitor_id')[:30]
-    return render(request, 'hostelmgmt/visitors.html', {'visitor_list': visitor_list})
+    visitor_list = Visitor.objects.all().order_by('-visitor_id')[:50]
+    return render(request, 'hostelmgmt/visitors.html', {
+        'visitor_list': visitor_list,
+    })
 
 
 def book_gate_pass(request):
+    """
+    Admin fills visitor form → save → generate PDF → email to visitor.
+    PDF is sent to visitor's email only — no download on admin PC.
+    """
     if request.method == 'POST':
         form = VisitorForm(request.POST)
+
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Gate pass booked successfully.')
+            visitor = form.save()
+
+            # ── Step 1: Generate PDF in memory ───────────────────────────
+            pdf_bytes = None
+            try:
+                from .utils.gate_pass_pdf import generate_gate_pass_pdf
+                pdf_bytes = generate_gate_pass_pdf(visitor)
+            except Exception as exc:
+                messages.warning(
+                    request,
+                    f'⚠️  Gate pass saved but PDF generation failed: {exc}'
+                )
+
+            # ── Step 2: Email PDF to visitor (no browser download) ────────
+            if pdf_bytes:
+                email_address = (visitor.visitor_email or '').strip()
+                if email_address:
+                    try:
+                        from django.core.mail import EmailMessage
+                        from django.conf import settings as django_settings
+
+                        gate_pass_id = visitor.gate_pass_id()
+                        filename     = f'GatePass_{gate_pass_id}.pdf'
+
+                        email = EmailMessage(
+                            subject=f'Your Hostel Visitor Gate Pass — {gate_pass_id}',
+                            body=(
+                                f'Dear {visitor.visitor_name},\n\n'
+                                f'Your gate pass has been approved.\n'
+                                f'Gate Pass ID : {gate_pass_id}\n\n'
+                                f'Please find your gate pass attached.\n\n'
+                                f'Important:\n'
+                                f'  • Carry a valid photo ID (Aadhaar / PAN / Passport).\n'
+                                f'  • This pass is valid only for the specified date and time.\n'
+                                f'  • Report at the security desk on arrival.\n'
+                                f'  • Visiting hours: 9:00 AM - 8:00 PM only.\n\n'
+                                f'Regards,\n'
+                                f'Hostel Administration\n'
+                                f'PRAVAAH Integrated Management Suite'
+                            ),
+                            from_email=getattr(
+                                django_settings, 'DEFAULT_FROM_EMAIL', 'admin@pravaah.com'
+                            ),
+                            to=[email_address],
+                        )
+                        email.attach(filename, pdf_bytes, 'application/pdf')
+                        email.send(fail_silently=False)
+
+                        messages.success(
+                            request,
+                            f'✅ Gate pass created and emailed to {email_address}.'
+                        )
+                    except Exception as exc:
+                        messages.warning(
+                            request,
+                            f'✅ Gate pass saved but email could not be sent: {exc}'
+                        )
+                else:
+                    messages.warning(
+                        request,
+                        '✅ Gate pass saved. No email sent — visitor email not provided.'
+                    )
+
             return redirect('hostelmgmt:visitors')
+
+        else:
+            messages.error(request, '❌ Please fix the errors below.')
+
     else:
         form = VisitorForm()
+
     return render(request, 'hostelmgmt/book_gate_pass.html', {'form': form})
 
 
-# ═════════════════════════════════════════════════════════════
-# COMPLAINTS
-# ═════════════════════════════════════════════════════════════
-
+# ─────────────────────────────────────────────────────────────
+#  COMPLAINTS  (main page)
+# ─────────────────────────────────────────────────────────────
 def complaints(request):
+    """
+    GET  → render the complaints page
+    POST → submit a new complaint
+    """
     if request.method == 'POST':
-        form = ComplaintForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Complaint submitted.')
-            return redirect('hostelmgmt:complaints')
-    else:
-        form = ComplaintForm()
-    complaint_list = (
-        Complaint.objects.all().select_related('room').order_by('-complaint_id')[:30]
-    )
-    return render(request, 'hostelmgmt/complaints.html', {
-        'form':             form,
-        'all_rooms':        Room.objects.all(),
+        room_id = request.POST.get('room_id')
+        room    = Room.objects.filter(pk=room_id).first() if room_id else None
+ 
+        Complaint.objects.create(
+            student_id     = request.POST.get('student_id', '').strip() or None,
+            student_name   = request.POST.get('student_name', '').strip() or 'Unknown',
+            room           = room,
+            complaint_type = request.POST['complaint_type'],
+            description    = request.POST['description'],
+            priority       = request.POST.get('priority', 'medium'),
+        )
+        messages.success(request, 'Complaint submitted successfully.')
+        return redirect('hostelmgmt:complaints')
+ 
+    complaint_list = Complaint.objects.select_related('room').all()
+ 
+    ctx = {
         'complaint_list':   complaint_list,
-        'open_count':       Complaint.objects.filter(status='open').count(),
-        'inprogress_count': Complaint.objects.filter(status='in_progress').count(),
-        'resolved_count':   Complaint.objects.filter(status='resolved').count(),
+        'rooms':            Room.objects.all(),
+        # ── counts for stat cards ──
+        'open_count':       complaint_list.filter(status='open').count(),
+        'inprogress_count': complaint_list.filter(status='in_progress').count(),
+        'resolved_count':   complaint_list.filter(status='resolved').count(),
+        'closed_count':     complaint_list.filter(status='closed').count(),
+        'total_count':      complaint_list.count(),
+    }
+    return render(request, 'hostelmgmt/complaints.html', ctx)
+ 
+ 
+# ─────────────────────────────────────────────────────────────
+#  COMPLAINT DETAIL  (AJAX – returns JSON for the modal)
+# ─────────────────────────────────────────────────────────────
+@require_GET
+def complaint_detail(request, complaint_id):
+    """
+    Called by the JS on the complaints page when the admin clicks a card.
+    Returns full complaint data as JSON so the modal can be populated.
+    """
+    c = get_object_or_404(Complaint, pk=complaint_id)
+    return JsonResponse({
+        'id':             c.pk,
+        'ref':            f'CMP-{c.pk:04d}',
+        'student_name':   c.student_name,
+        'student_id':     c.student_id or '—',
+        'room':           str(c.room) if c.room else '—',
+        'complaint_type': c.get_complaint_type_display(),
+        'description':    c.description,
+        'priority':       c.priority,
+        'priority_label': c.get_priority_display(),
+        'status':         c.status,
+        'status_label':   c.get_status_display(),
+        'admin_notes':    c.admin_notes or '',
+        'assigned_to':    c.assigned_to or '',
+        'created_at':     c.created_at.strftime('%d %b %Y, %I:%M %p'),
+        'updated_at':     c.updated_at.strftime('%d %b %Y, %I:%M %p'),
+        'resolved_at':    c.resolved_at.strftime('%d %b %Y, %I:%M %p') if c.resolved_at else None,
+        'days_open':      c.days_open,
     })
-
-
-# ═════════════════════════════════════════════════════════════
-# MAINTENANCE
-# ═════════════════════════════════════════════════════════════
-
-def maintenance(request):
-    rooms = (
-        Room.objects.all()
-        .annotate(room_no_int=Cast('room_number', IntegerField()))
-        .order_by('room_no_int')
-    )
-    maintenance_requests = (
-        MaintenanceRequest.objects.all().select_related('room').order_by('-request_id')[:20]
-    )
-    return render(request, 'hostelmgmt/maintenance.html', {
-        'rooms':               rooms,
-        'total':               rooms.count(),
-        'available':           rooms.filter(status='available').count(),
-        'full':                rooms.filter(status='full').count(),
-        'under_maintenance':   rooms.filter(status='maintenance').count(),
-        'maintenance_requests': maintenance_requests,
+ 
+ 
+# ─────────────────────────────────────────────────────────────
+#  UPDATE COMPLAINT STATUS  (AJAX POST)
+# ─────────────────────────────────────────────────────────────
+@require_POST
+def update_complaint_status(request, complaint_id):
+    """
+    AJAX endpoint called when admin submits the status-change form inside
+    the detail modal.  Returns updated counts so the stat cards refresh
+    without a full page reload.
+    """
+    c = get_object_or_404(Complaint, pk=complaint_id)
+ 
+    new_status  = request.POST.get('status',      c.status)
+    admin_notes = request.POST.get('admin_notes', c.admin_notes or '')
+    assigned_to = request.POST.get('assigned_to', c.assigned_to or '')
+ 
+    c.status      = new_status
+    c.admin_notes = admin_notes
+    c.assigned_to = assigned_to
+    c.save()   # resolved_at is auto-stamped inside model.save()
+ 
+    # Return fresh counts so the UI updates the stat cards without reload
+    all_c = Complaint.objects.all()
+    return JsonResponse({
+        'ok':             True,
+        'new_status':     c.status,
+        'status_label':   c.get_status_display(),
+        'resolved_at':    c.resolved_at.strftime('%d %b %Y, %I:%M %p') if c.resolved_at else None,
+        'updated_at':     c.updated_at.strftime('%d %b %Y, %I:%M %p'),
+        'open_count':       all_c.filter(status='open').count(),
+        'inprogress_count': all_c.filter(status='in_progress').count(),
+        'resolved_count':   all_c.filter(status='resolved').count(),
+        'closed_count':     all_c.filter(status='closed').count(),
+        'total_count':      all_c.count(),
     })
-
-
-# ═════════════════════════════════════════════════════════════
-# REPORTS  (updated to include checkout stats)
-# ═════════════════════════════════════════════════════════════
-
+ 
+ 
+# ─────────────────────────────────────────────────────────────
+#  REPORTS  (updated to include complaint breakdown)
+# ─────────────────────────────────────────────────────────────
 def reports(request):
-    today        = date.today()
+    from .models import RoomAllocation, WaitingList, Visitor, MaintenanceRequest
+    from django.db.models.functions import Cast
+    from django.db.models import IntegerField, Count
+ 
     allocations  = (
         RoomAllocation.objects.filter(status='active')
-        .select_related('room').order_by('room__room_number')
+        .select_related('room')
+        .order_by('room__room_number')
     )
-    waiting_list = WaitingList.objects.filter(status='waiting').order_by('added_on')
+    waiting_list = WaitingList.objects.all().order_by('added_on')
     room_wise    = (
         Room.objects.all()
         .annotate(room_no_int=Cast('room_number', IntegerField()))
         .order_by('room_no_int')
     )
-
-    # Security checkout stats for the reports page
-    checked_out_all  = RoomAllocation.objects.filter(
-        status='vacated', actual_checkout_time__isnull=False
+    all_complaints = Complaint.objects.select_related('room').all()
+ 
+    # Complaint breakdown by type
+    type_breakdown = (
+        all_complaints.values('complaint_type')
+        .annotate(total=Count('id'))
+        .order_by('-total')
     )
-    checked_out_today = checked_out_all.filter(actual_checkout_time__date=today)
-
-    # Overdue: still active but planned checkout_date already passed
-    overdue_count = RoomAllocation.objects.filter(
-        status='active',
-        actual_checkout_time__isnull=True,
-        checkout_date__lt=today,
-    ).count()
-
-    return render(request, 'hostelmgmt/reports.html', {
-        'total_allocated':      allocations.count(),
-        'total_visitors':       Visitor.objects.count(),
-        'open_complaints':      Complaint.objects.filter(status='open').count(),
-        'resolved_complaints':  Complaint.objects.filter(status='resolved').count(),
-        'available_rooms':      Room.objects.filter(status='available').count(),
-        'full_rooms':           Room.objects.filter(status='full').count(),
-        'waiting_count':        waiting_list.count(),
-        'room_wise':            room_wise,
-        'allocations':          allocations,
-        'waiting_list':         waiting_list,
-        # Checkout stats
-        'total_checked_out':    checked_out_all.count(),
-        'checked_out_today':    checked_out_today.count(),
-        'overdue_count':        overdue_count,
-        'recent_checkouts':     checked_out_all.select_related('room').order_by('-actual_checkout_time')[:20],
-    })
+    # Label the types
+    type_labels = dict(Complaint.TYPE_CHOICES)
+    for row in type_breakdown:
+        row['label'] = type_labels.get(row['complaint_type'], row['complaint_type'])
+ 
+    ctx = {
+        # Room stats
+        'total_allocated':   allocations.count(),
+        'total_visitors':    Visitor.objects.count(),
+        'available_rooms':   Room.objects.filter(status='available').count(),
+        'full_rooms':        Room.objects.filter(status='full').count(),
+        'waiting_count':     waiting_list.count(),
+        'room_wise':         room_wise,
+        'allocations':       allocations,
+        'waiting_list':      waiting_list,
+ 
+        # Complaint stats (live)
+        'total_complaints':      all_complaints.count(),
+        'open_complaints':       all_complaints.filter(status='open').count(),
+        'inprogress_complaints': all_complaints.filter(status='in_progress').count(),
+        'resolved_complaints':   all_complaints.filter(status='resolved').count(),
+        'closed_complaints':     all_complaints.filter(status='closed').count(),
+        'complaint_list':        all_complaints[:50],
+        'type_breakdown':        list(type_breakdown),
+ 
+        # Maintenance stats
+        'mnt_pending':    MaintenanceRequest.objects.filter(status='pending').count(),
+        'mnt_inprogress': MaintenanceRequest.objects.filter(status='in_progress').count(),
+        'mnt_resolved':   MaintenanceRequest.objects.filter(status='resolved').count(),
+    }
+    return render(request, 'hostelmgmt/reports.html', ctx)

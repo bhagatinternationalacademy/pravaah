@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Excel Upload{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card page-card">
+      <div class="card-body">
+        <h2 class="mb-3">Excel Upload</h2>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="mb-3">{{ form.import_type.label_tag }}{{ form.import_type }}</div>
+          <div class="mb-3">{{ form.file.label_tag }}{{ form.file }}</div>
+          <button class="btn btn-primary">Upload</button>
+        </form>
+        {% if result %}
+          <hr>
+          <p class="mb-1">Created: {{ result.created }}</p>
+          <p class="mb-1">Updated: {{ result.updated }}</p>
+          <p class="mb-1">Invalid: {{ result.invalid }}</p>
+          {% if result.errors %}
+            <div class="mt-3">
+              <strong>Errors</strong>
+              <ul class="mb-0">{% for error in result.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+            </div>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

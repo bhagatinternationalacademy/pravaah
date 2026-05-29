@@ -1,0 +1,33 @@
+<nav class="navbar navbar-expand-lg navbar-dark navbar-glass sticky-top">
+  <div class="container-fluid px-3 px-lg-4">
+    <a class="navbar-brand d-flex align-items-center gap-2 fw-semibold" href="{% url 'landing' %}">
+      <span class="brand-mark brand-mark-sm">TM</span>
+      <span>Training Management</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="mainNavbar">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+        <li class="nav-item"><a class="nav-link" href="{% url 'landing' %}">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'programs:list' %}">Programs</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'programs:courses' %}">Courses</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'trainers:list' %}">Trainers</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'batches:list' %}">Batches</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'reports:index' %}">Reports</a></li>
+      </ul>
+      <div class="d-flex align-items-center gap-2">
+        {% if user.is_authenticated %}
+          <a class="btn btn-outline-light btn-sm" href="{% url 'dashboard:index' %}">Dashboard</a>
+          <a class="btn btn-outline-light btn-sm" href="{% url 'attendance:list' %}">Attendance</a>
+          <form method="post" action="{% url 'logout' %}" class="d-inline">
+            {% csrf_token %}
+            <button class="btn btn-light btn-sm fw-semibold" type="submit">Logout</button>
+          </form>
+        {% else %}
+          <a class="btn btn-outline-light btn-sm" href="{% url 'login' %}">Login</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</nav>

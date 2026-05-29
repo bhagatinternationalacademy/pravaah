@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Student Dashboard{% endblock %}
+{% block content %}
+<h2 class="mb-4">Student Dashboard</h2>
+<div class="row g-3 mb-4">
+  <div class="col-md-6"><div class="card page-card"><div class="card-body"><div class="text-muted">Student</div><div class="fs-4 fw-semibold">{{ student.full_name|default:"Student" }}</div></div></div></div>
+  <div class="col-md-3"><div class="card page-card"><div class="card-body"><div class="text-muted">Enrollments</div><div class="fs-4 fw-semibold">{{ enrollments|length }}</div></div></div></div>
+  <div class="col-md-3"><div class="card page-card"><div class="card-body"><div class="text-muted">Certificates</div><div class="fs-4 fw-semibold">{{ certificates|length }}</div></div></div></div>
+</div>
+<div class="card page-card">
+  <div class="card-body">
+    <h5 class="mb-3">Enrolled Batches</h5>
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead><tr><th>Batch</th><th>Program</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for enrollment in enrollments %}
+            <tr>
+              <td>{{ enrollment.batch.batch_name }}</td>
+              <td>{{ enrollment.batch.program.program_name }}</td>
+              <td>{{ enrollment.status }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="3" class="text-muted">No enrollments found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

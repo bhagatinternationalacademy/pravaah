@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}Training Management{% endblock %}
+{% block content %}
+<section class="hero-card mb-4">
+  <div class="row align-items-center g-4">
+    <div class="col-lg-7">
+      <span class="badge hero-badge mb-3">Training Program & Course Management</span>
+      <h1 class="display-5 fw-bold mb-3">A premium workspace for programs, trainers, batches, and schedules.</h1>
+      <p class="lead hero-copy mb-4">MySQL-backed CRUD, auto-generated codes, live scheduling, and a clean interface designed for day-to-day institute operations.</p>
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-light btn-lg fw-semibold" href="{% url 'login' %}">Sign in</a>
+        <a class="btn btn-outline-light btn-lg" href="{% url 'programs:list' %}">Browse Programs</a>
+      </div>
+      <div class="hero-tags mt-4 d-flex flex-wrap gap-2">
+        <span>Programs</span>
+        <span>Courses</span>
+        <span>Trainers</span>
+        <span>Batches</span>
+        <span>Sessions</span>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="landing-panel">
+        <div class="landing-visual mb-3">
+          <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1200&q=80" alt="Training classroom" class="img-fluid">
+          <div class="landing-visual-overlay">
+            <div class="fw-semibold">Modern LMS</div>
+            <div class="small text-white-50">Programs • Courses • Sessions</div>
+          </div>
+        </div>
+        <div class="row g-3">
+          <div class="col-6"><div class="mini-stat"><span>Programs</span><strong>{{ total_programs }}</strong></div></div>
+          <div class="col-6"><div class="mini-stat"><span>Courses</span><strong>{{ total_courses }}</strong></div></div>
+          <div class="col-6"><div class="mini-stat"><span>Trainers</span><strong>{{ total_trainers }}</strong></div></div>
+          <div class="col-6"><div class="mini-stat"><span>Active Batches</span><strong>{{ active_batches }}</strong></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="feature-card feature-blue">
+      <div class="feature-kicker">CRUD</div>
+      <h5>Real database actions</h5>
+      <p>Programs, courses, trainers, students, and batches are created and updated directly in MySQL.</p>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="feature-card feature-purple">
+      <div class="feature-kicker">SCHEDULE</div>
+      <h5>Conflict-aware sessions</h5>
+      <p>Trainer slots, batch time ranges, and occupied sessions are shown with clear schedule blocks.</p>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="feature-card feature-teal">
+      <div class="feature-kicker">INSIGHTS</div>
+      <h5>Live summary cards</h5>
+      <p>Dashboard counts stay tied to actual database rows, not static placeholder values.</p>
+    </div>
+  </div>
+</section>
+
+<section class="mb-4">
+  <div class="d-flex justify-content-between align-items-end mb-3">
+    <div>
+      <h3 class="mb-1">Featured Programs</h3>
+      <p class="text-muted mb-0">Programs, course counts, module depth, and linked materials.</p>
+    </div>
+    <a class="btn btn-outline-primary" href="{% url 'programs:list' %}">View all programs</a>
+  </div>
+  <div class="row g-3">
+    {% for program in programs %}
+      <div class="col-lg-4 col-md-6">
+        <div class="card page-card h-100">
+          {% if program.program_image %}
+            <img src="{{ program.program_image.url }}" class="card-img-top page-card-image" alt="{{ program.program_name }}">
+          {% else %}
+            <img src="https://picsum.photos/seed/program-{{ program.pk }}/900/500" class="card-img-top page-card-image" alt="{{ program.program_name }}">
+          {% endif %}
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <div class="text-muted small">{{ program.category.category_name }}</div>
+                <h5 class="mb-1"><a class="text-decoration-none" href="{% url 'programs:detail' program.pk %}">{{ program.program_name }}</a></h5>
+              </div>
+              <span class="badge text-bg-primary">{{ program.program_code }}</span>
+            </div>
+            <p class="text-muted">{{ program.description|default:"No description provided."|truncatechars:100 }}</p>
+            <div class="row g-2 text-center">
+              <div class="col-4"><div class="mini-pill"><strong>{{ program.course_count }}</strong><span>Courses</span></div></div>
+              <div class="col-4"><div class="mini-pill"><strong>{{ program.module_count }}</strong><span>Modules</span></div></div>
+              <div class="col-4"><div class="mini-pill"><strong>{{ program.material_count }}</strong><span>Materials</span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12"><div class="card page-card"><div class="card-body text-muted">No programs available yet.</div></div></div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="mb-4">
+  <div class="d-flex justify-content-between align-items-end mb-3">
+    <div>
+      <h3 class="mb-1">Connected Courses</h3>
+      <p class="text-muted mb-0">Every course links to modules, materials, and fee details.</p>
+    </div>
+    <a class="btn btn-outline-primary" href="{% url 'programs:courses' %}">View all courses</a>
+  </div>
+  <div class="row g-3">
+    {% for course in courses %}
+      <div class="col-lg-4 col-md-6">
+        <div class="card page-card h-100">
+          {% if course.course_image %}
+            <img src="{{ course.course_image.url }}" class="card-img-top page-card-image" alt="{{ course.course_name }}">
+          {% else %}
+            <img src="https://picsum.photos/seed/course-{{ course.pk }}/900/500" class="card-img-top page-card-image" alt="{{ course.course_name }}">
+          {% endif %}
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <div class="text-muted small">{{ course.level }}</div>
+                <h5 class="mb-1"><a class="text-decoration-none" href="{% url 'programs:course-detail' course.pk %}">{{ course.course_name }}</a></h5>
+              </div>
+              <span class="badge text-bg-dark">{{ course.course_code }}</span>
+            </div>
+            <p class="text-muted">{{ course.description|default:"No description provided."|truncatechars:100 }}</p>
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="fw-semibold">Fees: {{ course.fees }}</span>
+              <span class="text-muted">{{ course.module_count }} modules • {{ course.material_count }} materials</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12"><div class="card page-card"><div class="card-body text-muted">No courses available yet.</div></div></div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="row g-3">
+  <div class="col-md-4"><div class="card card-stat"><div class="card-body"><div class="text-muted">Ongoing Sessions</div><div class="fs-3 fw-bold">{{ ongoing_sessions }}</div></div></div></div>
+  <div class="col-md-4"><div class="card card-stat"><div class="card-body"><div class="text-muted">Certificates Issued</div><div class="fs-3 fw-bold">{{ certificates_issued }}</div></div></div></div>
+  <div class="col-md-4"><div class="card card-stat"><div class="card-body"><div class="text-muted">Ready for Scale</div><div class="fs-3 fw-bold">ERP/LMS</div></div></div></div>
+</section>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Trainer Availability{% endblock %}
+{% block content %}
+<h2 class="mb-4">Trainer Availability</h2>
+<form class="row g-2 mb-3" method="get">
+  <div class="col-md-4">
+    <select class="form-select" name="trainer">
+      <option value="">All Trainers</option>
+      {% for item in trainers %}
+        <option value="{{ item.pk }}" {% if trainer and trainer.pk == item.pk %}selected{% endif %}>{{ item.full_name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2"><button class="btn btn-primary">Filter</button></div>
+</form>
+<div class="card page-card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead><tr><th>Date</th><th>Time</th><th>Trainer</th><th>Batch</th><th>Course</th><th>Topic</th></tr></thead>
+        <tbody>
+          {% for session in schedules %}
+            <tr>
+              <td>{{ session.session_date }}</td>
+              <td>{{ session.start_time }} - {{ session.end_time }}</td>
+              <td>{{ session.trainer.full_name }}</td>
+              <td>{{ session.batch.batch_name }}</td>
+              <td>{{ session.course.course_name }}</td>
+              <td>{{ session.session_topic }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6" class="text-muted">No schedules found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

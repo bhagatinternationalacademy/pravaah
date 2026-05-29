@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card page-card">
+  <div class="card-body">
+    <h2 class="mb-2">Enrollment updated</h2>
+    <p class="text-muted mb-0">{{ enrollment.student.full_name }} is now {{ enrollment.status|lower }} for {{ enrollment.batch.batch_name }}.</p>
+  </div>
+</div>
+{% endblock %}

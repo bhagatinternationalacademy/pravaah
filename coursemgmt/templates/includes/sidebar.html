@@ -1,0 +1,25 @@
+<aside class="app-sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-mark">TM</div>
+    <div>
+      <div class="fw-semibold text-white">Training Suite</div>
+      <div class="small text-white-50">Programs • Batches • Reports</div>
+    </div>
+  </div>
+  <div class="sidebar-inner">
+    <a href="{% url 'dashboard:index' %}">Dashboard</a>
+    <a href="{% url 'programs:list' %}">Programs</a>
+    <a href="{% url 'programs:courses' %}">Courses</a>
+    <a href="{% url 'trainers:list' %}">Trainers</a>
+    <a href="{% url 'students:list' %}">Students</a>
+    <a href="{% url 'batches:list' %}">Batches</a>
+    <a href="{% url 'batches:calendar' %}">Calendar</a>
+    <a href="{% url 'batches:enrollment-review' %}">Enrollments</a>
+    <a href="{% url 'attendance:list' %}">Attendance</a>
+    <a href="{% url 'attendance:bulk-mark' %}">Bulk Attendance</a>
+    <a href="{% url 'assessments:list' %}">Assessments</a>
+    <a href="{% url 'certificates:list' %}">Certificates</a>
+    <a href="{% url 'uploads:upload' %}">Excel Upload</a>
+    <a href="{% url 'reports:index' %}">Reports</a>
+  </div>
+</aside>

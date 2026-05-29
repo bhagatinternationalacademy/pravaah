@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Assessment Results{% endblock %}
+{% block content %}
+<div class="page-hero mb-4">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+    <div>
+      <div class="text-uppercase small fw-semibold text-muted mb-2">Assessments</div>
+      <h2 class="mb-1">Student marks by batch</h2>
+      <div class="text-muted">View every student, batch, assessment, and the marks they received.</div>
+    </div>
+    {% if user.is_staff %}<a class="btn btn-success" href="{% url 'assessments:result-create' %}">Add Result</a>{% endif %}
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="card card-stat"><div class="card-body"><div class="text-muted">Results</div><div class="fs-3 fw-bold">{{ total_results }}</div></div></div></div>
+  <div class="col-md-4"><div class="card card-stat"><div class="card-body"><div class="text-muted">Students</div><div class="fs-3 fw-bold">{{ total_students }}</div></div></div></div>
+  <div class="col-md-4"><div class="card card-stat"><div class="card-body"><div class="text-muted">Pass Count</div><div class="fs-3 fw-bold">{{ passed_count }}</div></div></div></div>
+</div>
+
+<div class="card page-card mb-3">
+  <div class="card-body">
+    <form class="row g-3 align-items-end" method="get">
+      <div class="col-md-5">
+        <label class="form-label">Search</label>
+        <input class="form-control" name="q" value="{{ query }}" placeholder="Search student, batch, assessment">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Batch</label>
+        <select class="form-select" name="batch">
+          <option value="">All</option>
+          {% for batch in batches %}
+            <option value="{{ batch.pk }}" {% if batch_id|stringformat:'s' == batch.pk|stringformat:'s' %}selected{% endif %}>{{ batch.batch_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Assessment</label>
+        <select class="form-select" name="assessment">
+          <option value="">All</option>
+          {% for assessment in assessments %}
+            <option value="{{ assessment.pk }}" {% if assessment_id|stringformat:'s' == assessment.pk|stringformat:'s' %}selected{% endif %}>{{ assessment.assessment_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Status</label>
+        <select class="form-select" name="status">
+          <option value="">All</option>
+          <option value="Pass" {% if status == "Pass" %}selected{% endif %}>Pass</option>
+          <option value="Fail" {% if status == "Fail" %}selected{% endif %}>Fail</option>
+          <option value="Pending" {% if status == "Pending" %}selected{% endif %}>Pending</option>
+        </select>
+      </div>
+      <div class="col-12 d-flex gap-2 flex-wrap">
+        <button class="btn btn-primary" type="submit">Filter</button>
+        <a class="btn btn-outline-primary" href="{% url 'assessments:result-export' 'csv' %}?q={{ query }}&batch={{ batch_id }}&assessment={{ assessment_id }}&status={{ status }}">Export CSV</a>
+        <a class="btn btn-outline-primary" href="{% url 'assessments:result-export' 'excel' %}?q={{ query }}&batch={{ batch_id }}&assessment={{ assessment_id }}&status={{ status }}">Export Excel</a>
+        <a class="btn btn-outline-primary" href="{% url 'assessments:result-export' 'pdf' %}?q={{ query }}&batch={{ batch_id }}&assessment={{ assessment_id }}&status={{ status }}">Export PDF</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card page-card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Batch</th>
+            <th>Program</th>
+            <th>Course</th>
+            <th>Assessment</th>
+            <th>Marks</th>
+            <th>Total</th>
+            <th>%</th>
+            <th>Status</th>
+            <th>Submitted</th>
+            <th>Graded</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for result in page_obj %}
+            <tr>
+              <td>
+                <div class="fw-semibold">{{ result.enrollment.student.full_name }}</div>
+                <div class="text-muted small">{{ result.enrollment.student.student_code }}</div>
+              </td>
+              <td>
+                <div class="fw-semibold">{{ result.enrollment.batch.batch_name }}</div>
+                <div class="text-muted small">{{ result.enrollment.batch.batch_code }}</div>
+              </td>
+              <td>{{ result.enrollment.batch.program.program_name }}</td>
+              <td>{{ result.assessment.course.course_name }}</td>
+              <td>{{ result.assessment.assessment_name }}</td>
+              <td>{{ result.marks_obtained }}</td>
+              <td>{{ result.assessment.total_marks }}</td>
+              <td>{{ result.percentage|floatformat:0 }}%</td>
+              <td>
+                <span class="badge {% if result.status == 'Pass' %}text-bg-success{% elif result.status == 'Fail' %}text-bg-danger{% else %}text-bg-warning{% endif %}">
+                  {{ result.status }}
+                </span>
+              </td>
+              <td>{{ result.submitted_at|default:"-" }}</td>
+              <td>{{ result.graded_at|default:"-" }}</td>
+              <td class="text-nowrap">
+                {% if user.is_staff %}
+                  <a class="btn btn-sm btn-outline-primary" href="{% url 'assessments:result-edit' result.pk %}">Edit</a>
+                  <a class="btn btn-sm btn-outline-danger" href="{% url 'assessments:result-delete' result.pk %}">Delete</a>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="12" class="text-muted">No results.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "shared/pagination.html" with page_obj=page_obj %}
+  </div>
+</div>
+{% endblock %}

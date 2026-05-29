@@ -1,0 +1,47 @@
+from django.urls import path
+
+from .views import (
+    batch_create,
+    batch_delete,
+    batch_detail,
+    batch_list,
+    batch_update,
+    calendar,
+    calendar_events,
+    available_trainers,
+    enrollment_create,
+    enrollment_request,
+    enrollment_delete,
+    enrollment_update,
+    enrollment_review_view,
+    enrollment_action_view,
+    generate_session_plan,
+    session_create,
+    session_delete,
+    session_move_view,
+    session_update,
+)
+
+app_name = "batches"
+
+urlpatterns = [
+    path("", batch_list, name="list"),
+    path("create/", batch_create, name="create"),
+    path("calendar/", calendar, name="calendar"),
+    path("calendar/events/", calendar_events, name="calendar-events"),
+    path("trainers/available/", available_trainers, name="available-trainers"),
+    path("<int:pk>/", batch_detail, name="detail"),
+    path("<int:pk>/edit/", batch_update, name="edit"),
+    path("<int:pk>/delete/", batch_delete, name="delete"),
+    path("<int:pk>/generate-session-plan/", generate_session_plan, name="generate-session-plan"),
+    path("enrollments/create/", enrollment_create, name="enrollment-create"),
+    path("enrollments/request/", enrollment_request, name="enrollment-request"),
+    path("enrollments/review/", enrollment_review_view, name="enrollment-review"),
+    path("enrollments/<int:pk>/<str:action>/", enrollment_action_view, name="enrollment-action"),
+    path("enrollments/<int:pk>/edit/", enrollment_update, name="enrollment-edit"),
+    path("enrollments/<int:pk>/delete/", enrollment_delete, name="enrollment-delete"),
+    path("sessions/create/", session_create, name="session-create"),
+    path("sessions/<int:pk>/edit/", session_update, name="session-edit"),
+    path("sessions/<int:pk>/delete/", session_delete, name="session-delete"),
+    path("sessions/move/", session_move_view, name="session-move"),
+]

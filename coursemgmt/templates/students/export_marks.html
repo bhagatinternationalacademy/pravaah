@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Export Marks{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">Export Student Marks</h2>
+</div>
+
+<div class="card page-card">
+  <div class="card-header">
+    <h5 class="mb-0">Select Export Options</h5>
+  </div>
+  <div class="card-body">
+    {% if error %}
+    <div class="alert alert-warning">{{ error }}</div>
+    {% endif %}
+    
+    <form method="get" class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Export Type</label>
+        <div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="type" id="type-all" value="all" checked>
+            <label class="form-check-label" for="type-all">Export All Marks</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="type" id="type-student" value="student">
+            <label class="form-check-label" for="type-student">Export by Student</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="type" id="type-batch" value="batch">
+            <label class="form-check-label" for="type-batch">Export by Batch</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="type" id="type-program" value="program">
+            <label class="form-check-label" for="type-program">Export by Program</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Select Item (Optional)</label>
+        <select name="student" id="student-select" class="form-select" style="display:none;">
+          <option value="">-- Select a Student --</option>
+          <option value="1">Student 1</option>
+        </select>
+        <select name="batch" id="batch-select" class="form-select" style="display:none;">
+          <option value="">-- Select a Batch --</option>
+          <option value="1">Batch 1</option>
+        </select>
+        <select name="program" id="program-select" class="form-select" style="display:none;">
+          <option value="">-- Select a Program --</option>
+          <option value="1">Program 1</option>
+        </select>
+      </div>
+
+      <div class="col-12">
+        <button type="submit" class="btn btn-success">
+          <i class="bi bi-download"></i> Export to Excel
+        </button>
+        <a href="{% url 'students:assessment-results' %}" class="btn btn-secondary">Back to Results</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card page-card mt-3">
+  <div class="card-header">
+    <h5 class="mb-0">Export Information</h5>
+  </div>
+  <div class="card-body">
+    <ul>
+      <li><strong>Format:</strong> Microsoft Excel (.xlsx)</li>
+      <li><strong>Columns Included:</strong> Student Name, Code, Batch, Program, Course, Assessment, Marks Obtained, Total Marks, Status, Graded Date</li>
+      <li><strong>All Marks:</strong> Exports all assessment results from the system</li>
+      <li><strong>By Student:</strong> Exports only marks for the selected student across all batches and programs</li>
+      <li><strong>By Batch:</strong> Exports all student marks for the selected batch</li>
+      <li><strong>By Program:</strong> Exports all student marks for all batches in the selected program</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('input[name="type"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    document.getElementById('student-select').style.display = this.value === 'student' ? 'block' : 'none';
+    document.getElementById('batch-select').style.display = this.value === 'batch' ? 'block' : 'none';
+    document.getElementById('program-select').style.display = this.value === 'program' ? 'block' : 'none';
+  });
+});
+</script>
+{% endblock %}

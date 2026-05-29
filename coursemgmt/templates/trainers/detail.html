@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Trainer Detail{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h2 class="mb-1">{{ trainer.full_name }}</h2>
+    <div class="text-muted">{{ trainer.email }}</div>
+  </div>
+  <span class="badge text-bg-{% if trainer.status == 'Active' %}success{% else %}secondary{% endif %}">{{ trainer.status }}</span>
+</div>
+{% if user.is_staff %}
+<div class="d-flex gap-2 mb-3">
+  <a class="btn btn-outline-primary" href="{% url 'trainers:edit' trainer.pk %}">Edit</a>
+  <a class="btn btn-outline-danger" href="{% url 'trainers:delete' trainer.pk %}">Delete</a>
+  <a class="btn btn-success" href="{% url 'trainers:skill-create' %}?trainer={{ trainer.pk }}">Add Skill</a>
+  <a class="btn btn-success" href="{% url 'trainers:cert-create' %}?trainer={{ trainer.pk }}">Add Certification</a>
+</div>
+{% endif %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card page-card"><div class="card-body">
+      <p class="mb-1"><strong>Email:</strong> {{ trainer.email }}</p>
+      <p class="mb-1"><strong>Mobile:</strong> {{ trainer.mobile|default:"N/A" }}</p>
+      <p class="mb-1"><strong>Qualification:</strong> {{ trainer.qualification|default:"N/A" }}</p>
+      <p class="mb-1"><strong>Join Date:</strong> {{ trainer.join_date|date:"d M Y" }}</p>
+      <p class="mb-0"><strong>Status:</strong> {{ trainer.status }}</p>
+    </div></div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card page-card mb-3"><div class="card-body">
+      <h5>Assigned Programs</h5>
+      {% if programs %}
+        <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Program</th><th>Specialization</th></tr></thead><tbody>
+          {% for assignment in programs %}
+            <tr><td><a href="{% url 'programs:detail' assignment.program.pk %}">{{ assignment.program.program_name }}</a></td><td>{{ assignment.specialization|default:"General" }}</td></tr>
+          {% endfor %}
+        </tbody></table></div>
+      {% else %}
+        <p class="text-muted mb-0">No program assignments.</p>
+      {% endif %}
+    </div></div>
+
+    <div class="card page-card mb-3"><div class="card-body">
+      <h5>Teaching Courses</h5>
+      {% if courses %}
+        <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Course</th></tr></thead><tbody>
+          {% for assignment in courses %}
+            <tr><td>{{ assignment.course.course_name }}</td></tr>
+          {% endfor %}
+        </tbody></table></div>
+      {% else %}
+        <p class="text-muted mb-0">No course assignments.</p>
+      {% endif %}
+    </div></div>
+
+    <div class="card page-card mb-3"><div class="card-body">
+      <h5>Batches Handled</h5>
+      {% if batches %}
+        <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Batch</th><th>Program</th></tr></thead><tbody>
+          {% for batch in batches %}
+            <tr><td><a href="{% url 'batches:detail' batch.pk %}">{{ batch.batch_name }}</a></td><td>{{ batch.program.program_name }}</td></tr>
+          {% empty %}
+            <tr><td colspan="2" class="text-muted">No batches assigned.</td></tr>
+          {% endfor %}
+        </tbody></table></div>
+      {% else %}
+        <p class="text-muted mb-0">No batches assigned.</p>
+      {% endif %}
+    </div></div>
+
+    <div class="card page-card mb-3"><div class="card-body">
+      <h5>Recent Sessions</h5>
+      {% if sessions %}
+        <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Date</th><th>Batch</th><th>Topic</th></tr></thead><tbody>
+          {% for session in sessions %}
+            <tr><td>{{ session.session_date|date:"d M Y" }}</td><td>{{ session.batch.batch_name }}</td><td>{{ session.session_topic }}</td></tr>
+          {% empty %}<tr><td colspan="3" class="text-muted">No sessions.</td></tr>
+          {% endfor %}
+        </tbody></table></div>
+      {% else %}
+        <p class="text-muted mb-0">No sessions.</p>
+      {% endif %}
+    </div></div>
+
+    <div class="card page-card mb-3"><div class="card-body">
+      <h5>Skills</h5>
+      {% if skills %}
+        <ul class="mb-0">{% for skill in skills %}<li>Skill {{ skill.skill_id }} - {{ skill.proficiency_level }}</li>{% endfor %}</ul>
+      {% else %}
+        <p class="text-muted mb-0">No skills.</p>
+      {% endif %}
+    </div></div>
+
+    <div class="card page-card"><div class="card-body">
+      <h5>Certifications</h5>
+      {% if certifications %}
+        <ul class="mb-0">{% for certification in certifications %}<li>{{ certification.certification_name }}{% if certification.expiry_date %} (Expires: {{ certification.expiry_date|date:"d M Y" }}){% endif %}</li>{% endfor %}</ul>
+      {% else %}
+        <p class="text-muted mb-0">No certifications.</p>
+      {% endif %}
+    </div></div>
+  </div>
+</div>
+{% endblock %}

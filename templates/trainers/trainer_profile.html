@@ -78,6 +78,51 @@
         {% endif %}
       </div>
 
+      <div class="card mt-3 p-3">
+        <h5>Batch Assignments</h5>
+        {% if batches %}
+          <ul class="list-group list-group-flush">
+            {% for b in batches %}
+              <li class="list-group-item">
+                <strong>{{ b.batch_name }}</strong> — {{ b.course_name }} ({{ b.start_date }} to {{ b.end_date }}) <span class="badge bg-secondary">{{ b.status }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted">No batches assigned.</p>
+        {% endif %}
+      </div>
+
+      <div class="card mt-3 p-3">
+        <h5>Assessments</h5>
+        {% if assessments %}
+          <ul class="list-group list-group-flush">
+            {% for a in assessments %}
+              <li class="list-group-item">
+                <strong>{{ a.assessment_name }}</strong> ({{ a.assessment_type }}) — Due: {{ a.due_date }} — Batch: {{ a.batch.batch_name }}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted">No assessments scheduled.</p>
+        {% endif %}
+      </div>
+
+      <div class="card mt-3 p-3">
+        <h5>Availability Entries</h5>
+        {% if availability_entries %}
+          <ul class="list-group list-group-flush">
+            {% for av in availability_entries %}
+              <li class="list-group-item">
+                {{ av.date }} — {{ av.status|default:"" }}{% if av.reason %} — {{ av.reason }}{% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted">No availability records.</p>
+        {% endif %}
+      </div>
+
     </div>
   </div>
   {% endif %}

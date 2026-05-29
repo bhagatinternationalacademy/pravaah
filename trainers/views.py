@@ -56,7 +56,7 @@ def trainer_list(request):
     querystring = params.urlencode()
 
     # skill options
-    from skills.models import Skill
+    from pravaah.skills.models import Skill
     skills = Skill.objects.all()
 
     context = {
@@ -145,7 +145,34 @@ def trainer_profile(request):
     skills_qs = trainer.trainerskill_set.select_related('skill').all()
     certifications = trainer.certification_set.all().order_by('-issue_date')
 
-    return render(request, 'trainers/trainer_profile.html', {'trainer': trainer, 'skills_qs': skills_qs, 'certifications': certifications})
+    # batch assignments for trainer
+    try:
+        batches = trainer.batch_assignments.all().order_by('-assigned_date')
+    except Exception:
+        batches = []
+
+    # assessments for trainer's batches
+    try:
+        from pravaah.assessment.models import Assessment
+        assessments = Assessment.objects.filter(batch__trainer=trainer).order_by('-due_date')
+    except Exception:
+        assessments = []
+
+    # availability entries (if available app present)
+    try:
+        from pravaah.available.models import Availability as AvailabilityModel
+        availability_entries = AvailabilityModel.objects.filter(trainer=trainer).order_by('-date')
+    except Exception:
+        availability_entries = []
+
+    return render(request, 'trainers/trainer_profile.html', {
+        'trainer': trainer,
+        'skills_qs': skills_qs,
+        'certifications': certifications,
+        'batches': batches,
+        'assessments': assessments,
+        'availability_entries': availability_entries,
+    })
 
 
 @login_required
@@ -195,7 +222,7 @@ def registration_submitted(request):
 
 @staff_member_required
 def pending_trainers(request):
-    pending = Trainer.objects.filter(status='Pending').order_by('-id')
+    pending = Trainer.objects.filter(status='Pending').order_by('-trainer_id')
     return render(request, 'trainers/pending_trainers.html', {'pending': pending})
 
 
@@ -240,7 +267,7 @@ def approve_trainer(request, pk):
         pass
 
     try:
-        from skills.models import Skill as SkillModel
+        from pravaah.skills.models import Skill as SkillModel
         ct_skill = ContentType.objects.get_for_model(SkillModel)
         try:
             perms_to_add.append(Permission.objects.get(codename='view_skill', content_type=ct_skill))

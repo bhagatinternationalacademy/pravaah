@@ -77,6 +77,7 @@ DATABASES = {
         'HOST': '192.168.0.95',
         'PORT': '3306',
     }
+    
 }
 
 AUTH_PASSWORD_VALIDATORS = [

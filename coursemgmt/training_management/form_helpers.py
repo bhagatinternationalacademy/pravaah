@@ -15,6 +15,9 @@ class BootstrapModelForm(forms.ModelForm):
                 classes.append("form-control")
             elif widget_type == "Select":
                 classes.append("form-select")
+            elif widget_type in {"CheckboxInput", "CheckboxSelectMultiple"}:
+                classes = [cls for cls in classes if cls != "form-control"]
+                classes.append("form-check-input")
             elif widget_type in {"DateInput", "TimeInput", "NumberInput", "EmailInput", "URLInput", "TextInput", "Textarea"}:
                 classes.append("form-control")
             else:
@@ -35,7 +38,6 @@ BATCH_STATUS_CHOICES = [
 ]
 
 ENROLLMENT_STATUS_CHOICES = [
-    ("Pending", "Pending"),
     ("Approved", "Approved"),
     ("Rejected", "Rejected"),
 ]

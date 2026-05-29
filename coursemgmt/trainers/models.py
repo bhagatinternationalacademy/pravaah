@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 from programs.models import Gender, Program, Course
@@ -6,19 +7,21 @@ from training_management.codegen import generate_unique_code
 
 class Trainer(models.Model):
     trainer_id = models.BigAutoField(primary_key=True, db_column="trainer_id")
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="trainer_profile", db_column="user_id")
     trainer_code = models.CharField(max_length=30, unique=True, blank=True)
     first_name = models.CharField(max_length=80)
     last_name = models.CharField(max_length=80)
-    gender = models.ForeignKey(Gender, on_delete=models.PROTECT, db_column="gender", related_name="trainers")
+    gender = models.ForeignKey(Gender, on_delete=models.PROTECT, db_column="gender", related_name="trainers", null=True, blank=True)
     dob = models.DateField(null=True, blank=True)
     qualification = models.CharField(max_length=150, blank=True)
     mobile = models.CharField(max_length=20, blank=True)
     email = models.EmailField(unique=True)
-    join_date = models.DateField()
+    join_date = models.DateField(null=True, blank=True, db_column="joining_date")
     status = models.CharField(max_length=20, default="Active")
+    availability = models.CharField(max_length=20, default="Available")
 
     class Meta:
-        db_table = "trainers"
+        db_table = "trainers_trainer"
         ordering = ["first_name", "last_name"]
 
     def __str__(self):

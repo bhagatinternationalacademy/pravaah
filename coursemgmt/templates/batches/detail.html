@@ -14,7 +14,7 @@
   <a class="btn btn-outline-danger" href="{% url 'batches:delete' batch.pk %}">Delete</a>
   <a class="btn btn-success" href="{% url 'batches:session-create' %}?batch={{ batch.pk }}">Schedule Session</a>
   <a class="btn btn-success" href="{% url 'batches:enrollment-create' %}?batch={{ batch.pk }}">Add Enrollment</a>
-  <a class="btn btn-success" href="{% url 'attendance:create' %}?batch={{ batch.pk }}">Mark Attendance</a>
+  <a class="btn btn-success" href="{% url 'attendance:bulk-mark' %}?batch={{ batch.pk }}">Mark Attendance</a>
   <form method="post" action="{% url 'batches:generate-session-plan' batch.pk %}" class="d-inline">
     {% csrf_token %}
     <button class="btn btn-outline-success" type="submit">Generate Session Plan</button>
@@ -50,9 +50,25 @@
             {% for enrollment in enrollments %}
               <tr>
                 <td>{{ enrollment.student.full_name }}</td>
-                <td>{{ enrollment.status }}</td>
+                <td>
+                  <form method="post" action="{% url 'batches:enrollment-update-status' enrollment.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <select name="status" class="form-select form-select-sm d-inline" style="min-width: 110px; width: auto;" onchange="this.form.submit()">
+                      <option value="Approved" {% if enrollment.status == 'Approved' %}selected{% endif %}>Approved</option>
+                      <option value="Rejected" {% if enrollment.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                    </select>
+                  </form>
+                </td>
                 <td>{{ enrollment.fee_amount }}</td>
-                <td>{{ enrollment.payment_status }}</td>
+                <td>
+                  <form method="post" action="{% url 'batches:enrollment-update-payment' enrollment.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <select name="payment_status" class="form-select form-select-sm d-inline" style="min-width: 100px; width: auto;" onchange="this.form.submit()">
+                      <option value="Pending" {% if enrollment.payment_status|lower == 'pending' %}selected{% endif %}>Pending</option>
+                      <option value="Paid" {% if enrollment.payment_status|lower == 'paid' %}selected{% endif %}>Paid</option>
+                    </select>
+                  </form>
+                </td>
               </tr>
             {% empty %}
               <tr><td colspan="4" class="text-muted">No enrollments.</td></tr>

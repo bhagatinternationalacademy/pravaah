@@ -103,6 +103,9 @@ class Program(models.Model):
     program_image = models.ImageField(upload_to="programs/", null=True, blank=True, db_column="program_image")
     description = models.TextField(blank=True)
     duration_days = models.PositiveIntegerField(default=0)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    enrollment_open = models.BooleanField(default=True)
     status = models.CharField(max_length=20, default="Active")
 
     class Meta:

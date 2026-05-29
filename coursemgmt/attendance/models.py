@@ -8,7 +8,6 @@ class Attendance(models.Model):
     enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE, db_column="enrollment_id", related_name="attendance_records")
     session = models.ForeignKey(Session, on_delete=models.CASCADE, db_column="session_id", related_name="attendance_records")
     status = models.CharField(max_length=20, default="Present")
-    attendance_photo = models.ImageField(upload_to="attendance/", null=True, blank=True, db_column="attendance_photo")
     marked_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

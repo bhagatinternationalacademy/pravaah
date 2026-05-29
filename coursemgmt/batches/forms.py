@@ -1,4 +1,5 @@
 from django import forms
+from django.db.models import Q
 
 from programs.models import Course, ProgramCourse
 from students.models import Student
@@ -25,11 +26,23 @@ class EnrollmentForm(BootstrapModelForm):
         fields = ["batch", "student", "enrollment_date", "status", "fee_amount", "discount", "payment_status"]
         widgets = {"enrollment_date": forms.DateInput(attrs={"type": "date"})}
 
+    def clean_batch(self):
+        batch = self.cleaned_data.get("batch")
+        if batch and (batch.is_expired or batch.status != "Active"):
+            raise forms.ValidationError("Cannot enroll in an inactive or expired batch.")
+        return batch
+
 
 class EnrollmentRequestForm(BootstrapModelForm):
     class Meta:
         model = Enrollment
         fields = ["batch", "student"]
+
+    def clean_batch(self):
+        batch = self.cleaned_data.get("batch")
+        if batch and (batch.is_expired or batch.status != "Active"):
+            raise forms.ValidationError("Cannot enroll in an inactive or expired batch.")
+        return batch
 
 
 class SessionForm(BootstrapModelForm):
@@ -41,6 +54,10 @@ class SessionForm(BootstrapModelForm):
             "start_time": forms.TimeInput(attrs={"type": "time"}),
             "end_time": forms.TimeInput(attrs={"type": "time"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["trainer"].queryset = Trainer.objects.filter(status__iexact="Active", availability__iexact="Available")
 
 
 class BatchFormationForm(BootstrapModelForm):
@@ -65,22 +82,29 @@ class BatchFormationForm(BootstrapModelForm):
 
         self.fields["trainer"].required = True
         self.fields["course"].required = True
-        self.fields["trainer"].queryset = Trainer.objects.filter(status__iexact="Active").select_related("gender")
-        self.fields["course"].queryset = Course.objects.all().order_by("course_name")
-        self.fields["participants"].queryset = Student.objects.filter(status__iexact="Active", enrollments__status__iexact="Approved").distinct().order_by("first_name", "last_name")
+        self.fields["trainer"].queryset = Trainer.objects.filter(status__iexact="Active", availability__iexact="Available")
+        self.fields["course"].queryset = Course.objects.none()
+        self.fields["participants"].queryset = Student.objects.filter(
+            status__iexact="Approved"
+        ).distinct().order_by("first_name", "last_name")
 
         program_id = self.data.get(program_key) or self.initial.get("program") or getattr(self.instance, "program_id", None)
         if program_id:
             self.fields["course"].queryset = Course.objects.filter(course_program_links__program_id=program_id).distinct().order_by("course_name")
-            students = Student.objects.filter(status__iexact="Active", enrollments__status__iexact="Approved").distinct()
+            students = Student.objects.filter(
+                status__iexact="Approved"
+            ).distinct()
             current_batch_id = getattr(self.instance, "pk", None)
-            occupied_students = Student.objects.filter(enrollments__batch__status__in=["Active", "Planned"]).distinct()
+            occupied_students = Student.objects.filter(
+                enrollments__batch__status__in=["Active", "Planned"],
+                enrollments__status__in=["Approved", "Pending"],
+            ).distinct()
             if current_batch_id:
                 occupied_students = occupied_students.exclude(enrollments__batch_id=current_batch_id)
             self.fields["participants"].queryset = students.exclude(pk__in=occupied_students.values_list("pk", flat=True)).order_by("first_name", "last_name")
 
         if self.instance and self.instance.pk:
-            selected_students = self.instance.enrollments.filter(status__iexact="Approved").values_list("student_id", flat=True)
+            selected_students = self.instance.enrollments.filter(status__in=["Approved", "Pending"]).values_list("student_id", flat=True)
             self.initial.setdefault("participants", list(selected_students))
             primary_course = self.instance.sessions.select_related("course").order_by("session_date", "start_time").first()
             if primary_course:

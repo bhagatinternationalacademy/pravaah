@@ -82,11 +82,21 @@ def index(request):
 @role_required("Admin", "Trainer", "Student")
 def students_report(request):
     query = request.GET.get("q", "")
-    queryset = Student.objects.select_related("gender", "city")
+    queryset = Student.objects.select_related("course")
     if query:
         queryset = queryset.filter(Q(first_name__icontains=query) | Q(last_name__icontains=query) | Q(student_code__icontains=query))
     page = _paginate(queryset, request)
-    return render(request, "reports/list.html", {"title": "Students Report", "page_obj": page, "rows": _rows(page, lambda s: {"title": s.full_name, "subtitle": s.student_code, "cells": [getattr(s.gender, "gender_name", "-"), getattr(s.city, "city_name", "-"), s.status]}), "query": query, "status": None})
+    return render(
+        request,
+        "reports/list.html",
+        {
+            "title": "Students Report",
+            "page_obj": page,
+            "rows": _rows(page, lambda s: {"title": s.full_name, "subtitle": s.student_code, "cells": [s.gender or "-", getattr(s.course, "course_name", "-"), s.status or "-"]}),
+            "query": query,
+            "status": None,
+        },
+    )
 
 
 @role_required("Admin", "Trainer", "Student")

@@ -211,10 +211,10 @@ def program_course_delete(request, pk):
 def program_courses_api(request, pk):
     program = get_object_or_404(Program, pk=pk)
     courses = [
-        {"id": pc.course.pk, "name": pc.course.course_name}
+        {"id": pc.course.pk, "name": pc.course.course_name, "code": pc.course.course_code}
         for pc in ProgramCourse.objects.filter(program=program).select_related("course")
     ]
-    return JsonResponse({"courses": courses})
+    return JsonResponse(courses, safe=False)
 
 
 # ─────────────────────────────────────────────

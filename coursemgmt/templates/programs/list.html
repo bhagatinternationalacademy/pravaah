@@ -46,7 +46,7 @@
 <div class="row g-3">
   {% for program in page_obj %}
     <div class="col-lg-4 col-md-6">
-      <div class="card page-card h-100">
+      <div class="card page-card h-100 {% if program.status == 'Inactive' %}opacity-50 bg-light{% endif %}">
         {% if program.program_image %}
           <img src="{{ program.program_image.url }}" class="card-img-top page-card-image" alt="{{ program.program_name }}">
         {% else %}
@@ -63,7 +63,11 @@
           <p class="text-muted mb-3">{{ program.description|default:"No description provided."|truncatechars:120 }}</p>
           <div class="d-flex justify-content-between align-items-center text-muted small mb-3">
             <span>{{ program.duration_days }} days</span>
-            <span>{{ program.status }}</span>
+            {% if program.status == 'Inactive' %}
+              <span class="badge bg-secondary">Inactive</span>
+            {% else %}
+              <span class="badge bg-success">{{ program.status }}</span>
+            {% endif %}
           </div>
           <div class="mt-auto d-flex gap-2 flex-wrap">
             <a class="btn btn-sm btn-outline-primary" href="{% url 'programs:detail' program.pk %}">Open</a>

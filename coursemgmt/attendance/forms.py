@@ -11,7 +11,7 @@ class AttendanceForm(BootstrapModelForm):
 
     class Meta:
         model = Attendance
-        fields = ["enrollment", "session", "status", "attendance_photo"]
+        fields = ["enrollment", "session", "status"]
 
     def __init__(self, *args, **kwargs):
         batch_id = kwargs.pop("batch_id", None)

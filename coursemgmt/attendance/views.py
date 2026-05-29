@@ -118,25 +118,23 @@ def bulk_mark(request):
         for enrollment in enrollments
     ]
     if request.method == "POST" and batch and session:
-        photo = request.FILES.get("attendance_photo")
         marked_present = 0
         marked_absent = 0
+        marked_late = 0
         for enrollment in enrollments:
-            status = "Present" if request.POST.get(f"attendance_{enrollment.pk}") else "Absent"
+            status = request.POST.get(f"attendance_{enrollment.pk}", "Absent")
+            if status not in ["Present", "Absent", "Late"]:
+                status = "Absent"
             record, _ = Attendance.objects.get_or_create(enrollment=enrollment, session=session, defaults={"status": status})
             record.status = status
-            if photo:
-                record.attendance_photo = photo
-                try:
-                    photo.seek(0)
-                except Exception:
-                    pass
             record.save()
             if status == "Present":
                 marked_present += 1
-            else:
+            elif status == "Absent":
                 marked_absent += 1
-        messages.success(request, f"Bulk attendance updated: {marked_present} present, {marked_absent} absent.")
+            elif status == "Late":
+                marked_late += 1
+        messages.success(request, f"Bulk attendance updated: {marked_present} present, {marked_absent} absent, {marked_late} late.")
         return render(request, "attendance/bulk_mark_done.html", {"batch": batch, "session": session})
     return render(
         request,
@@ -151,6 +149,7 @@ def bulk_mark(request):
             "enrollment_rows": enrollment_rows,
             "present_count": sum(1 for record in existing.values() if record.status == "Present"),
             "absent_count": sum(1 for record in existing.values() if record.status == "Absent"),
+            "late_count": sum(1 for record in existing.values() if record.status == "Late"),
         },
     )
 

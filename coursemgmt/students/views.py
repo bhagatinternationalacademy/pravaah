@@ -26,7 +26,7 @@ class StudentListView(RoleRequiredMixin, ListView):
     roles = ("Admin", "Student")
 
     def get_queryset(self):
-        qs = Student.objects.select_related("gender", "city")
+        qs = Student.objects.select_related("course")
         q = self.request.GET.get("q", "")
         if q:
             qs = qs.filter(Q(first_name__icontains=q) | Q(last_name__icontains=q) | Q(student_code__icontains=q) | Q(email__icontains=q))

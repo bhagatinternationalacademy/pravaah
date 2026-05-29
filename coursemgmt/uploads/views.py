@@ -40,6 +40,24 @@ def _resolve_city(value):
     )
 
 
+def _resolve_course(data):
+    from programs.models import Course
+
+    for key in ("course_id", "course_code", "course_name", "course"):
+        value = data.get(key)
+        if pd.isna(value) or value in ("", None):
+            continue
+        if key == "course_id":
+            try:
+                return Course.objects.filter(course_id=int(value)).first()
+            except (TypeError, ValueError):
+                return None
+        if key == "course_code":
+            return Course.objects.filter(course_code__iexact=str(value).strip()).first()
+        return Course.objects.filter(course_name__iexact=str(value).strip()).first()
+    return None
+
+
 def _parse_date(value):
     if pd.isna(value) or value in ("", None):
         return None
@@ -93,18 +111,19 @@ def upload_excel(request):
                                 },
                             )
                         elif import_type == "students":
-                            gender = _resolve_gender(data.get("gender"))
-                            city = _resolve_city(data.get("city"))
+                            gender_value = data.get("gender")
+                            gender = None if pd.isna(gender_value) else str(gender_value).strip()
+                            course = _resolve_course(data)
                             obj, was_created = Student.objects.update_or_create(
                                 student_code=str(data.get("student_code")).strip(),
                                 defaults={
                                     "first_name": data.get("first_name", ""),
                                     "last_name": data.get("last_name", ""),
-                                    "gender": gender,
+                                    "course": course,
+                                    "gender": gender or None,
                                     "dob": _parse_date(data.get("dob")),
                                     "mobile": str(data.get("mobile", "")),
                                     "email": data.get("email", ""),
-                                    "city": city,
                                     "join_date": _parse_date(data.get("join_date")) or _parse_date(data.get("dob")),
                                     "status": data.get("status", "Active"),
                                 },

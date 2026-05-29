@@ -47,7 +47,7 @@
 </form>
 
 {% if batch and session %}
-<form class="card page-card p-3" method="post" enctype="multipart/form-data" id="bulk-attendance-form">
+<form class="card page-card p-3" method="post" id="bulk-attendance-form">
   {% csrf_token %}
   <input type="hidden" name="batch" value="{{ batch.pk }}">
   <input type="hidden" name="session" value="{{ session.pk }}">
@@ -64,15 +64,12 @@
   </div>
 
   <div class="row g-3 mb-3">
-    <div class="col-md-4"><div class="mini-pill"><strong>{{ enrollments|length }}</strong><span>Students</span></div></div>
-    <div class="col-md-4"><div class="mini-pill"><strong>{{ present_count }}</strong><span>Already Present</span></div></div>
-    <div class="col-md-4"><div class="mini-pill"><strong>{{ absent_count }}</strong><span>Already Absent</span></div></div>
+    <div class="col-md-3"><div class="mini-pill"><strong>{{ enrollments|length }}</strong><span>Students</span></div></div>
+    <div class="col-md-3"><div class="mini-pill"><strong>{{ present_count }}</strong><span>Already Present</span></div></div>
+    <div class="col-md-3"><div class="mini-pill"><strong>{{ absent_count }}</strong><span>Already Absent</span></div></div>
+    <div class="col-md-3"><div class="mini-pill"><strong>{{ late_count }}</strong><span>Already Late</span></div></div>
   </div>
 
-  <div class="mb-3">
-    <label class="form-label">Attendance photo (optional)</label>
-    <input class="form-control" type="file" name="attendance_photo" accept="image/jpeg,image/jpg,image/png">
-  </div>
 
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div class="form-check">
@@ -94,7 +91,11 @@
           </div>
           <div class="text-end">
             <div class="badge text-bg-light mb-2">{% if record %}{{ record.status }}{% else %}Present{% endif %}</div>
-            <input class="form-check-input attendance-check" type="checkbox" name="attendance_{{ enrollment.pk }}" {% if not record or record.status == "Present" %}checked{% endif %}>
+            <select class="form-select form-select-sm attendance-select" name="attendance_{{ enrollment.pk }}">
+              <option value="Present" {% if not record or record.status == 'Present' %}selected{% endif %}>Present</option>
+              <option value="Absent" {% if record and record.status == 'Absent' %}selected{% endif %}>Absent</option>
+              <option value="Late" {% if record and record.status == 'Late' %}selected{% endif %}>Late</option>
+            </select>
           </div>
         </div>
       </div>
@@ -115,11 +116,11 @@ document.addEventListener("DOMContentLoaded", function () {
   const toggleAll = document.getElementById("toggle-all");
   const markAllPresent = document.getElementById("mark-all-present");
   const markAllAbsent = document.getElementById("mark-all-absent");
-  const checks = () => Array.from(document.querySelectorAll(".attendance-check"));
+  const selects = () => Array.from(document.querySelectorAll(".attendance-select"));
 
-  function setAll(state) {
-    checks().forEach(cb => cb.checked = state);
-    if (toggleAll) toggleAll.checked = state;
+  function setAll(value) {
+    selects().forEach(sel => sel.value = value);
+    if (toggleAll) toggleAll.checked = (value === 'Present');
   }
 
   function loadSessions() {
@@ -142,9 +143,9 @@ document.addEventListener("DOMContentLoaded", function () {
       });
   }
 
-  toggleAll && toggleAll.addEventListener("change", () => setAll(toggleAll.checked));
-  markAllPresent && markAllPresent.addEventListener("click", () => setAll(true));
-  markAllAbsent && markAllAbsent.addEventListener("click", () => setAll(false));
+  toggleAll && toggleAll.addEventListener("change", () => setAll(toggleAll.checked ? 'Present' : 'Absent'));
+  markAllPresent && markAllPresent.addEventListener("click", () => setAll('Present'));
+  markAllAbsent && markAllAbsent.addEventListener("click", () => setAll('Absent'));
   batchSelect && batchSelect.addEventListener("change", loadSessions);
   reloadSessions && reloadSessions.addEventListener("click", loadSessions);
 });

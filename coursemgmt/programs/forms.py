@@ -10,7 +10,11 @@ class ProgramForm(BootstrapModelForm):
 
     class Meta:
         model = Program
-        fields = ["program_name", "category", "program_image", "description", "duration_days", "status"]
+        fields = ["program_name", "category", "program_image", "description", "duration_days", "start_date", "end_date", "enrollment_open", "status"]
+        widgets = {
+            "start_date": forms.DateInput(attrs={"type": "date"}),
+            "end_date": forms.DateInput(attrs={"type": "date"}),
+        }
 
 
 class CourseForm(BootstrapModelForm):

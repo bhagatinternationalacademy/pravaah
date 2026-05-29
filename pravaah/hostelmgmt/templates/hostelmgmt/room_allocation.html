@@ -1,0 +1,406 @@
+{% extends 'hostelmgmt/base.html' %}
+{% block title %}Room Allocation{% endblock %}
+{% block page_title %}Smart Room Allocation{% endblock %}
+
+{% block extra_css %}
+<style>
+  .auto-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none; color: white; font-size: 1.05rem; font-weight: 700;
+    padding: 16px 40px; border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(16,185,129,0.3);
+    transition: all 0.3s;
+  }
+  .auto-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(16,185,129,0.4);
+    color: white;
+  }
+  .room-cell {
+    border-radius: 10px; border: 2px solid transparent;
+    padding: 10px 6px; text-align: center;
+    transition: transform 0.15s;
+    cursor: default;
+  }
+  .room-cell:hover { transform: translateY(-2px); }
+  .room-avail  { background: #d1fae5; border-color: #6ee7b7; }
+  .room-partial{ background: #fef3c7; border-color: #fcd34d; }
+  .room-full   { background: #fee2e2; border-color: #fca5a5; }
+  .room-maint  { background: #e5e7eb; border-color: #9ca3af; opacity:.75; }
+  .room-num    { font-weight: 700; font-size: .95rem; }
+  .room-occ    { font-size: .7rem;  color: #6b7280; }
+  .person-chip {
+    display: inline-block; padding: 2px 8px; border-radius: 20px;
+    font-size: .72rem; font-weight: 600; margin: 1px;
+  }
+  .chip-student { background: #dbeafe; color: #1e40af; }
+  .chip-trainer { background: #f3e8ff; color: #6b21a8; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Page header -->
+<div class="page-header">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+      <h4 class="mb-1"><i class="fas fa-robot me-2"></i>Smart Room Allocation</h4>
+      <p class="mb-0 opacity-75">One-click auto-allocation from student &amp; trainer records.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <span class="badge bg-white text-success fs-6 px-3 py-2">
+        <i class="fas fa-door-open me-1"></i>{{ available_rooms }} Available
+      </span>
+      <span class="badge bg-white text-danger fs-6 px-3 py-2">
+        <i class="fas fa-users me-1"></i>{{ full_rooms }} Full
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card text-center">
+      <h3 class="fw-bold mb-0">{{ total_rooms }}</h3>
+      <small class="text-muted">Total Rooms</small>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card text-center">
+      <h3 class="fw-bold mb-0 text-success">{{ available_rooms }}</h3>
+      <small class="text-muted">Available</small>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card text-center">
+      <h3 class="fw-bold mb-0 text-warning">{{ waiting_list|length }}</h3>
+      <small class="text-muted">Waiting</small>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card text-center">
+      <h3 class="fw-bold mb-0 text-secondary">{{ maintenance_rooms }}</h3>
+      <small class="text-muted">Maintenance</small>
+    </div>
+  </div>
+</div>
+
+<!-- Auto Allocate Button -->
+<div class="text-center mb-4">
+  <form method="post" action="{% url 'hostelmgmt:auto_allocate' %}">
+    {% csrf_token %}
+    <button type="submit" class="auto-btn"
+      onclick="this.innerHTML='<i class=\'fas fa-spinner fa-spin me-2\'></i>Allocating…';this.disabled=true;this.form.submit();">
+      <i class="fas fa-magic me-2"></i>Auto Allocate Rooms
+    </button>
+  </form>
+  <p class="text-muted mt-2" style="font-size:.82rem;">
+    Allocates students first, then trainers — same gender, rooms filled completely before opening next room.
+  </p>
+</div>
+
+<div class="row g-4">
+
+  <!-- Unallocated Students -->
+  <div class="col-12">
+    <div class="form-card">
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:10px;padding:10px 14px;">
+          <i class="fas fa-user-graduate text-white"></i>
+        </div>
+        <div>
+          <h5 class="fw-semibold mb-0">Unallocated Students</h5>
+          <small class="text-muted">Fetched from Participant Management</small>
+        </div>
+        <span class="badge ms-auto" style="background:#dbeafe;color:#1e40af;padding:6px 12px;">
+          {{ unallocated_students|length }} Pending
+        </span>
+      </div>
+      {% if unallocated_students %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle" style="font-size:.86rem;">
+          <thead style="background:#f8f7ff;">
+            <tr>
+              <th class="text-muted">STUDENT</th>
+              <th class="text-muted">ID</th>
+              <th class="text-muted">GENDER</th>
+              <th class="text-muted">COURSE</th>
+              <th class="text-muted">CHECK-IN</th>
+              <th class="text-muted">CHECK-OUT</th>
+              <th class="text-muted">STATUS</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for s in unallocated_students %}
+          <tr>
+            <td class="fw-500">{{ s.name }}</td>
+            <td><span class="badge" style="background:#ede9fe;color:#4f46e5;">{{ s.id }}</span></td>
+            <td>
+              {% if s.gender == 'male' %}
+                <span class="badge" style="background:#dbeafe;color:#1e40af;">♂ Male</span>
+              {% else %}
+                <span class="badge" style="background:#fce7f3;color:#be185d;">♀ Female</span>
+              {% endif %}
+            </td>
+            <td class="text-muted">{{ s.course }}</td>
+            <td class="text-muted">{{ s.checkin_date }}</td>
+            <td class="text-muted">{{ s.checkout_date }}</td>
+            <td><span class="badge" style="background:#fef3c7;color:#92400e;">⏳ Pending</span></td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-4">
+        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+        <p class="text-muted mb-0">All students allocated.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Unallocated Trainers -->
+  <div class="col-12">
+    <div class="form-card">
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);border-radius:10px;padding:10px 14px;">
+          <i class="fas fa-chalkboard-teacher text-white"></i>
+        </div>
+        <div>
+          <h5 class="fw-semibold mb-0">Unallocated Trainers</h5>
+          <small class="text-muted">Allocated after all students — private rooms</small>
+        </div>
+        <span class="badge ms-auto" style="background:#f3e8ff;color:#6b21a8;padding:6px 12px;">
+          {{ unallocated_trainers|length }} Pending
+        </span>
+      </div>
+      {% if unallocated_trainers %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle" style="font-size:.86rem;">
+          <thead style="background:#fdf4ff;">
+            <tr>
+              <th class="text-muted">TRAINER</th>
+              <th class="text-muted">ID</th>
+              <th class="text-muted">GENDER</th>
+              <th class="text-muted">DEPT</th>
+              <th class="text-muted">CHECK-IN</th>
+              <th class="text-muted">CHECK-OUT</th>
+              <th class="text-muted">STATUS</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for t in unallocated_trainers %}
+          <tr>
+            <td class="fw-500">{{ t.name }}</td>
+            <td><span class="badge" style="background:#f3e8ff;color:#6b21a8;">{{ t.id }}</span></td>
+            <td>
+              {% if t.gender == 'male' %}
+                <span class="badge" style="background:#dbeafe;color:#1e40af;">♂ Male</span>
+              {% else %}
+                <span class="badge" style="background:#fce7f3;color:#be185d;">♀ Female</span>
+              {% endif %}
+            </td>
+            <td class="text-muted">{{ t.department }}</td>
+            <td class="text-muted">{{ t.checkin_date }}</td>
+            <td class="text-muted">{{ t.checkout_date }}</td>
+            <td><span class="badge" style="background:#f3e8ff;color:#6b21a8;">⏳ Pending</span></td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-4">
+        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+        <p class="text-muted mb-0">All trainers allocated.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div><!-- /row -->
+
+<!-- Room Overview Grid
+     Uses rooms_display (not rooms) so trainer rooms show 1/1 instead of 1/2.
+-->
+<div class="form-card mt-4">
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <h5 class="fw-semibold mb-0"><i class="fas fa-th me-2 text-primary"></i>Room Overview</h5>
+    <div class="d-flex gap-2 flex-wrap" style="font-size:.78rem;">
+      <span style="background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:20px;">● Available</span>
+      <span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:20px;">● Partial</span>
+      <span style="background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:20px;">● Full</span>
+      <span style="background:#e5e7eb;color:#374151;padding:3px 10px;border-radius:20px;">● Maintenance</span>
+    </div>
+  </div>
+  <div class="row g-2">
+    {% for item in rooms_display %}
+    {% with room=item.room %}
+    <div class="col-4 col-sm-3 col-md-2">
+      <div class="room-cell
+        {% if room.status == 'maintenance' %}room-maint
+        {% elif room.status == 'full' %}room-full
+        {% elif room.occupied > 0 %}room-partial
+        {% else %}room-avail{% endif %}"
+        title="Room {{ room.room_number }}{% if item.is_trainer_room %} · Trainer (Private){% endif %}">
+        <div class="room-num">{{ room.room_number }}</div>
+        <!-- KEY FIX: show item.effective_capacity (1 for trainer rooms, 2 for student rooms) -->
+        <div class="room-occ">{{ room.occupied }}/{{ item.effective_capacity }}</div>
+        {% if item.is_trainer_room %}
+          <div style="font-size:.6rem;color:#6b21a8;">👤 Trainer</div>
+        {% elif room.gender %}
+          <div style="font-size:.65rem;">{% if room.gender == 'male' %}♂{% else %}♀{% endif %}</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Active Allocations -->
+{% if active_allocations %}
+<div class="form-card mt-4">
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <div style="background:linear-gradient(135deg,#10b981,#059669);border-radius:10px;padding:10px 14px;">
+      <i class="fas fa-list-check text-white"></i>
+    </div>
+    <h5 class="fw-semibold mb-0">Active Allocations</h5>
+    <span class="badge bg-success ms-auto">{{ active_allocations|length }} Active</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle" style="font-size:.86rem;">
+      <thead style="background:#f0fdf4;">
+        <tr>
+          <th class="text-muted">NAME</th>
+          <th class="text-muted">ID</th>
+          <th class="text-muted">TYPE</th>
+          <th class="text-muted">ROOM</th>
+          <th class="text-muted">GENDER</th>
+          <th class="text-muted">CHECK-IN</th>
+          <th class="text-muted">CHECK-OUT</th>
+          <th class="text-muted">ACTION</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for a in active_allocations %}
+      <tr>
+        <td class="fw-500">{{ a.student_name }}</td>
+        <td><span class="badge" style="background:#ede9fe;color:#4f46e5;">{{ a.student_id }}</span></td>
+        <td>
+          {% if a.person_type == 'trainer' %}
+            <span class="person-chip chip-trainer">Trainer</span>
+          {% else %}
+            <span class="person-chip chip-student">Student</span>
+          {% endif %}
+        </td>
+        <td><strong>Room {{ a.room.room_number }}</strong></td>
+        <td>
+          {% if a.gender == 'male' %}
+            <span class="badge" style="background:#dbeafe;color:#1e40af;">♂ Male</span>
+          {% else %}
+            <span class="badge" style="background:#fce7f3;color:#be185d;">♀ Female</span>
+          {% endif %}
+        </td>
+        <td class="text-muted">{{ a.checkin_date|default:"—" }}</td>
+        <td class="text-muted">{{ a.checkout_date|default:"—" }}</td>
+        <td>
+          <form method="post" action="{% url 'hostelmgmt:remove_occupant' a.allocation_id %}"
+                onsubmit="return confirm('Remove {{ a.student_name }}?');" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm"
+                    style="background:#fee2e2;color:#991b1b;border:none;border-radius:6px;">
+              <i class="fas fa-user-minus me-1"></i>Remove
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Waiting List -->
+{% if waiting_list %}
+<div class="form-card mt-4">
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <div style="background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:10px;padding:10px 14px;">
+      <i class="fas fa-hourglass-half text-white"></i>
+    </div>
+    <h5 class="fw-semibold mb-0">Waiting List</h5>
+    <span class="badge ms-auto" style="background:#fef3c7;color:#92400e;">{{ waiting_list|length }} Waiting</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle" style="font-size:.86rem;">
+      <thead style="background:#fffbeb;">
+        <tr>
+          <th class="text-muted">NAME</th>
+          <th class="text-muted">ID</th>
+          <th class="text-muted">TYPE</th>
+          <th class="text-muted">GENDER</th>
+          <th class="text-muted">CHECK-IN</th>
+          <th class="text-muted">CHECK-OUT</th>
+          <th class="text-muted">ADDED</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for w in waiting_list %}
+      <tr>
+        <td class="fw-500">{{ w.person_name }}</td>
+        <td><span class="badge" style="background:#fef3c7;color:#92400e;">{{ w.person_id }}</span></td>
+        <td>
+          {% if w.person_type == 'trainer' %}
+            <span class="person-chip chip-trainer">Trainer</span>
+          {% else %}
+            <span class="person-chip chip-student">Student</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if w.gender == 'male' %}
+            <span class="badge" style="background:#dbeafe;color:#1e40af;">♂ Male</span>
+          {% else %}
+            <span class="badge" style="background:#fce7f3;color:#be185d;">♀ Female</span>
+          {% endif %}
+        </td>
+        <td class="text-muted">{{ w.checkin_date|default:"—" }}</td>
+        <td class="text-muted">{{ w.checkout_date|default:"—" }}</td>
+        <td class="text-muted">{{ w.added_on }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Maintenance Controls -->
+<div class="form-card mt-4">
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <div style="background:linear-gradient(135deg,#6b7280,#374151);border-radius:10px;padding:10px 14px;">
+      <i class="fas fa-wrench text-white"></i>
+    </div>
+    <h5 class="fw-semibold mb-0">Maintenance Controls</h5>
+  </div>
+  <div class="row g-2">
+    {% for room in rooms %}
+    <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+      <form method="post" action="{% url 'hostelmgmt:toggle_maintenance' room.room_id %}">
+        {% csrf_token %}
+        <button type="submit" class="w-100 py-2 rounded-3 border-0 fw-500"
+          style="font-size:.78rem; cursor:pointer;
+            {% if room.status == 'maintenance' %}background:#d1fae5;color:#065f46;
+            {% else %}background:#f3f4f6;color:#374151;{% endif %}">
+          <div class="fw-bold">Room {{ room.room_number }}</div>
+          <small>{% if room.status == 'maintenance' %}🔓 Reactivate{% else %}🔧 Block{% endif %}</small>
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

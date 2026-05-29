@@ -1,0 +1,53 @@
+{% extends 'hostelmgmt/base.html' %}
+{% block title %}Visitors{% endblock %}
+{% block page_title %}Visitors & Gate Pass{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4 class="mb-0"><i class="fas fa-user-friends me-2"></i>Visitors & Gate Pass</h4>
+</div>
+
+<!-- Two large action cards -->
+<div class="row g-4 mb-5">
+    <div class="col-md-6">
+        <div class="stat-card text-center p-5">
+            <i class="fas fa-list-alt fa-3x text-primary mb-3"></i>
+            <h5 class="fw-bold">Visitor Records</h5>
+            <p class="text-muted">View all registered visitors and their details</p>
+            <a href="#visitor-table" class="btn btn-outline-primary px-4">View Records</a>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="stat-card text-center p-5" style="background:linear-gradient(135deg,#4facfe,#00f2fe);">
+            <i class="fas fa-id-card fa-3x text-white mb-3"></i>
+            <h5 class="fw-bold text-white">Book Gate Pass</h5>
+            <p style="color:rgba(255,255,255,0.85);">Register a new visitor and generate a gate pass</p>
+            <a href="{% url 'hostelmgmt:book_gate_pass' %}" class="btn btn-light px-4 fw-semibold">Book Now</a>
+        </div>
+    </div>
+</div>
+
+<!-- Visitor table -->
+<div class="form-card" id="visitor-table">
+    <h5 class="fw-semibold mb-4">Recent Visitors</h5>
+    <table class="table table-hover align-middle">
+        <thead style="background:#f8f7ff;">
+            <tr><th>Visitor</th><th>Student ID</th><th>Relation</th><th>Mobile</th><th>Check-In</th><th>Check-Out</th></tr>
+        </thead>
+        <tbody>
+        {% for v in visitor_list %}
+            <tr>
+                <td>{{ v.visitor_name }}</td>
+                <td>{{ v.student_id }}</td>
+                <td>{{ v.relationship }}</td>
+                <td>{{ v.mobile }}</td>
+                <td>{{ v.checkin|date:"d M Y, H:i" }}</td>
+                <td>{{ v.checkout|date:"d M Y, H:i"|default:"—" }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="6" class="text-center text-muted py-4">No visitor records.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,269 @@
+{% extends 'hostelmgmt/base.html' %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reports & Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-card {
+        border-radius: 16px;
+        padding: 25px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    .report-card::before {
+        content: '';
+        position: absolute;
+        top: -30px; right: -30px;
+        width: 100px; height: 100px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+    }
+    .report-card::after {
+        content: '';
+        position: absolute;
+        bottom: -40px; right: 20px;
+        width: 120px; height: 120px;
+        background: rgba(255,255,255,0.07);
+        border-radius: 50%;
+    }
+    .chart-bar {
+        display: flex;
+        align-items: flex-end;
+        gap: 6px;
+        height: 80px;
+    }
+    .chart-bar .bar {
+        flex: 1;
+        border-radius: 4px 4px 0 0;
+        transition: height 0.5s ease;
+        min-width: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb);">
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <h4 class="mb-1"><i class="fas fa-chart-bar me-2"></i>Reports & Analytics</h4>
+            <p class="mb-0 opacity-75">Comprehensive overview of hostel operations</p>
+        </div>
+        <button onclick="window.print()" class="btn btn-white btn-sm fw-semibold"
+                style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);">
+            <i class="fas fa-print me-1"></i> Print Report
+        </button>
+    </div>
+</div>
+
+<!-- Summary Cards Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4 col-lg-2">
+        <div class="report-card" style="background:linear-gradient(135deg,#667eea,#764ba2);">
+            <i class="fas fa-users fa-2x mb-2 opacity-75"></i>
+            <h2 class="fw-bold mb-0">{{ total_allocated }}</h2>
+            <small class="opacity-75">Students Allocated</small>
+        </div>
+    </div>
+    <div class="col-md-4 col-lg-2">
+        <div class="report-card" style="background:linear-gradient(135deg,#43e97b,#38f9d7);">
+            <i class="fas fa-door-open fa-2x mb-2 opacity-75"></i>
+            <h2 class="fw-bold mb-0">{{ available_rooms }}</h2>
+            <small class="opacity-75">Available Rooms</small>
+        </div>
+    </div>
+    <div class="col-md-4 col-lg-2">
+        <div class="report-card" style="background:linear-gradient(135deg,#fa709a,#fee140);">
+            <i class="fas fa-door-closed fa-2x mb-2 opacity-75"></i>
+            <h2 class="fw-bold mb-0">{{ full_rooms }}</h2>
+            <small class="opacity-75">Full Rooms</small>
+        </div>
+    </div>
+    <div class="col-md-4 col-lg-2">
+        <div class="report-card" style="background:linear-gradient(135deg,#4facfe,#00f2fe);">
+            <i class="fas fa-user-friends fa-2x mb-2 opacity-75"></i>
+            <h2 class="fw-bold mb-0">{{ total_visitors }}</h2>
+            <small class="opacity-75">Total Visitors</small>
+        </div>
+    </div>
+    <div class="col-md-4 col-lg-2">
+        <div class="report-card" style="background:linear-gradient(135deg,#f093fb,#f5576c);">
+            <i class="fas fa-exclamation-circle fa-2x mb-2 opacity-75"></i>
+            <h2 class="fw-bold mb-0">{{ open_complaints }}</h2>
+            <small class="opacity-75">Open Complaints</small>
+        </div>
+    </div>
+    <div class="col-md-4 col-lg-2">
+        <div class="report-card" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb);">
+            <i class="fas fa-check-circle fa-2x mb-2 opacity-75"></i>
+            <h2 class="fw-bold mb-0">{{ resolved_complaints }}</h2>
+            <small class="opacity-75">Resolved</small>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Room Occupancy Report Table -->
+    <div class="col-lg-8">
+        <div class="form-card h-100">
+            <div class="d-flex align-items-center gap-2 mb-4">
+                <div style="background:linear-gradient(135deg,#a18cd1,#fbc2eb);border-radius:10px;padding:10px 14px;">
+                    <i class="fas fa-table text-white"></i>
+                </div>
+                <h5 class="fw-semibold mb-0">Room-wise Occupancy Report</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" style="font-size:0.88rem;">
+                    <thead>
+                        <tr style="background:#f8f7ff;">
+                            <th class="text-muted fw-500">ROOM NO.</th>
+                            <th class="text-muted fw-500">FLOOR</th>
+                            <th class="text-muted fw-500">OCCUPANCY</th>
+                            <th class="text-muted fw-500">FILL RATE</th>
+                            <th class="text-muted fw-500">GENDER</th>
+                            <th class="text-muted fw-500">STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for room in room_wise %}
+                        <tr>
+                            <td><strong>{{ room.room_number }}</strong></td>
+                            <td>Floor {{ room.floor.floor_no }}</td>
+                            <td>{{ room.occupied }} / {{ room.capacity }}</td>
+                            <td>
+                                {% if room.capacity > 0 %}
+                                    {% widthratio room.occupied room.capacity 100 as pct %}
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="progress flex-grow-1" style="height:6px;border-radius:3px;">
+                                            <div class="progress-bar
+                                                {% if pct == '100' %}bg-danger
+                                                {% elif pct != '0' %}bg-warning
+                                                {% else %}bg-success{% endif %}"
+                                                style="width:{{ pct }}%">
+                                            </div>
+                                        </div>
+                                        <small>{{ pct }}%</small>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>{{ room.gender|default:"—"|capfirst }}</td>
+                            <td>
+                                {% if room.status == 'available' %}
+                                    <span class="badge" style="background:#d1fae5;color:#065f46;">Available</span>
+                                {% elif room.status == 'full' %}
+                                    <span class="badge" style="background:#fee2e2;color:#991b1b;">Full</span>
+                                {% else %}
+                                    <span class="badge" style="background:#fef3c7;color:#92400e;">Maintenance</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="6" class="text-center text-muted py-4">No room data available.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visual Summary Panel -->
+    <div class="col-lg-4">
+        <!-- Complaints Breakdown -->
+        <div class="form-card mb-4">
+            <h6 class="fw-semibold mb-3">Complaints Summary</h6>
+            <div class="d-flex flex-column gap-3">
+                <div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span style="font-size:0.85rem;">Open</span>
+                        <strong class="text-danger">{{ open_complaints }}</strong>
+                    </div>
+                    <div class="progress" style="height:8px;border-radius:4px;">
+                        {% if open_complaints or resolved_complaints %}
+                            {% with total_c=open_complaints|add:resolved_complaints %}
+                                {% if total_c > 0 %}
+                                    <div class="progress-bar bg-danger"
+                                         style="width:{% widthratio open_complaints total_c 100 %}%">
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span style="font-size:0.85rem;">Resolved</span>
+                        <strong class="text-success">{{ resolved_complaints }}</strong>
+                    </div>
+                    <div class="progress" style="height:8px;border-radius:4px;">
+                        {% with total_c=open_complaints|add:resolved_complaints %}
+                            {% if total_c > 0 %}
+                                <div class="progress-bar bg-success"
+                                     style="width:{% widthratio resolved_complaints total_c 100 %}%">
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Room Availability Donut-style -->
+        <div class="form-card">
+            <h6 class="fw-semibold mb-3">Room Availability</h6>
+
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <div style="width:14px;height:14px;background:#10b981;border-radius:3px;"></div>
+                <span style="font-size:0.85rem;">Available Rooms</span>
+                <strong class="ms-auto text-success">{{ available_rooms }}</strong>
+            </div>
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <div style="width:14px;height:14px;background:#ef4444;border-radius:3px;"></div>
+                <span style="font-size:0.85rem;">Full Rooms</span>
+                <strong class="ms-auto text-danger">{{ full_rooms }}</strong>
+            </div>
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div style="width:14px;height:14px;background:#6366f1;border-radius:3px;"></div>
+                <span style="font-size:0.85rem;">Students Housed</span>
+                <strong class="ms-auto text-primary">{{ total_allocated }}</strong>
+            </div>
+
+            <!-- Simple visual bar chart -->
+            <div class="chart-bar mt-3">
+                {% if available_rooms > 0 %}
+                    <div class="bar bg-success"
+                         style="height:{% widthratio available_rooms 40 80 %}px;"
+                         title="Available: {{ available_rooms }}">
+                    </div>
+                {% endif %}
+                {% if full_rooms > 0 %}
+                    <div class="bar bg-danger"
+                         style="height:{% widthratio full_rooms 40 80 %}px;"
+                         title="Full: {{ full_rooms }}">
+                    </div>
+                {% endif %}
+                <div class="bar bg-primary"
+                     style="height:{% widthratio total_allocated 80 80 %}px;"
+                     title="Students: {{ total_allocated }}">
+                </div>
+                <div class="bar" style="background:#a5b4fc;height:{% widthratio total_visitors 200 80 %}px;"
+                     title="Visitors: {{ total_visitors }}">
+                </div>
+            </div>
+            <div class="d-flex gap-1 mt-1" style="font-size:0.7rem;color:#94a3b8;">
+                <span style="flex:1;text-align:center;">Avail</span>
+                <span style="flex:1;text-align:center;">Full</span>
+                <span style="flex:1;text-align:center;">Students</span>
+                <span style="flex:1;text-align:center;">Visitors</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer note -->
+<div class="text-center py-3">
+    <small class="text-muted">
+        <i class="fas fa-clock me-1"></i>
+        Report generated on: {% now "d M Y, H:i" %} &nbsp;|&nbsp; PRAVAAH Hostel Management System
+    </small>
+</div>
+{% endblock %}

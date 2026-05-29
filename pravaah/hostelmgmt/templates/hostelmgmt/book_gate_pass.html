@@ -1,0 +1,265 @@
+{% extends 'hostelmgmt/base.html' %}
+{% block title %}Book Gate Pass{% endblock %}
+{% block page_title %}Book Gate Pass{% endblock %}
+
+{% block content %}
+<div class="page-header" style="background:linear-gradient(135deg,#4facfe,#00f2fe);">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <h4 class="mb-1"><i class="fas fa-id-card me-2"></i>Book Gate Pass</h4>
+            <p class="mb-0 opacity-75">Register visitor and generate gate pass PDF + email</p>
+        </div>
+        <a href="{% url 'hostelmgmt:visitors' %}"
+           class="btn btn-sm fw-semibold"
+           style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);">
+            <i class="fas fa-arrow-left me-1"></i>Back to Visitors
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 justify-content-center">
+<div class="col-lg-8">
+<div class="form-card">
+
+    <!-- Form header -->
+    <div class="text-center mb-4 p-4"
+         style="background:linear-gradient(135deg,#e0f7ff,#b3ecff);border-radius:12px;">
+        <div style="width:72px;height:72px;
+                    background:linear-gradient(135deg,#4facfe,#00f2fe);
+                    border-radius:50%;display:inline-flex;
+                    align-items:center;justify-content:center;
+                    margin-bottom:12px;
+                    box-shadow:0 8px 25px rgba(79,172,254,0.4);">
+            <i class="fas fa-user-check fa-2x text-white"></i>
+        </div>
+        <h5 class="fw-bold text-dark mb-1">Visitor Registration Form</h5>
+        <p class="text-muted mb-0" style="font-size:.85rem;">
+            Fill all details — a gate pass PDF will be generated and emailed to the visitor.
+        </p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+
+            <!-- Student ID -->
+            <div class="col-md-6">
+                <label class="form-label fw-500">
+                    <i class="fas fa-id-badge me-1 text-primary"></i>Student ID *
+                </label>
+                <input type="text" name="student_id"
+                       class="form-control form-control-lg"
+                       placeholder="e.g. STU2024001" required
+                       value="{{ form.student_id.value|default:'' }}">
+                {% if form.student_id.errors %}
+                    <small class="text-danger">{{ form.student_id.errors }}</small>
+                {% endif %}
+            </div>
+
+            <!-- Student Name -->
+            <div class="col-md-6">
+                <label class="form-label fw-500">
+                    <i class="fas fa-user-graduate me-1 text-primary"></i>Student Name *
+                </label>
+                <input type="text" name="student_name"
+                       class="form-control form-control-lg"
+                       placeholder="Full name of the student being visited" required
+                       value="{{ form.student_name.value|default:'' }}">
+                {% if form.student_name.errors %}
+                    <small class="text-danger">{{ form.student_name.errors }}</small>
+                {% endif %}
+            </div>
+
+            <!-- Visitor Name -->
+            <div class="col-md-6">
+                <label class="form-label fw-500">
+                    <i class="fas fa-user me-1 text-primary"></i>Visitor Name *
+                </label>
+                <input type="text" name="visitor_name"
+                       class="form-control form-control-lg"
+                       placeholder="Full name of visitor" required
+                       value="{{ form.visitor_name.value|default:'' }}">
+                {% if form.visitor_name.errors %}
+                    <small class="text-danger">{{ form.visitor_name.errors }}</small>
+                {% endif %}
+            </div>
+
+            <!-- Visitor Email -->
+            <div class="col-md-6">
+                <label class="form-label fw-500">
+                    <i class="fas fa-envelope me-1 text-info"></i>Visitor Email
+                    <span class="text-muted" style="font-size:.73rem;">
+                        (gate pass will be emailed)
+                    </span>
+                </label>
+                <input type="email" name="visitor_email"
+                       class="form-control form-control-lg"
+                       placeholder="visitor@example.com"
+                       value="{{ form.visitor_email.value|default:'' }}">
+                {% if form.visitor_email.errors %}
+                    <small class="text-danger">{{ form.visitor_email.errors }}</small>
+                {% endif %}
+            </div>
+
+            <!-- Relationship -->
+            <div class="col-md-6">
+                <label class="form-label fw-500">
+                    <i class="fas fa-heart me-1 text-danger"></i>Relationship *
+                </label>
+                <select name="relationship" class="form-select form-select-lg" required>
+                    <option value="">-- Select Relationship --</option>
+                    {% for val, label in form.fields.relationship.widget.choices %}
+                        {% if val %}
+                        <option value="{{ val }}"
+                            {% if form.relationship.value == val %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+                {% if form.relationship.errors %}
+                    <small class="text-danger">{{ form.relationship.errors }}</small>
+                {% endif %}
+            </div>
+
+            <!-- Mobile -->
+            <div class="col-md-6">
+                <label class="form-label fw-500">
+                    <i class="fas fa-phone me-1 text-success"></i>Mobile Number *
+                </label>
+                <input type="tel" name="mobile"
+                       class="form-control form-control-lg"
+                       placeholder="10-digit mobile number"
+                       maxlength="15" required
+                       value="{{ form.mobile.value|default:'' }}">
+                {% if form.mobile.errors %}
+                    <small class="text-danger">{{ form.mobile.errors }}</small>
+                {% endif %}
+            </div>
+
+            <!-- Visit Date -->
+            <div class="col-md-4">
+                <label class="form-label fw-500">
+                    <i class="fas fa-calendar me-1 text-primary"></i>Visit Date *
+                </label>
+                <input type="date" name="visit_date"
+                       class="form-control form-control-lg" required
+                       value="{{ form.visit_date.value|default:'' }}">
+                {% if form.visit_date.errors %}
+                    <small class="text-danger">{{ form.visit_date.errors }}</small>
+                {% endif %}
+            </div>
+
+            <!-- Check-In -->
+            <div class="col-md-4">
+                <label class="form-label fw-500">
+                    <i class="fas fa-sign-in-alt me-1 text-info"></i>Check-In Time *
+                </label>
+                <input type="datetime-local" name="checkin"
+                       class="form-control form-control-lg" required
+                       value="{{ form.checkin.value|default:'' }}">
+                {% if form.checkin.errors %}
+                    <small class="text-danger">{{ form.checkin.errors }}</small>
+                {% endif %}
+            </div>
+
+            <!-- Check-Out -->
+            <div class="col-md-4">
+                <label class="form-label fw-500">
+                    <i class="fas fa-sign-out-alt me-1 text-warning"></i>Check-Out Time
+                </label>
+                <input type="datetime-local" name="checkout"
+                       class="form-control form-control-lg"
+                       value="{{ form.checkout.value|default:'' }}">
+                {% if form.checkout.errors %}
+                    <small class="text-danger">{{ form.checkout.errors }}</small>
+                {% endif %}
+            </div>
+
+            <!-- Purpose — full width -->
+            <div class="col-12">
+                <label class="form-label fw-500">
+                    <i class="fas fa-clipboard me-1 text-warning"></i>Purpose of Visit *
+                </label>
+                <textarea name="purpose" class="form-control" rows="3" required
+                    placeholder="e.g. Family visit, Birthday celebration, Medical visit…">{{ form.purpose.value|default:'' }}</textarea>
+                {% if form.purpose.errors %}
+                    <small class="text-danger">{{ form.purpose.errors }}</small>
+                {% endif %}
+            </div>
+
+        </div><!-- /row g-3 -->
+
+        <!-- Info note -->
+        <div class="mt-4 p-3 rounded-3"
+             style="background:#f0fdf4;border:1px solid #bbf7d0;">
+            <div class="d-flex gap-2">
+                <i class="fas fa-info-circle text-success mt-1"></i>
+                <span class="text-muted" style="font-size:.85rem;">
+                    After submitting, a PDF gate pass will be generated automatically
+                    and the browser will download it. If a visitor email is provided,
+                    it will also be sent by email.
+                </span>
+            </div>
+        </div>
+
+        <div class="d-flex gap-3 mt-4">
+            <a href="{% url 'hostelmgmt:visitors' %}"
+               class="btn btn-outline-secondary px-4 py-2">
+                <i class="fas fa-times me-1"></i>Cancel
+            </a>
+            <button type="submit"
+                    class="btn flex-grow-1 py-2 fw-semibold text-white"
+                    style="background:linear-gradient(135deg,#4facfe,#00f2fe);
+                           border:none;border-radius:10px;">
+                <i class="fas fa-id-card me-2"></i>Generate Gate Pass
+            </button>
+        </div>
+
+    </form>
+</div>
+</div>
+
+<!-- Side panel -->
+<div class="col-lg-4">
+    <div class="form-card"
+         style="background:linear-gradient(160deg,#1e1b4b,#312e81);color:white;">
+        <h6 class="fw-bold mb-3" style="color:#a5b4fc;">
+            <i class="fas fa-clipboard-list me-2"></i>Visitor Guidelines
+        </h6>
+        <ul class="list-unstyled" style="font-size:.84rem;color:rgba(255,255,255,0.8);">
+            <li class="mb-3 d-flex gap-2">
+                <i class="fas fa-check-circle mt-1" style="color:#4ade80;"></i>
+                Show gate pass at the security desk on arrival.
+            </li>
+            <li class="mb-3 d-flex gap-2">
+                <i class="fas fa-check-circle mt-1" style="color:#4ade80;"></i>
+                Carry original photo ID (Aadhaar / PAN / Passport).
+            </li>
+            <li class="mb-3 d-flex gap-2">
+                <i class="fas fa-check-circle mt-1" style="color:#4ade80;"></i>
+                Visiting hours: 9 AM – 8 PM only.
+            </li>
+            <li class="mb-3 d-flex gap-2">
+                <i class="fas fa-check-circle mt-1" style="color:#4ade80;"></i>
+                Maximum 2 visitors per student at a time.
+            </li>
+            <li class="mb-3 d-flex gap-2">
+                <i class="fas fa-times-circle mt-1" style="color:#f87171;"></i>
+                No overnight stays without warden approval.
+            </li>
+            <li class="d-flex gap-2">
+                <i class="fas fa-times-circle mt-1" style="color:#f87171;"></i>
+                Violations lead to restricted visiting privileges.
+            </li>
+        </ul>
+        <hr style="border-color:rgba(255,255,255,0.15);">
+        <div class="text-center mt-2">
+            <i class="fas fa-phone-alt mb-2" style="color:#a5b4fc;font-size:1.4rem;"></i>
+            <p style="font-size:.78rem;color:rgba(255,255,255,0.6);margin:0;">Warden Contact</p>
+            <p style="font-size:1rem;font-weight:600;color:white;margin:0;">+91 98765 43210</p>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}

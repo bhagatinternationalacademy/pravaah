@@ -1,0 +1,603 @@
+{% extends 'hostelmgmt/base.html' %}
+{% block title %}Security – Checkout Desk{% endblock %}
+{% block page_title %}Security – Physical Checkout{% endblock %}
+
+{% block extra_css %}
+<style>
+  .filter-bar {
+    background: white;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    margin-bottom: 25px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+  .filter-bar input,
+  .filter-bar select {
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    padding: 8px 12px;
+    font-size: .9rem;
+  }
+  .filter-bar input:focus,
+  .filter-bar select:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    outline: none;
+  }
+  .btn-filter {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-filter:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.3);
+  }
+  .btn-reset {
+    background: #f3f4f6;
+    color: #6b7280;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .btn-reset:hover {
+    background: #e5e7eb;
+  }
+  .bulk-bar {
+    background: linear-gradient(135deg, rgba(16,185,129,.08), rgba(16,185,129,.04));
+    border: 1px solid #d1fae5;
+    border-radius: 14px;
+    padding: 15px 20px;
+    display: none;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  .bulk-bar.show {
+    display: flex;
+  }
+  .bulk-count {
+    font-weight: 600;
+    color: #059669;
+    flex: 1;
+  }
+  .btn-bulk-checkout {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-bulk-checkout:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+  }
+  .btn-deselect {
+    background: white;
+    color: #6b7280;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .btn-checkout {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: .85rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-checkout:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  }
+  .btn-checkout:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .row-check {
+    width: 18px;
+    height: 18px;
+    accent-color: #4f46e5;
+    cursor: pointer;
+  }
+  .overdue-row {
+    background: #fef2f2;
+  }
+  .section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 30px;
+    margin-bottom: 15px;
+  }
+  .section-title .badge {
+    font-size: .75rem;
+    font-weight: 600;
+  }
+  #toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: white;
+    border: 2px solid #10b981;
+    border-radius: 10px;
+    padding: 14px 18px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.12);
+    display: none;
+    align-items: center;
+    gap: 10px;
+    z-index: 9999;
+    animation: slideIn .3s ease-out;
+  }
+  #toast.show {
+    display: flex;
+  }
+  #toast.error {
+    border-color: #ef4444;
+  }
+  #toast.error .icon {
+    color: #ef4444;
+  }
+  @keyframes slideIn {
+    from {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  .spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .empty-state {
+    text-align: center;
+    padding: 60px 30px;
+    color: #9ca3af;
+  }
+  .empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 10px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+      <h4 class="mb-1">
+        <i class="fas fa-shield-alt me-2"></i>Security Checkout Desk
+      </h4>
+      <p class="mb-0 opacity-75">
+        Track physical checkout — {{ today|date:"l, d F Y" }}
+      </p>
+    </div>
+    <a href="{% url 'hostelmgmt:room_allocation' %}" class="btn btn-outline-primary btn-sm">
+      <i class="fas fa-arrow-left me-1"></i>Back to Allocation
+    </a>
+  </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="stat-card d-flex align-items-center gap-3">
+      <div style="background:#d1fae5;border-radius:12px;padding:14px;">
+        <i class="fas fa-user-check fa-lg text-success"></i>
+      </div>
+      <div>
+        <h4 class="mb-0 fw-bold text-success">{{ total_present }}</h4>
+        <small class="text-muted">Currently Present</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card d-flex align-items-center gap-3">
+      <div style="background:#fee2e2;border-radius:12px;padding:14px;">
+        <i class="fas fa-exclamation-circle fa-lg text-danger"></i>
+      </div>
+      <div>
+        <h4 class="mb-0 fw-bold text-danger">{{ total_overdue }}</h4>
+        <small class="text-muted">Overdue Stays</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card d-flex align-items-center gap-3">
+      <div style="background:#fef3c7;border-radius:12px;padding:14px;">
+        <i class="fas fa-sign-out-alt fa-lg text-warning"></i>
+      </div>
+      <div>
+        <h4 class="mb-0 fw-bold text-warning">{{ checked_out_today_count }}</h4>
+        <small class="text-muted">Checked Out Today</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card d-flex align-items-center gap-3">
+      <div style="background:#dbeafe;border-radius:12px;padding:14px;">
+        <i class="fas fa-door-open fa-lg text-primary"></i>
+      </div>
+      <div>
+        <h4 class="mb-0 fw-bold text-primary">{{ available_rooms|default:"—" }}</h4>
+        <small class="text-muted">Available Rooms</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<form method="get" class="filter-bar">
+  <input type="text" name="q" value="{{ filter_q }}" placeholder="Search name, room, ID…" style="min-width: 220px;">
+  <select name="gender">
+    <option value="" {% if not filter_gender %}selected{% endif %}>All Genders</option>
+    <option value="male" {% if filter_gender == 'male' %}selected{% endif %}>Male</option>
+    <option value="female" {% if filter_gender == 'female' %}selected{% endif %}>Female</option>
+  </select>
+  <select name="type">
+    <option value="" {% if not filter_type %}selected{% endif %}>All Types</option>
+    <option value="student" {% if filter_type == 'student' %}selected{% endif %}>Students</option>
+    <option value="trainer" {% if filter_type == 'trainer' %}selected{% endif %}>Trainers</option>
+  </select>
+  <label style="display:flex;align-items:center;gap:6px;font-size:.9rem;cursor:pointer;margin:0;">
+    <input type="checkbox" name="overdue" value="1" {% if filter_overdue == '1' %}checked{% endif %}>
+    <span>Overdue only</span>
+  </label>
+  <button type="submit" class="btn-filter">Apply</button>
+  <a href="{% url 'hostelmgmt:security' %}" class="btn-reset">Reset</a>
+</form>
+
+<!-- Bulk Checkout Bar -->
+<div class="bulk-bar" id="bulkBar">
+  <span class="bulk-count" id="selCount">0 selected</span>
+  <button class="btn-deselect" onclick="deselectAll()">Deselect all</button>
+  <button class="btn-bulk-checkout" onclick="bulkCheckout()">
+    <i class="fas fa-check me-1"></i>Checkout Selected
+  </button>
+</div>
+
+<!-- PANEL A — PRESENT -->
+<div class="section-title">
+  <span style="width:8px;height:8px;border-radius:50%;background:#10b981;display:inline-block;"></span>
+  Currently Present
+  <span class="badge bg-light text-dark ms-auto">
+    {{ present_list|length }} record{% if present_list|length != 1 %}s{% endif %}
+  </span>
+</div>
+
+<div class="form-card">
+  {% if present_list %}
+  <div class="table-responsive">
+    <table class="table table-hover align-middle" style="font-size:.875rem;margin-bottom:0;">
+      <thead style="background:#f8f7ff;">
+        <tr>
+          <th style="width:40px;">
+            <input type="checkbox" class="row-check" id="selectAll" onchange="toggleAll(this)">
+          </th>
+          <th>NAME / ID</th>
+          <th>ROOM</th>
+          <th>TYPE</th>
+          <th>GENDER</th>
+          <th>CHECK-IN</th>
+          <th>CHECKOUT DATE</th>
+          <th style="text-align:center;">ACTION</th>
+        </tr>
+      </thead>
+      <tbody id="presentBody">
+        {% for alloc in present_list %}
+        <tr id="row-{{ alloc.allocation_id }}" {% if alloc.checkout_date and alloc.checkout_date < today %}class="overdue-row"{% endif %}>
+          <td>
+            <input type="checkbox" class="row-check alloc-check" data-id="{{ alloc.allocation_id }}" onchange="updateBulkBar()">
+          </td>
+          <td>
+            <div class="fw-500">{{ alloc.student_name }}</div>
+            <div style="font-size:.75rem;color:#9ca3af;margin-top:2px;">{{ alloc.student_id }}</div>
+          </td>
+          <td>
+            <span class="badge" style="background:#dbeafe;color:#1e40af;padding:5px 10px;font-weight:600;">
+              {{ alloc.room.room_number }}
+            </span>
+          </td>
+          <td>
+            {% if alloc.person_type == 'student' %}
+              <span class="badge" style="background:#d1fae5;color:#065f46;">Student</span>
+            {% else %}
+              <span class="badge" style="background:#fef3c7;color:#92400e;">Trainer</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if alloc.gender == 'male' %}
+              <span class="badge" style="background:#dbeafe;color:#1e40af;">♂ Male</span>
+            {% else %}
+              <span class="badge" style="background:#fce7f3;color:#be185d;">♀ Female</span>
+            {% endif %}
+          </td>
+          <td style="font-size:.8rem;color:#6b7280;">
+            {{ alloc.checkin_date|date:"d M Y"|default:"—" }}
+          </td>
+          <td style="font-size:.8rem;color:#6b7280;">
+            {% if alloc.checkout_date %}
+              {% if alloc.checkout_date < today %}
+                <span style="color:#dc2626;font-weight:600;">{{ alloc.checkout_date|date:"d M Y" }}</span>
+                <span class="badge" style="background:#fee2e2;color:#991b1b;">Overdue</span>
+              {% else %}
+                {{ alloc.checkout_date|date:"d M Y" }}
+              {% endif %}
+            {% else %}—{% endif %}
+          </td>
+          <td style="text-align:center;">
+            <button class="btn-checkout" id="btn-{{ alloc.allocation_id }}" onclick="checkoutSingle({{ alloc.allocation_id }}, this)">
+              <i class="fas fa-check"></i>Checkout
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">🏠</div>
+    <p>No occupants match filters, or everyone has checked out.</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- PANEL B — CHECKED OUT TODAY -->
+<div class="section-title">
+  <span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;"></span>
+  Checked Out Today
+  <span class="badge bg-light text-dark ms-auto">
+    {{ checked_out_today|length }} record{% if checked_out_today|length != 1 %}s{% endif %}
+  </span>
+</div>
+
+<div class="form-card">
+  {% if checked_out_today %}
+  <div class="table-responsive">
+    <table class="table table-hover align-middle" style="font-size:.875rem;margin-bottom:0;">
+      <thead style="background:#f8f7ff;">
+        <tr>
+          <th>NAME / ID</th>
+          <th>ROOM</th>
+          <th>TYPE</th>
+          <th>CHECKOUT TIME</th>
+          <th>PROCESSED BY</th>
+        </tr>
+      </thead>
+      <tbody id="coBody">
+        {% for alloc in checked_out_today %}
+        <tr id="co-row-{{ alloc.allocation_id }}">
+          <td>
+            <div class="fw-500">{{ alloc.student_name }}</div>
+            <div style="font-size:.75rem;color:#9ca3af;margin-top:2px;">{{ alloc.student_id }}</div>
+          </td>
+          <td>
+            <span class="badge" style="background:#dbeafe;color:#1e40af;padding:5px 10px;font-weight:600;">
+              {{ alloc.room.room_number }}
+            </span>
+          </td>
+          <td>
+            {% if alloc.person_type == 'student' %}
+              <span class="badge" style="background:#d1fae5;color:#065f46;">Student</span>
+            {% else %}
+              <span class="badge" style="background:#fef3c7;color:#92400e;">Trainer</span>
+            {% endif %}
+          </td>
+          <td style="font-size:.8rem;color:#6b7280;font-family:monospace;font-weight:600;">
+            {{ alloc.actual_checkout_time|date:"d M Y, h:i A" }}
+          </td>
+          <td style="font-size:.8rem;color:#6b7280;">
+            {% if alloc.checked_out_by %}
+              {{ alloc.checked_out_by.get_full_name|default:alloc.checked_out_by.username }}
+            {% else %}
+              <span style="color:#d1d5db;">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">📋</div>
+    <p>No checkouts recorded today yet.</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Toast -->
+<div id="toast">
+  <i class="fas fa-check icon" style="color:#10b981;"></i>
+  <span id="toastMsg"></span>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const CSRF = '{{ csrf_token }}';
+
+  let toastTimer;
+  function showToast(msg, isError = false) {
+    const t = document.getElementById('toast');
+    if (isError) {
+      t.querySelector('.icon').className = 'fas fa-exclamation-circle icon';
+      t.querySelector('.icon').style.color = '#ef4444';
+    } else {
+      t.querySelector('.icon').className = 'fas fa-check icon';
+      t.querySelector('.icon').style.color = '#10b981';
+    }
+    t.classList.toggle('error', isError);
+    document.getElementById('toastMsg').textContent = msg;
+    void t.offsetWidth;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3800);
+  }
+
+  function checkoutSingle(allocId, btn) {
+    if (!confirm('Confirm checkout for this person?')) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Processing…';
+
+    fetch(`{% url 'hostelmgmt:security_checkout' 0 %}`.replace('/0/', `/${allocId}/`), {
+      method: 'POST',
+      headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/json' },
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        const row = document.getElementById(`row-${allocId}`);
+        if (row) {
+          row.style.transition = 'opacity .4s, transform .4s';
+          row.style.opacity = '0';
+          row.style.transform = 'translateX(20px)';
+          setTimeout(() => {
+            row.remove();
+            appendToCheckedOut(data);
+          }, 420);
+        }
+        showToast(data.message);
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check"></i>Checkout';
+        showToast(data.message || 'Error occurred.', true);
+      }
+    })
+    .catch(() => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-check"></i>Checkout';
+      showToast('Network error. Please try again.', true);
+    });
+  }
+
+  function bulkCheckout() {
+    const checked = [...document.querySelectorAll('.alloc-check:checked')];
+    if (!checked.length) return;
+    if (!confirm(`Checkout ${checked.length} selected person(s)?`)) return;
+
+    const ids = checked.map(c => parseInt(c.dataset.id));
+
+    fetch("{% url 'hostelmgmt:security_checkout_bulk' %}", {
+      method: 'POST',
+      headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ allocation_ids: ids }),
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        ids.forEach(id => {
+          const row = document.getElementById(`row-${id}`);
+          if (row) row.remove();
+        });
+        deselectAll();
+        showToast(data.message);
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        showToast(data.message || 'Bulk checkout failed.', true);
+      }
+    })
+    .catch(() => showToast('Network error during bulk checkout.', true));
+  }
+
+  function appendToCheckedOut(data) {
+    const tbody = document.getElementById('coBody');
+    if (!tbody) {
+      location.reload();
+      return;
+    }
+    const tr = document.createElement('tr');
+    tr.id = `co-row-${data.allocation_id}`;
+    tr.style.opacity = '0';
+    tr.innerHTML = `
+      <td>
+        <div class="fw-500">${data.student_name}</div>
+        <div style="font-size:.75rem;color:#9ca3af;margin-top:2px;">${data.student_id}</div>
+      </td>
+      <td>
+        <span class="badge" style="background:#dbeafe;color:#1e40af;padding:5px 10px;font-weight:600;">
+          ${data.room_number}
+        </span>
+      </td>
+      <td>
+        <span class="badge" style="background:${data.person_type === 'student' ? '#d1fae5' : '#fef3c7'};color:${data.person_type === 'student' ? '#065f46' : '#92400e'};">
+          ${data.person_type === 'student' ? 'Student' : 'Trainer'}
+        </span>
+      </td>
+      <td style="font-size:.8rem;color:#6b7280;font-family:monospace;font-weight:600;">
+        ${data.checkout_time}
+      </td>
+      <td style="font-size:.8rem;color:#6b7280;">
+        ${data.checked_out_by || '—'}
+      </td>
+    `;
+    tbody.insertBefore(tr, tbody.firstChild);
+    setTimeout(() => {
+      tr.style.transition = 'opacity .4s';
+      tr.style.opacity = '1';
+    }, 10);
+  }
+
+  function toggleAll(checkbox) {
+    document.querySelectorAll('.alloc-check').forEach(cb => cb.checked = checkbox.checked);
+    updateBulkBar();
+  }
+
+  function deselectAll() {
+    document.querySelectorAll('.alloc-check').forEach(cb => cb.checked = false);
+    document.getElementById('selectAll').checked = false;
+    updateBulkBar();
+  }
+
+  function updateBulkBar() {
+    const checked = document.querySelectorAll('.alloc-check:checked').length;
+    const bulkBar = document.getElementById('bulkBar');
+    const selCount = document.getElementById('selCount');
+    selCount.textContent = `${checked} selected`;
+    if (checked > 0) {
+      bulkBar.classList.add('show');
+    } else {
+      bulkBar.classList.remove('show');
+    }
+  }
+</script>
+{% endblock %}

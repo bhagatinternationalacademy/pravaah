@@ -16,6 +16,9 @@ urlpatterns = [
     # --- Central User Management & Portal Module Routing Hub ---
     # Mounted at root to flawlessly match internal app-level pathing definitions
     path('', include('usermgmt.urls')),
+
+    # --- Trainer Management & Accounts Module ---
+    path('trainers/', include('trainermgmt.urls')),
 ]
 
 # --- Media Uploads Asset Streamer Routing ---

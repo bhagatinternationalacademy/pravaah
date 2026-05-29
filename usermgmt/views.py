@@ -13,12 +13,11 @@ from django.utils import timezone
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
+
 from .models import User, AuditLog
 from .forms import ProfileEditForm  # Ensure ProfileEditForm is defined in forms.py
 from commonservices.utils import send_email, get_client_ip
-from django.db.models import Q
-from django.utils import timezone
-from datetime import timedelta
+
 # --- Internal Session Helper ---
 def _redirect_if_session_expired(request):
     if not request.user.is_authenticated:
@@ -37,13 +36,13 @@ def login_view(request):
         password = request.POST.get('password', '')
         remember = request.POST.get('remember')
 
-        # Simple brute-force protection per-session
-        failures = request.session.get('login_failures', {})
-        entry = failures.get(username_input, {'count': 0, 'first': None})
-        first_ts = entry.get('first')
-        if first_ts and entry.get('count', 0) >= 5 and (timezone.now().timestamp() - first_ts) < 15 * 60:
-            messages.error(request, 'Too many failed login attempts. Try again later.')
-            return render(request, 'auth/login.html')
+       # # Simple brute-force protection per-session
+       # failures = request.session.get('login_failures', {})
+       # entry = failures.get(username_input, {'count': 0, 'first': None})
+       # first_ts = entry.get('first')
+       # if first_ts and entry.get('count', 0) >= 5 and (timezone.now().timestamp() - first_ts) < 15 * 60:
+      #      messages.error(request, 'Too many failed login attempts. Try again later.')
+       #     return render(request, 'auth/login.html')
 
         # Allow login by email: lookup username if input looks like email
         username = username_input
@@ -80,9 +79,9 @@ def login_view(request):
             )
 
             # Reset failures
-            if username_input in failures:
-                failures.pop(username_input)
-                request.session['login_failures'] = failures
+          # if username_input in failures:
+          #      failures.pop(username_input)
+           #     request.session['login_failures'] = failures
 
             # Dynamic Role-Based Redirect Gateways
             groups = list(user.groups.values_list('name', flat=True))
@@ -93,11 +92,11 @@ def login_view(request):
             return redirect('usermgmt:user_home')
         else:
             # Increment failure count
-            entry['count'] = entry.get('count', 0) + 1
-            if not entry.get('first'):
-                entry['first'] = timezone.now().timestamp()
-            failures[username_input] = entry
-            request.session['login_failures'] = failures
+            #entry['count'] = entry.get('count', 0) + 1
+           # if not entry.get('first'):
+           #     entry['first'] = timezone.now().timestamp()
+           # failures[username_input] = entry
+           # request.session['login_failures'] = failures
             
             # Audit
             AuditLog.objects.create(
@@ -455,82 +454,68 @@ def reports(request):
 
 @login_required
 def report_result(request):
-
-    report_type = request.GET.get('report_type', 'users')
+    report_type = request.GET.get('report_type')
     role = request.GET.get('role')
     status = request.GET.get('status')
-    search = request.GET.get('search')
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
+    login_start = request.GET.get('login_start')
+    login_end = request.GET.get('login_end')
+    joined_within = request.GET.get('joined_within')
+    search = request.GET.get('search')
 
     users = User.objects.all()
 
-    print("TOTAL USERS =", users.count())
-
     if role:
-        users = users.filter(
-            groups__name=role
-        )
+        users = users.filter(groups__name=role)
+    
+    if status == 'Active':
+        users = users.filter(is_active=True)
+    elif status == 'Inactive':
+        users = users.filter(is_active=False)
 
-    if status:
+    if start_date:
+        users = users.filter(date_joined__date__gte=start_date)
+    if end_date:
+        users = users.filter(date_joined__date__lte=end_date)
 
-        if status == "Active":
-            users = users.filter(is_active=True)
+    if login_start:
+        users = users.filter(last_login__date__gte=login_start)
+    if login_end:
+        users = users.filter(last_login__date__lte=login_end)
 
-        elif status == "Inactive":
-            users = users.filter(is_active=False)
+    if joined_within and joined_within.isdigit():
+        from django.utils import timezone
+        import datetime
+        cutoff = timezone.now() - datetime.timedelta(days=int(joined_within))
+        users = users.filter(date_joined__gte=cutoff)
 
     if search:
         users = users.filter(
-            Q(username__icontains=search) |
-            Q(email__icontains=search)
+            models.Q(username__icontains=search) |
+            models.Q(first_name__icontains=search) |
+            models.Q(last_name__icontains=search) |
+            models.Q(email__icontains=search)
         )
 
-    if start_date:
-        users = users.filter(
-            date_joined__date__gte=start_date
-        )
-
-    if end_date:
-        users = users.filter(
-            date_joined__date__lte=end_date
-        )
-
-    active_count = users.filter(
-        is_active=True
-    ).count()
-
-    inactive_count = users.filter(
-        is_active=False
-    ).count()
-
-    recent_count = users.filter(
-        date_joined__gte=timezone.now() - timedelta(days=30)
-    ).count()
+    users_list = users.order_by('-date_joined')
 
     counts = {
-        'total': users.count(),
-        'active': active_count,
-        'inactive': inactive_count,
-        'new': recent_count
+        'total': users_list.count(),
+        'active': users_list.filter(is_active=True).count(),
+        'inactive': users_list.filter(is_active=False).count(),
+        'new': users_list.count()
     }
 
     context = {
-        'users': users,
-        'counts': counts,
         'report_type': report_type,
-        'role': role,
-        'status': status,
-        'search': search,
-        'start_date': start_date,
-        'end_date': end_date
+        'users': users_list,
+        'counts': counts,
+        'search': search
     }
+    return render(request, 'reports/report_result.html', context)
 
-    return render(
-        request,
-        'reports/report_result.html',
-        context
-    )
+
 @login_required
 def users_list(request):
     users = User.objects.all().order_by('-created_at')
@@ -575,7 +560,7 @@ def activity_dashboard(request):
     recent_registrations = User.objects.order_by('-created_at')[:5]
     failed_logins = AuditLog.objects.filter(action__icontains='Failed').count()
     
-    top_role = Group.objects.annotate(total_users=models.Count('user')).order_by('-total_users').first()
+    top_role = Group.objects.annotate(total_users=models.Count('usermgmt_user_set')).order_by('-total_users').first()
 
     context = {
         'total_users': total_users,

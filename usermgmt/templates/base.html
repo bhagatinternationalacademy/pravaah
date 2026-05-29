@@ -88,8 +88,28 @@
               <a class="nav-link" href="#"> Participants </a>
             </li>
 
-            <li class="nav-item">
-              <a class="nav-link" href="#"> Trainers </a>
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                Trainers
+              </a>
+              <ul class="dropdown-menu shadow border-0 mt-2">
+                <li>
+                  <a class="dropdown-item" href="{% url 'trainermgmt:accounts_dashboard' %}">
+                    <i class="fa-solid fa-wallet me-2 text-muted"></i>Accounts Ledger
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item" href="{% url 'trainermgmt:payment_history' %}">
+                    <i class="fa-solid fa-clock-rotate-left me-2 text-muted"></i>Disbursal Logs
+                  </a>
+                </li>
+              </ul>
             </li>
 
             <li class="nav-item">

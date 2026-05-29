@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     
     # Unified Module Registration Workspace
     'usermgmt',
+    'trainermgmt',
 ]
 
 MIDDLEWARE = [
@@ -76,8 +77,15 @@ TEMPLATES = [
 # =========================================================================
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+       # 'ENGINE': 'django.db.backends.sqlite3',
+       # 'NAME': BASE_DIR / 'db.sqlite3',
+       
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'pravaah',          # Your MySQL Database Name
+        'USER': 'test',                # Your MySQL username
+        'PASSWORD': 'Laptop@123',            # Your MySQL password
+        'HOST': '192.168.0.95',           # Local PC IP (Change to server IP later)
+        'PORT': '3306',                # Standard MySQL port
     }
 }
 

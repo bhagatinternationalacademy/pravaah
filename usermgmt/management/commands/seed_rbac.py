@@ -31,7 +31,7 @@ class Command(BaseCommand):
                 self.stdout.write(f"Generated target role: {role_name}")
 
         # Fetch custom proxy capability configurations
-        content_type = ContentType.objects.get_for_model(RBACPermissionProxy)
+        content_type = ContentType.objects.get_for_model(RBACPermissionProxy, for_concrete_model=False)
         
         # Safe Mapping Logic to Distribute Permissions Across Roles Automatically
         def assign_perms(group_name, codenames_list):

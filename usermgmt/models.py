@@ -31,8 +31,24 @@ class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # Overriding groups and permissions relationships to avoid shared database clashes
+    groups = models.ManyToManyField(
+        Group,
+        related_name='usermgmt_user_set',
+        blank=True,
+        help_text='The groups this user belongs to.',
+        verbose_name='groups',
+    )
+    user_permissions = models.ManyToManyField(
+        Permission,
+        related_name='usermgmt_user_permissions_set',
+        blank=True,
+        help_text='Specific permissions for this user.',
+        verbose_name='user_permissions',
+    )
+
     class Meta:
-        db_table = 'users'  # Forces the database to name the table exactly 'users'
+        db_table = 'gaurav_user'  # Forces the database to name the table exactly 'gaurav_user'
 
     def __str__(self):
         return f"{self.username} ({self.email})"

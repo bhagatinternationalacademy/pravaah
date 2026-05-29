@@ -71,15 +71,15 @@ WSGI_APPLICATION = 'pravaah.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'pravaah',
-        'USER': 'test',
-        'PASSWORD': 'Laptop@123',
-        'HOST': '192.168.0.95',
-        'PORT': '3306',
+        'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.mysql'),
+        'NAME': os.environ.get('DB_NAME', 'pravaah'),
+        'USER': os.environ.get('DB_USER', 'test'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'Laptop@123'),
+        'HOST': os.environ.get('DB_HOST', '192.168.0.95'),
+        'PORT': os.environ.get('DB_PORT', '3306'),
     }
-    
 }
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {

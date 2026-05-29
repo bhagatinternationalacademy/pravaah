@@ -58,6 +58,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "training_management.wsgi.application"
 
 DATABASES = {
+    
     "default": {
         "ENGINE": os.getenv("DJANGO_DB_ENGINE", "django.db.backends.mysql"),
         "NAME": os.getenv("DJANGO_DB_NAME", "pravaah"),

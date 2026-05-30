@@ -5,7 +5,95 @@ import django.utils.timezone
 from django.db import migrations, models
 
 
+def _col_exists(schema_editor, table, column):
+    cur = schema_editor.connection.cursor()
+    cur.execute(
+        "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=%s AND COLUMN_NAME=%s",
+        (table, column),
+    )
+    return cur.fetchone()[0] > 0
+
+
+def add_accepted_date(apps, schema_editor):
+    if not _col_exists(schema_editor, 'batch_batchassignment', 'accepted_date'):
+        schema_editor.execute("ALTER TABLE batch_batchassignment ADD COLUMN `accepted_date` DATETIME(6) NULL")
+
+def remove_accepted_date(apps, schema_editor):
+    if _col_exists(schema_editor, 'batch_batchassignment', 'accepted_date'):
+        schema_editor.execute("ALTER TABLE batch_batchassignment DROP COLUMN `accepted_date`")
+
+def add_assigned_date(apps, schema_editor):
+    if not _col_exists(schema_editor, 'batch_batchassignment', 'assigned_date'):
+        schema_editor.execute("ALTER TABLE batch_batchassignment ADD COLUMN `assigned_date` DATETIME(6) NULL")
+
+def remove_assigned_date(apps, schema_editor):
+    if _col_exists(schema_editor, 'batch_batchassignment', 'assigned_date'):
+        schema_editor.execute("ALTER TABLE batch_batchassignment DROP COLUMN `assigned_date`")
+
+def add_course_name(apps, schema_editor):
+    if not _col_exists(schema_editor, 'batch_batchassignment', 'course_name'):
+        schema_editor.execute("ALTER TABLE batch_batchassignment ADD COLUMN `course_name` VARCHAR(100) NULL")
+
+def remove_course_name(apps, schema_editor):
+    if _col_exists(schema_editor, 'batch_batchassignment', 'course_name'):
+        schema_editor.execute("ALTER TABLE batch_batchassignment DROP COLUMN `course_name`")
+
+def add_created_at(apps, schema_editor):
+    if not _col_exists(schema_editor, 'batch_batchassignment', 'created_at'):
+        schema_editor.execute("ALTER TABLE batch_batchassignment ADD COLUMN `created_at` DATETIME(6) NULL")
+
+def remove_created_at(apps, schema_editor):
+    if _col_exists(schema_editor, 'batch_batchassignment', 'created_at'):
+        schema_editor.execute("ALTER TABLE batch_batchassignment DROP COLUMN `created_at`")
+
+def add_status(apps, schema_editor):
+    if not _col_exists(schema_editor, 'batch_batchassignment', 'status'):
+        schema_editor.execute("ALTER TABLE batch_batchassignment ADD COLUMN `status` VARCHAR(20) NULL")
+
+def remove_status(apps, schema_editor):
+    if _col_exists(schema_editor, 'batch_batchassignment', 'status'):
+        schema_editor.execute("ALTER TABLE batch_batchassignment DROP COLUMN `status`")
+
+def add_student_count(apps, schema_editor):
+    if not _col_exists(schema_editor, 'batch_batchassignment', 'student_count'):
+        schema_editor.execute("ALTER TABLE batch_batchassignment ADD COLUMN `student_count` INT UNSIGNED NULL")
+
+def remove_student_count(apps, schema_editor):
+    if _col_exists(schema_editor, 'batch_batchassignment', 'student_count'):
+        schema_editor.execute("ALTER TABLE batch_batchassignment DROP COLUMN `student_count`")
+
+def add_updated_at(apps, schema_editor):
+    if not _col_exists(schema_editor, 'batch_batchassignment', 'updated_at'):
+        schema_editor.execute("ALTER TABLE batch_batchassignment ADD COLUMN `updated_at` DATETIME(6) NULL")
+
+def remove_updated_at(apps, schema_editor):
+    if _col_exists(schema_editor, 'batch_batchassignment', 'updated_at'):
+        schema_editor.execute("ALTER TABLE batch_batchassignment DROP COLUMN `updated_at`")
+
+
+def _add_unique_if_missing(schema_editor, table, index_name, columns):
+    cur = schema_editor.connection.cursor()
+    cur.execute(
+        "SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=%s AND INDEX_NAME=%s",
+        (table, index_name),
+    )
+    if cur.fetchone()[0] == 0:
+        cols_sql = ','.join([f"`{c}`" for c in columns])
+        schema_editor.execute(f"ALTER TABLE {table} ADD UNIQUE `{index_name}` ({cols_sql})")
+
+
+def _drop_unique_if_exists(schema_editor, table, index_name):
+    cur = schema_editor.connection.cursor()
+    cur.execute(
+        "SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=%s AND INDEX_NAME=%s",
+        (table, index_name),
+    )
+    if cur.fetchone()[0] > 0:
+        schema_editor.execute(f"ALTER TABLE {table} DROP INDEX `{index_name}`")
+
+
 class Migration(migrations.Migration):
+    atomic = False
 
     dependencies = [
         ('batch', '0001_initial'),
@@ -17,50 +105,20 @@ class Migration(migrations.Migration):
             name='batchassignment',
             options={'ordering': ['-assigned_date']},
         ),
-        migrations.AddField(
-            model_name='batchassignment',
-            name='accepted_date',
-            field=models.DateTimeField(blank=True, null=True),
-        ),
-        migrations.AddField(
-            model_name='batchassignment',
-            name='assigned_date',
-            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='batchassignment',
-            name='course_name',
-            field=models.CharField(blank=True, max_length=100, null=True),
-        ),
-        migrations.AddField(
-            model_name='batchassignment',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='batchassignment',
-            name='status',
-            field=models.CharField(choices=[('pending', 'Pending'), ('accepted', 'Accepted'), ('rejected', 'Rejected'), ('completed', 'Completed')], default='pending', max_length=20),
-        ),
-        migrations.AddField(
-            model_name='batchassignment',
-            name='student_count',
-            field=models.PositiveIntegerField(default=0),
-        ),
-        migrations.AddField(
-            model_name='batchassignment',
-            name='updated_at',
-            field=models.DateTimeField(auto_now=True),
-        ),
+        migrations.RunPython(add_accepted_date, remove_accepted_date),
+        migrations.RunPython(add_assigned_date, remove_assigned_date),
+        migrations.RunPython(add_course_name, remove_course_name),
+        migrations.RunPython(add_created_at, remove_created_at),
+        migrations.RunPython(add_status, remove_status),
+        migrations.RunPython(add_student_count, remove_student_count),
+        migrations.RunPython(add_updated_at, remove_updated_at),
         migrations.AlterField(
             model_name='batchassignment',
             name='trainer',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='batch_assignments', to='trainers.trainer'),
         ),
-        migrations.AlterUniqueTogether(
-            name='batchassignment',
-            unique_together={('trainer', 'batch_name', 'start_date')},
+        migrations.RunPython(
+            lambda apps, schema_editor: _add_unique_if_missing(schema_editor, 'batch_batchassignment', 'batch_batchassignment_trainer_id_batch_name_st_uniq', ['trainer_id','batch_name','start_date']),
+            lambda apps, schema_editor: _drop_unique_if_exists(schema_editor, 'batch_batchassignment', 'batch_batchassignment_trainer_id_batch_name_st_uniq'),
         ),
     ]

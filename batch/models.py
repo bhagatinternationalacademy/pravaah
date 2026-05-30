@@ -1,47 +1,39 @@
 from django.db import models
-from pravaah.trainers.models import Trainer
 
-class BatchAssignment(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('accepted', 'Accepted'),
-        ('rejected', 'Rejected'),
-        ('completed', 'Completed'),
-    ]
-
-    trainer = models.ForeignKey(
-        Trainer,
-        on_delete=models.CASCADE,
-        related_name='batch_assignments'
-    )
-
+class Batch(models.Model):
+    batch_id = models.AutoField(primary_key=True)
+    batch_code = models.CharField(max_length=100)
     batch_name = models.CharField(max_length=100)
-    
-    course_name = models.CharField(max_length=100, blank=True, null=True)
 
     start_date = models.DateField()
-
     end_date = models.DateField()
-    
-    student_count = models.PositiveIntegerField(default=0)
-    
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='pending'
-    )
-    
-    assigned_date = models.DateTimeField(auto_now_add=True)
-    
-    accepted_date = models.DateTimeField(blank=True, null=True)
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return f"{self.batch_name} - {self.trainer} ({self.status})"
-    
+    trainer_id = models.IntegerField()
+
     class Meta:
-        ordering = ['-assigned_date']
-        unique_together = ('trainer', 'batch_name', 'start_date')
+        managed = False
+        db_table = 'batches'
+
+
+class BatchAssignment(models.Model):
+    """Unmanaged model mapping to existing batch_batchassignment table used elsewhere in the code and migrations.
+    Fields are minimal and marked unmanaged so migrations won't attempt to create/drop the table.
+    """
+    id = models.BigAutoField(primary_key=True)
+    batch_name = models.CharField(max_length=100)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    trainer_id = models.IntegerField(db_column='trainer_id')
+
+    # Optional additional fields present in DB (nullable)
+    accepted_date = models.DateTimeField(null=True, blank=True)
+    assigned_date = models.DateTimeField(null=True, blank=True)
+    course_name = models.CharField(max_length=100, null=True, blank=True)
+    created_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=20, null=True, blank=True)
+    student_count = models.IntegerField(null=True, blank=True)
+    updated_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        managed = False
+        db_table = 'batch_batchassignment'

@@ -33,3 +33,48 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect('accounts:login')
+
+
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+import json
+
+@login_required
+def sidebar_pref(request):
+    """GET returns JSON {'sidebar_collapsed': bool}
+    POST accepts form or JSON with 'collapsed' and saves to UserProfile.sidebar_collapsed
+    """
+    user = request.user
+    from .models import UserProfile
+    try:
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+    except Exception:
+        profile = None
+
+    if request.method == 'GET':
+        return JsonResponse({'sidebar_collapsed': bool(profile.sidebar_collapsed) if profile else False})
+
+    if request.method == 'POST':
+        val = None
+        # try form
+        val = request.POST.get('collapsed')
+        if val is None:
+            # try JSON body
+            try:
+                data = json.loads(request.body.decode() or '{}')
+                val = data.get('collapsed')
+            except Exception:
+                val = None
+        # normalize
+        collapsed = False
+        if val in (True, 'true', 'True', '1', 1):
+            collapsed = True
+        try:
+            if profile:
+                profile.sidebar_collapsed = collapsed
+                profile.save()
+        except Exception:
+            pass
+        return JsonResponse({'ok': True, 'sidebar_collapsed': collapsed})
+
+    return JsonResponse({'error': 'method not allowed'}, status=405)

@@ -16,7 +16,7 @@ class RoleBasedAccessControlMiddleware:
         # Whitelist of public routes accessible without login
         PUBLIC_ROUTES = {
             'login',
-            'home',
+            'public_home',
             'forgot_password',
             'reset_password',
             'reset_password_confirm',

@@ -1,18 +1,280 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}Proposals Landing{% endblock %}
+{% block title %} PRAVAAH - Workflow Portal {% endblock %}
 
 {% block content %}
 <div class="container py-4">
-    <h2>Proposals Landing Page</h2>
-    <p>Total Proposals: {{ proposals_count }}</p>
-    <p>Gate Zero Completed: {{ gate_zero_completed }}</p>
-    <p>Gate Approvals Pending: {{ gate_approvals_pending }}</p>
-    
-    <div class="mt-4">
-        <a href="{% url 'pravaah_add_proposal' %}" class="btn btn-primary">Create Proposal</a>
-        <a href="{% url 'pravaah_future_proposals' %}" class="btn btn-secondary">View Proposals</a>
-        <a href="{% url 'pravaah_marketing_queue' %}" class="btn btn-success">Marketing Queue</a>
+    <!-- Welcome Header / Hero Banner with Premium Gradient -->
+    <div class="p-5 mb-5 rounded-4 shadow-sm text-white position-relative overflow-hidden" 
+         style="background: linear-gradient(135deg, #1e0b36 0%, #3e1b75 50%, #5c2c90 100%);">
+        <div class="position-absolute top-0 end-0 opacity-10" style="font-size: 10rem; transform: translate(20%, -20%);">
+            <i class="fa-solid fa-water"></i>
+        </div>
+        <div class="container-fluid py-2 position-relative">
+            <span class="badge bg-info bg-opacity-20 text-info px-3 py-2 rounded-pill mb-3 fw-semibold text-uppercase tracking-wider">
+                <i class="fa-solid fa-circle-nodes me-1"></i> Workflow Management
+            </span>
+            <h1 class="display-4 fw-extrabold text-white mb-2">
+                <i class="fa-solid fa-wind text-info me-2 animate-pulse"></i>
+                Pravaah Portal
+            </h1>
+            <p class="col-md-9 fs-5 text-white-50 mb-4">
+                Accelerate course pipelines, validate facilities, and manage technical gate approvals securely. Seamlessly routed through the Marketing approvals queue.
+            </p>
+            {% if is_marketing_user %}
+                <span class="btn btn-outline-info btn-lg px-4 fw-bold disabled shadow-sm border-2">
+                    <i class="fa-solid fa-user-shield me-2 text-info"></i> Active Role: Marketing Person
+                </span>
+            {% else %}
+                <span class="btn btn-outline-light btn-lg px-4 fw-semibold disabled opacity-75">
+                    <i class="fa-solid fa-user-gear me-2"></i> Standard Workspace
+                </span>
+            {% endif %}
+        </div>
     </div>
+
+    <!-- Active Management Modules Grid (4 cards) -->
+    <h3 class="fw-bold mb-4 text-dark d-flex align-items-center">
+        <i class="fa-solid fa-square-poll-vertical me-2 text-primary"></i> 
+        Operational Workflow Boards
+    </h3>
+
+    <div class="row g-4 mb-5">
+        <!-- 1. Future Proposals Card -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden card-hover transition-all position-relative" 
+                 style="border-top: 5px solid #0dcaf0 !important;">
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="icon-shape rounded-3 bg-info bg-opacity-10 text-info p-2">
+                            <i class="fa-solid fa-calendar-days fs-4"></i>
+                        </div>
+                        <span class="badge bg-info bg-opacity-10 text-info px-2.5 py-1 rounded-pill small">Pipeline</span>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Future Proposals</h5>
+                    <p class="text-secondary small flex-grow-1 mb-4">
+                        Register, search, and view upcoming course pipelines, program dates, and hosting institutes.
+                    </p>
+                    
+                    <div class="d-flex align-items-center mb-3 text-secondary small">
+                        <i class="fa-solid fa-list-check me-2 text-muted"></i>
+                        <span>Registered: <strong>{{ proposals_count }}</strong></span>
+                    </div>
+
+                    <a href="{% url 'pravaah_future_proposals' %}" class="btn btn-outline-info text-dark w-100 fw-bold rounded-3 mt-auto">
+                        <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Open Pipeline
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Gate 0 Verification Card -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden card-hover transition-all" 
+                 style="border-top: 5px solid #198754 !important;">
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="icon-shape rounded-3 bg-success bg-opacity-10 text-success p-2">
+                            <i class="fa-solid fa-toggle-on fs-4"></i>
+                        </div>
+                        <span class="badge bg-success bg-opacity-10 text-success px-2.5 py-1 rounded-pill small">Gate 0</span>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Gate 0 Check</h5>
+                    <p class="text-secondary small flex-grow-1 mb-4">
+                        Verify immediate constraints like training rooms, hostel facilities, trainers, and financial feasibility.
+                    </p>
+
+                    <div class="d-flex align-items-center mb-3 text-secondary small">
+                        <i class="fa-solid fa-clipboard-check me-2 text-muted"></i>
+                        <span>Checked: <strong>{{ gate_zero_completed }}</strong></span>
+                    </div>
+
+                    <a href="{% url 'pravaah_gate_zero' %}" class="btn btn-outline-success w-100 fw-bold rounded-3 mt-auto">
+                        <i class="fa-solid fa-plus me-1"></i> New Gate 0 Form
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Gate Approvals Card -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden card-hover transition-all position-relative" 
+                 style="border-top: 5px solid #fd7e14 !important;">
+                
+                {% if stage_passed_count > 0 %}
+                    <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-warning text-dark border border-white mt-4 me-4 fs-6">
+                        {{ stage_passed_count }}
+                    </span>
+                {% endif %}
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="icon-shape rounded-3 bg-warning bg-opacity-10 text-warning p-2">
+                            <i class="fa-solid fa-file-signature fs-4"></i>
+                        </div>
+                        <span class="badge bg-warning bg-opacity-10 text-warning px-2.5 py-1 rounded-pill small">Gate Approval</span>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Gate Approvals</h5>
+                    <p class="text-secondary small flex-grow-1 mb-4">
+                        Enter deep course parameters across all 9 checklist sections and route directly to Marketing review.
+                    </p>
+
+                    <div class="d-flex align-items-center mb-3 text-secondary small">
+                        <i class="fa-solid fa-circle-info me-2 text-muted"></i>
+                        <span>Requires Gate 0 completion</span>
+                    </div>
+
+                    <a href="{% url 'pravaah_gate_approval' %}" class="btn btn-outline-warning text-dark w-100 fw-bold rounded-3 mt-auto">
+                        <i class="fa-solid fa-file-pen me-1"></i> Data Entry Sheet
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Marketing Approvals Card -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden card-hover transition-all position-relative" 
+                 style="border-top: 5px solid #6f42c1 !important; {% if is_marketing_user %}background: rgba(111, 66, 193, 0.03);{% endif %}">
+                
+                {% if is_marketing_user and gate_approvals_pending > 0 %}
+                    <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger border border-white mt-4 me-4 fs-6">
+                        {{ gate_approvals_pending }}
+                    </span>
+                {% endif %}
+                
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="icon-shape rounded-3 bg-primary bg-opacity-10 text-primary p-2">
+                            <i class="fa-solid fa-user-tie fs-4" style="color: #6f42c1 !important;"></i>
+                        </div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary px-2.5 py-1 rounded-pill small" style="color: #6f42c1 !important; background-color: rgba(111, 66, 193, 0.1) !important;">Marketing</span>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Marketing Approvals</h5>
+                    <p class="text-secondary small mb-3">
+                        Review, comment on, and authorize submitted gate approval documents. Restricted to Marketing role.
+                    </p>
+
+                    <!-- Beautiful, premium 6-stage visual pipeline metrics breakdown -->
+                    <div class="d-flex flex-column gap-2 mb-4 bg-light p-3 rounded-3 small border border-light shadow-inner">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-secondary"><i class="fa-solid fa-calendar-days text-info me-1.5 small"></i> Future Pipeline:</span>
+                            <span class="badge bg-info text-white fw-bold">{{ stage_pipeline_count }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-secondary"><i class="fa-solid fa-circle-xmark text-danger me-1.5 small"></i> Gate 0 Failed:</span>
+                            <span class="badge bg-danger text-white fw-bold">{{ stage_failed_count }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-secondary"><i class="fa-solid fa-circle-check text-success me-1.5 small"></i> Passed Gate 0:</span>
+                            <span class="badge bg-success text-white fw-bold">{{ stage_passed_count }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-secondary"><i class="fa-solid fa-hourglass-half text-warning me-1.5 small"></i> Awaiting Review:</span>
+                            <span class="badge bg-warning text-dark fw-bold">{{ stage_pending_count }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-secondary"><i class="fa-solid fa-shield-check text-success me-1.5 small"></i> Fully Approved:</span>
+                            <span class="badge bg-success text-white fw-bold">{{ stage_approved_count }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-secondary"><i class="fa-solid fa-rotate-left text-danger me-1.5 small"></i> Returned/Rejected:</span>
+                            <span class="badge bg-danger text-white fw-bold">{{ stage_rejected_count }}</span>
+                        </div>
+                    </div>
+
+                    <a href="{% url 'pravaah_marketing_queue' %}" class="btn btn-outline-primary w-100 fw-bold rounded-3 mt-auto" 
+                       style="color: #6f42c1; border-color: #6f42c1; {% if not is_marketing_user %}opacity: 0.5;{% endif %}">
+                        <i class="fa-solid fa-clipboard-list me-1"></i> Review Board
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Marketing Queue Snapshot Section (Conditional View) -->
+    {% if is_marketing_user and pending_approvals %}
+    <div class="card border-0 shadow-sm rounded-4 mb-5 overflow-hidden">
+        <div class="card-header bg-dark text-white p-4 d-flex justify-content-between align-items-center border-0">
+            <h5 class="fw-bold mb-0">
+                <i class="fa-solid fa-bell text-warning me-2 animate-bounce"></i>
+                Action Required: Pending Approvals
+            </h5>
+            <span class="badge bg-danger px-3 py-1.5 rounded-pill fw-semibold">{{ gate_approvals_pending }} Pending</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="background-color: transparent;">
+                    <thead class="table-light text-uppercase tracking-wider small">
+                        <tr>
+                            <th class="ps-4 py-3 text-secondary">Program Name</th>
+                            <th class="py-3 text-secondary">Institute</th>
+                            <th class="py-3 text-secondary">Client</th>
+                            <th class="py-3 text-secondary">Submitted By</th>
+                            <th class="py-3 text-secondary text-end pe-4">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for approval in pending_approvals %}
+                        <tr>
+                            <td class="ps-4 py-3 fw-bold text-dark">{{ approval.proposal.program_name }}</td>
+                            <td class="py-3 text-secondary">{{ approval.proposal.institute_name }}</td>
+                            <td class="py-3 text-secondary">{{ approval.name_of_client|default:"--" }}</td>
+                            <td class="py-3">
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border-0 px-2.5 py-1">
+                                    <i class="fa-solid fa-user me-1 text-muted"></i>
+                                    {{ approval.submitted_by.username }}
+                                </span>
+                            </td>
+                            <td class="py-3 text-end pe-4">
+                                <a href="{% url 'pravaah_marketing_queue' %}" class="btn btn-sm btn-indigo text-white fw-bold rounded-2 px-3" style="background-color: #6f42c1;">
+                                    <i class="fa-solid fa-magnifying-glass-chart me-1"></i> Review
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
+
+<style>
+    .card-hover {
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .card-hover:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 25px rgba(0,0,0,0.1) !important;
+    }
+    .icon-shape {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .btn-outline-info:hover {
+        background-color: #0dcaf0 !important;
+        border-color: #0dcaf0 !important;
+        color: white !important;
+    }
+    .btn-outline-warning:hover {
+        background-color: #fd7e14 !important;
+        border-color: #fd7e14 !important;
+        color: white !important;
+    }
+    .btn-outline-primary:hover {
+        background-color: #6f42c1 !important;
+        border-color: #6f42c1 !important;
+        color: white !important;
+    }
+    .animate-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: .5; }
+    }
+</style>
 {% endblock %}

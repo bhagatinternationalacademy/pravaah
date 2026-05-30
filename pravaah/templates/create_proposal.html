@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %} PRAVAAH - Register Future Proposal {% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'pravaah_landing' %}" class="text-decoration-none text-secondary"><i class="fa-solid fa-house me-1"></i> Pravaah Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'pravaah_future_proposals' %}" class="text-decoration-none text-secondary">Future Proposals</a></li>
+            <li class="breadcrumb-item active fw-semibold" aria-current="page">Register Proposal</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="mb-4">
+        <h2 class="fw-bold text-dark mb-1">
+            <i class="fa-solid fa-calendar-plus text-info me-2"></i>
+            Register Future Proposal
+        </h2>
+        <p class="text-secondary mb-0">Add a new upcoming program pipeline to execute operational checking modules.</p>
+    </div>
+
+    <!-- Form Card -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden" style="border-top: 5px solid #0dcaf0 !important;">
+                <div class="card-body p-4">
+                    <form method="POST" action="{% url 'pravaah_add_proposal' %}" class="needs-validation">
+                        {% csrf_token %}
+                        
+                        <!-- Section 1: Core Details -->
+                        <div class="mb-4">
+                            <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">
+                                <i class="fa-solid fa-circle-info text-info me-2 small"></i>
+                                Program Specifications
+                            </h5>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label for="program_name" class="form-label fw-semibold text-secondary">Program Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="program_name" id="program_name" class="form-control bg-light border-0 py-2.5 rounded-3" 
+                                           placeholder="e.g., Industrial Training Programme for Diploma Engineering Faculty" required>
+                                    <div class="form-text text-muted">Provide a descriptive, professional program or course name.</div>
+                                </div>
+                                
+                                <div class="col-md-12">
+                                    <label for="institute_name" class="form-label fw-semibold text-secondary">Hosting Institute Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="institute_name" id="institute_name" class="form-control bg-light border-0 py-2.5 rounded-3" 
+                                           placeholder="e.g., Maharashtra State Board of Technical Education (MSBTE)" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 2: Timelines -->
+                        <div class="mb-4">
+                            <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">
+                                <i class="fa-solid fa-clock text-info me-2 small"></i>
+                                Timelines and Schedule
+                            </h5>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="start_date" class="form-label fw-semibold text-secondary">Start Date <span class="text-danger">*</span></label>
+                                    <input type="date" name="start_date" id="start_date" class="form-control bg-light border-0 py-2.5 rounded-3" required>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="end_date" class="form-label fw-semibold text-secondary">End Date <span class="text-danger">*</span></label>
+                                    <input type="date" name="end_date" id="end_date" class="form-control bg-light border-0 py-2.5 rounded-3" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-end gap-3 pt-3 border-top">
+                            <a href="{% url 'pravaah_future_proposals' %}" class="btn btn-light fw-bold px-4 py-2.5 rounded-3 border-0">
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-info text-white fw-bold px-5 py-2.5 rounded-3 shadow-sm">
+                                <i class="fa-solid fa-circle-check me-2"></i> Register Proposal
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

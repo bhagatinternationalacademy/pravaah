@@ -54,8 +54,11 @@ def notify_group(group_name, title, message):
 
     try:
         group = Group.objects.get(name=group_name)
-        for user in group.user_set.all():
-            create_notification(user, title, message)
+        # Handle the custom related_name 'usermgmt_user_set' for User model
+        users = getattr(group, 'usermgmt_user_set', getattr(group, 'user_set', None))
+        if users is not None:
+            for user in users.all():
+                create_notification(user, title, message)
     except Group.DoesNotExist:
         pass
 

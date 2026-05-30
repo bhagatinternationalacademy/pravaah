@@ -60,7 +60,7 @@ WSGI_APPLICATION = 'pravaah.wsgi.application'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # Supports project-wide core global templates
+        'DIRS': [BASE_DIR / 'pravaah' / 'templates'],  # Supports project-wide core global templates
         'APP_DIRS': True,                  # Looks inside usermgmt/templates/
         'OPTIONS': {
             'context_processors': [

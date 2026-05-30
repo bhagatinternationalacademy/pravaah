@@ -1,27 +1,219 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}Future Proposals{% endblock %}
+{% block title %} PRAVAAH - Future Proposals Pipeline {% endblock %}
 
 {% block content %}
 <div class="container py-4">
-    <h2>Future Proposals Directory</h2>
-    <form method="GET" class="mb-4">
-        <div class="input-group">
-            <input type="text" name="search" class="form-control" placeholder="Search by program or institute..." value="{{ search_query }}">
-            <button class="btn btn-outline-secondary" type="submit">Search</button>
+    <!-- Breadcrumbs / Back navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'pravaah_landing' %}" class="text-decoration-none text-secondary"><i class="fa-solid fa-house me-1"></i> Pravaah Home</a></li>
+            <li class="breadcrumb-item active fw-semibold" aria-current="page">Future Proposals</li>
+        </ol>
+    </nav>
+
+    <!-- Header Section with Add Button -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold text-dark mb-1">
+                <i class="fa-solid fa-calendar-days text-info me-2"></i>
+                Future Proposals Pipeline
+            </h2>
+            <p class="text-secondary mb-0">List of registered programs, schedules, and active workflows in progress.</p>
         </div>
-    </form>
-    
-    <div class="list-group">
-        {% for prop in proposals %}
-            <a href="#" class="list-group-item list-group-item-action">
-                <h5 class="mb-1">{{ prop.program_name }}</h5>
-                <p class="mb-1">{{ prop.institute_name }}</p>
-                <small>Dates: {{ prop.start_date }} to {{ prop.end_date }}</small>
-            </a>
-        {% empty %}
-            <p>No proposals found.</p>
-        {% endfor %}
+        <a href="{% url 'pravaah_add_proposal' %}" class="btn btn-info text-white fw-bold px-4 py-2.5 rounded-3 shadow-sm">
+            <i class="fa-solid fa-plus me-2"></i> Register New Proposal
+        </a>
+    </div>
+
+    <!-- Search/Filters Bar -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-3">
+            <form method="GET" action="{% url 'pravaah_future_proposals' %}" class="row g-3 align-items-center">
+                <div class="col-md-9 col-lg-10">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                        <input type="text" name="search" class="form-control bg-light border-0" 
+                               placeholder="Search by program name or institute name..." value="{{ search_query }}">
+                    </div>
+                </div>
+                <div class="col-md-3 col-lg-2">
+                    <button type="submit" class="btn btn-dark w-100 fw-bold rounded-3">
+                        <i class="fa-solid fa-filter me-1"></i> Filter list
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Proposals List Card/Table -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-body p-0">
+            {% if proposals %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-uppercase tracking-wider small">
+                            <tr>
+                                <th class="ps-4 py-3 text-secondary">Program Details</th>
+                                <th class="py-3 text-secondary">Hosting Institute</th>
+                                <th class="py-3 text-secondary">Schedule Dates</th>
+                                <th class="py-3 text-secondary text-center">Gate 0 Check</th>
+                                <th class="py-3 text-secondary text-center">Gate Approval Status</th>
+                                <th class="py-3 text-secondary text-end pe-4">Workflow Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for proposal in proposals %}
+                            <tr>
+                                <td class="ps-4 py-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar bg-info bg-opacity-10 text-info rounded-3 p-2.5 me-3">
+                                            <i class="fa-solid fa-graduation-cap fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-0 text-dark">{{ proposal.program_name }}</h6>
+                                            <small class="text-muted">Registered by {{ proposal.created_by.username|default:"System" }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4">
+                                    <span class="fw-semibold text-secondary">
+                                        <i class="fa-solid fa-school text-muted me-1"></i>
+                                        {{ proposal.institute_name }}
+                                    </span>
+                                </td>
+                                <td class="py-4">
+                                    <div class="small">
+                                        <div class="text-dark fw-medium">
+                                            <i class="fa-regular fa-calendar text-muted me-1"></i>
+                                            {{ proposal.start_date|date:"M d, Y" }}
+                                        </div>
+                                        <div class="text-secondary">
+                                            to {{ proposal.end_date|date:"M d, Y" }}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 text-center">
+                                    {% if proposal.gate_zero %}
+                                        {% if proposal.gate_zero.is_training_room_available == 'Yes' and proposal.gate_zero.is_hostel_facility_available == 'Yes' and proposal.gate_zero.is_trainer_available == 'Yes' and proposal.gate_zero.is_proposal_financially_feasible == 'Yes' %}
+                                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-20 px-3 py-1.5 rounded-pill" title="All feasibility checks passed">
+                                                <i class="fa-solid fa-circle-check me-1"></i> Passed
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-20 px-3 py-1.5 rounded-pill" title="Feasibility checks failed">
+                                                <i class="fa-solid fa-circle-xmark me-1"></i> Failed
+                                            </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-1.5 rounded-pill">
+                                            <i class="fa-solid fa-circle-minus me-1"></i> Not Started
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-4 text-center">
+                                    {% if proposal.gate_approval %}
+                                        {% if proposal.gate_approval.status == 'Approved' %}
+                                            <span class="badge bg-success border border-success border-opacity-20 px-3 py-1.5 rounded-pill">
+                                                <i class="fa-solid fa-shield-check me-1"></i> Approved
+                                            </span>
+                                        {% elif proposal.gate_approval.status == 'Rejected' %}
+                                            <span class="badge bg-danger border border-danger border-opacity-20 px-3 py-1.5 rounded-pill">
+                                                <i class="fa-solid fa-shield-xmark me-1"></i> Rejected
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark border border-warning border-opacity-20 px-3 py-1.5 rounded-pill">
+                                                <i class="fa-solid fa-arrows-spin fa-spin me-1"></i> Pending Marketing
+                                            </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-1.5 rounded-pill">
+                                            <i class="fa-solid fa-ban me-1"></i> No Checksheet
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-4 text-end pe-4">
+                                    <div class="btn-group dropdown">
+                                        <button class="btn btn-sm btn-outline-dark dropdown-toggle px-3 py-2 rounded-2 fw-semibold" 
+                                                type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Launch Gate
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-1">
+                                            {% if not proposal.gate_zero %}
+                                                <li>
+                                                    <a class="dropdown-item py-2" href="{% url 'pravaah_gate_zero_proposal' proposal.id %}">
+                                                        <i class="fa-solid fa-toggle-on text-success me-2"></i> Fill Gate 0 Check
+                                                    </a>
+                                                </li>
+                                            {% else %}
+                                                {% if proposal.gate_zero.is_training_room_available == 'Yes' and proposal.gate_zero.is_hostel_facility_available == 'Yes' and proposal.gate_zero.is_trainer_available == 'Yes' and proposal.gate_zero.is_proposal_financially_feasible == 'Yes' %}
+                                                    <li>
+                                                        <a class="dropdown-item py-2 disabled" href="#">
+                                                            <i class="fa-solid fa-circle-check text-success me-2"></i> Gate 0 Passed
+                                                        </a>
+                                                    </li>
+                                                {% else %}
+                                                    <li>
+                                                        <a class="dropdown-item py-2" href="{% url 'pravaah_gate_zero_proposal' proposal.id %}">
+                                                            <i class="fa-solid fa-rotate-left text-danger me-2"></i> Re-submit Gate 0
+                                                        </a>
+                                                    </li>
+                                                {% endif %}
+                                            {% endif %}
+                                            
+                                            {% if proposal.gate_zero and proposal.gate_zero.is_training_room_available == 'Yes' and proposal.gate_zero.is_hostel_facility_available == 'Yes' and proposal.gate_zero.is_trainer_available == 'Yes' and proposal.gate_zero.is_proposal_financially_feasible == 'Yes' %}
+                                                {% if not proposal.gate_approval %}
+                                                    <li>
+                                                        <a class="dropdown-item py-2" href="{% url 'pravaah_gate_approval_proposal' proposal.id %}">
+                                                            <i class="fa-solid fa-file-signature text-warning me-2"></i> Start Gate Approvals
+                                                        </a>
+                                                    </li>
+                                                {% elif proposal.gate_approval.status == 'Rejected' %}
+                                                    <li>
+                                                        <a class="dropdown-item py-2" href="{% url 'pravaah_gate_approval_proposal' proposal.id %}">
+                                                            <i class="fa-solid fa-rotate-left text-danger me-2"></i> Re-submit Approvals
+                                                        </a>
+                                                    </li>
+                                                {% else %}
+                                                    <li>
+                                                        <a class="dropdown-item py-2" href="{% url 'pravaah_gate_approval_proposal' proposal.id %}">
+                                                            <i class="fa-solid fa-magnifying-glass text-info me-2"></i> View Gate Approvals
+                                                        </a>
+                                                    </li>
+                                                {% endif %}
+                                            {% else %}
+                                                <li>
+                                                    <a class="dropdown-item py-2 disabled text-muted" href="#" title="Pass Gate 0 first">
+                                                        <i class="fa-solid fa-lock me-2 text-muted"></i> Start Gate Approvals
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3 text-muted">
+                        <i class="fa-solid fa-calendar-xmark fs-1"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark">No Proposals Found</h5>
+                    <p class="text-secondary small max-width-300 mx-auto">
+                        {% if search_query %}
+                            No future proposals match your search query filter. Try another name.
+                        {% else %}
+                            There are currently no upcoming proposals registered. Register one to start.
+                        {% endif %}
+                    </p>
+                    {% if search_query %}
+                        <a href="{% url 'pravaah_future_proposals' %}" class="btn btn-sm btn-dark px-3 rounded-3 mt-2">Clear Search</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}

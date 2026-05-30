@@ -43,8 +43,9 @@ def landing_page(request):
         gate_zero__is_training_room_available='Yes',
         gate_zero__is_hostel_facility_available='Yes',
         gate_zero__is_trainer_available='Yes',
-        gate_zero__is_proposal_financially_feasible='Yes',
-        gate_approval__isnull=True
+        gate_zero__is_proposal_financially_feasible='Yes'
+    ).filter(
+        Q(gate_approval__isnull=True) | Q(gate_approval__status='Rejected')
     ).count()
     
     stage_pending_count = pending_approvals.count()
@@ -193,8 +194,9 @@ def gate_approval_form(request, proposal_id=None):
         gate_zero__is_training_room_available='Yes',
         gate_zero__is_hostel_facility_available='Yes',
         gate_zero__is_trainer_available='Yes',
-        gate_zero__is_proposal_financially_feasible='Yes',
-        gate_approval__isnull=True
+        gate_zero__is_proposal_financially_feasible='Yes'
+    ).filter(
+        Q(gate_approval__isnull=True) | Q(gate_approval__status='Rejected')
     )
     
     # If editing / loading existing approval

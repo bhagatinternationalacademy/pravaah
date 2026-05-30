@@ -1,49 +1,303 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}Marketing Queue{% endblock %}
+{% block title %} PRAVAAH - Marketing Approvals Board {% endblock %}
 
 {% block content %}
 <div class="container py-4">
-    <h2>Marketing Approval Queue</h2>
-    
-    <h4>Pending Approvals</h4>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Proposal</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for approval in pending_approvals %}
-            <tr>
-                <td>{{ approval.proposal.program_name }}</td>
-                <td>{{ approval.status }}</td>
-                <td>
-                    <form action="{% url 'pravaah_approve_gate_approval' approval.id %}" method="POST" class="d-inline">
-                        {% csrf_token %}
-                        <input type="text" name="marketing_remarks" placeholder="Remarks" required>
-                        <button type="submit" class="btn btn-success btn-sm">Approve</button>
-                    </form>
-                    <form action="{% url 'pravaah_reject_gate_approval' approval.id %}" method="POST" class="d-inline">
-                        {% csrf_token %}
-                        <input type="text" name="marketing_remarks" placeholder="Remarks" required>
-                        <button type="submit" class="btn btn-danger btn-sm">Reject</button>
-                    </form>
-                </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="3">No pending approvals.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'pravaah_landing' %}" class="text-decoration-none text-secondary"><i class="fa-solid fa-house me-1"></i> Pravaah Home</a></li>
+            <li class="breadcrumb-item active fw-semibold" aria-current="page">Marketing Approvals Board</li>
+        </ol>
+    </nav>
 
-    <h4 class="mt-5">Completed Approvals</h4>
-    <ul>
-        {% for approval in completed_approvals %}
-            <li>{{ approval.proposal.program_name }} - {{ approval.status }} - {{ approval.marketing_remarks }}</li>
-        {% endfor %}
-    </ul>
+    <!-- Header Section -->
+    <div class="mb-4">
+        <h2 class="fw-bold text-dark mb-1" style="color: #6f42c1 !important;">
+            <i class="fa-solid fa-user-tie me-2 animate-bounce"></i>
+            Marketing Approvals Board
+        </h2>
+        <p class="text-secondary mb-0">Authorize incoming technical gate approvals or request corrections with specific remarks.</p>
+    </div>
+
+    <!-- Tabbed Board View: Pending vs Archive -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-header bg-white border-0 p-4 pb-0">
+            <ul class="nav nav-tabs border-bottom-0 gap-3" id="marketingQueueTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active fw-bold text-uppercase tracking-wider small pb-3 border-0 rounded-0 position-relative" 
+                            id="pending-queue-tab" data-bs-toggle="tab" data-bs-target="#pending-queue" type="button" role="tab" aria-controls="pending-queue" aria-selected="true"
+                            style="color: #6f42c1;">
+                        Pending Approvals
+                        <span class="badge bg-danger ms-1.5">{{ pending_approvals|length }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-bold text-uppercase tracking-wider text-secondary small pb-3 border-0 rounded-0" 
+                            id="archive-queue-tab" data-bs-toggle="tab" data-bs-target="#archive-queue" type="button" role="tab" aria-controls="archive-queue" aria-selected="false">
+                        Authorization Logs
+                        <span class="badge bg-secondary ms-1.5">{{ completed_approvals|length }}</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="tab-content" id="marketingQueueTabsContent">
+            <!-- TAB 1: PENDING QUEUE -->
+            <div class="tab-pane fade show active" id="pending-queue" role="tabpanel" aria-labelledby="pending-queue-tab">
+                <div class="card-body p-0">
+                    {% if pending_approvals %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light text-uppercase tracking-wider small">
+                                    <tr>
+                                        <th class="ps-4 py-3 text-secondary">Program Details</th>
+                                        <th class="py-3 text-secondary">Hosting Institute</th>
+                                        <th class="py-3 text-secondary">Client</th>
+                                        <th class="py-3 text-secondary">Submitted By</th>
+                                        <th class="py-3 text-secondary text-end pe-4">Review Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for approval in pending_approvals %}
+                                    <tr>
+                                        <td class="ps-4 py-4">
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar rounded-3 bg-purple p-2.5 me-3" style="background-color: rgba(111, 66, 193, 0.1); color: #6f42c1;">
+                                                    <i class="fa-solid fa-graduation-cap fs-5"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="fw-bold mb-0 text-dark">{{ approval.proposal.program_name }}</h6>
+                                                    <small class="text-muted">Dated: {{ approval.proposal.start_date|date:"M d, Y" }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="py-4">
+                                            <span class="fw-semibold text-secondary">
+                                                <i class="fa-solid fa-school text-muted me-1"></i>
+                                                {{ approval.proposal.institute_name }}
+                                            </span>
+                                        </td>
+                                        <td class="py-4 text-secondary">
+                                            {{ approval.name_of_client|default:"--" }}
+                                        </td>
+                                        <td class="py-4">
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary border-0 px-2.5 py-1">
+                                                <i class="fa-solid fa-user me-1 text-muted"></i>
+                                                {{ approval.submitted_by.username }}
+                                            </span>
+                                        </td>
+                                        <td class="py-4 text-end pe-4">
+                                            <!-- Simple Form Review Trigger -->
+                                            <button class="btn btn-sm btn-indigo text-white fw-bold rounded-2 px-3.5 py-2 shadow-sm" 
+                                                    style="background-color: #6f42c1;"
+                                                    data-bs-toggle="collapse" data-bs-target="#reviewForm-{{ approval.id }}" aria-expanded="false">
+                                                <i class="fa-solid fa-stamp me-1"></i> Launch Review
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <!-- Collapsible Review Form Row -->
+                                    <tr class="collapse border-0" id="reviewForm-{{ approval.id }}" style="background-color: rgba(111, 66, 193, 0.01);">
+                                        <td colspan="5" class="p-4 border-0">
+                                            <div class="p-4 bg-white border border-light shadow-sm rounded-4">
+                                                <h5 class="fw-bold text-dark mb-4 border-bottom pb-2">
+                                                    <i class="fa-solid fa-magnifying-glass-chart text-primary me-2"></i>
+                                                    Review Checkpoint Data: {{ approval.proposal.program_name }}
+                                                </h5>
+                                                
+                                                <!-- Parameters List in nice grid layout -->
+                                                <div class="row g-4 mb-4 text-start">
+                                                    <!-- Section 1 -->
+                                                    <div class="col-md-6">
+                                                        <div class="p-3 bg-light rounded-3 h-100">
+                                                            <strong class="text-dark small d-block mb-2">1. Name of Client &amp; Training Details</strong>
+                                                            <ul class="list-unstyled mb-0 small text-secondary">
+                                                                <li>Client Name: <strong>{{ approval.name_of_client }}</strong></li>
+                                                                <li>MT Registration: <strong>{{ approval.mt_course_registration }}</strong></li>
+                                                                <li>Participants: <strong>{{ approval.number_of_participants }}</strong></li>
+                                                                <li>Format: <strong>{{ approval.training_type_online_offline }}</strong></li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <!-- Section 2 -->
+                                                    <div class="col-md-6">
+                                                        <div class="p-3 bg-light rounded-3 h-100">
+                                                            <strong class="text-dark small d-block mb-2">2. Training Need Identification</strong>
+                                                            <div class="small text-secondary mb-1">Type of Training: <span class="fw-semibold text-dark">{{ approval.training_need_type }}</span></div>
+                                                            <div class="small text-secondary">Course Content: <span class="fw-semibold text-dark">{{ approval.training_need_content }}</span></div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Section 3 -->
+                                                    <div class="col-12">
+                                                        <div class="p-3 bg-light rounded-3">
+                                                            <strong class="text-dark small d-block mb-2">3. Preparation Of Technical Proposal</strong>
+                                                            <div class="row g-2 small text-secondary">
+                                                                <div class="col-md-4">STA Infra: <strong class="text-dark">{{ approval.prep_sta_infra }}</strong></div>
+                                                                <div class="col-md-4">Consumables: <strong class="text-dark">{{ approval.prep_consumables }}</strong></div>
+                                                                <div class="col-md-4">CTEA Infra: <strong class="text-dark">{{ approval.prep_ctea_infra }}</strong></div>
+                                                                <div class="col-md-4">MT Availability: <strong class="text-dark">{{ approval.prep_mt_availability }}</strong></div>
+                                                                <div class="col-md-4">Material (Print): <strong class="text-dark">{{ approval.prep_material }}</strong></div>
+                                                                <div class="col-md-4">Material (PPT): <strong class="text-dark">{{ approval.prep_material_ppt }}</strong></div>
+                                                                <div class="col-12 mt-1">Previous feedback: <strong class="text-dark">{{ approval.prep_feedback }}</strong></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Sections 4, 5, 6 -->
+                                                    <div class="col-md-6">
+                                                        <div class="p-3 bg-light rounded-3 h-100">
+                                                            <strong class="text-dark small d-block mb-2">4 &amp; 5. Planning &amp; Value Addition</strong>
+                                                            <div class="small text-secondary mb-1">Session Availability: <strong class="text-dark">{{ approval.session_plan_availability }}</strong></div>
+                                                            <div class="small text-secondary">Value Addition: <strong class="text-dark">{{ approval.value_addition }}</strong></div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Section 6, 7, 8, 9 -->
+                                                    <div class="col-md-6">
+                                                        <div class="p-3 bg-light rounded-3 h-100">
+                                                            <strong class="text-dark small d-block mb-2">6, 7, 8, 9. Assessments, Invoicing &amp; Fees</strong>
+                                                            <div class="row g-1 small text-secondary">
+                                                                <div class="col-6">Formative: <strong class="text-dark">{{ approval.assessment_formative }}</strong></div>
+                                                                <div class="col-6">Summative: <strong class="text-dark">{{ approval.assessment_summative }}</strong></div>
+                                                                <div class="col-6">Certification: <strong class="text-dark">{{ approval.assessment_certification }}</strong></div>
+                                                                <div class="col-6">Assessor(s): <strong class="text-dark">{{ approval.assessment_assessors }}</strong></div>
+                                                                <div class="col-12 mt-1">Invoicing: <strong class="text-dark">{{ approval.invoicing_documents }}</strong></div>
+                                                                <div class="col-12">Fees: <strong class="text-dark">{{ approval.fees_standard_deviations }}</strong></div>
+                                                                <div class="col-12">Mitigation: <strong class="text-dark">{{ approval.challenges_mitigation }}</strong></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Decision Forms -->
+                                                <form method="POST" class="mt-4">
+                                                    {% csrf_token %}
+                                                    <div class="mb-4">
+                                                        <label class="form-label fw-bold text-dark">Marketing Review Remarks &amp; Feedback</label>
+                                                        <textarea name="marketing_remarks" class="form-control bg-light border-0 py-2 rounded-3" rows="3" 
+                                                                  placeholder="Type comments, requirements, or audit remarks. Required only for rejections."></textarea>
+                                                    </div>
+                                                    
+                                                    <div class="d-flex justify-content-end gap-3 pt-3 border-top">
+                                                        <!-- Reject Trigger -->
+                                                        <button type="submit" formaction="{% url 'pravaah_reject_gate_approval' approval.id %}" class="btn btn-outline-danger px-4 py-2 fw-bold rounded-3">
+                                                            <i class="fa-solid fa-circle-xmark me-2"></i> Reject &amp; Request Corrections
+                                                        </button>
+                                                        <!-- Approve Trigger -->
+                                                        <button type="submit" formaction="{% url 'pravaah_approve_gate_approval' approval.id %}" class="btn btn-success px-5 py-2 fw-bold rounded-3 shadow-sm">
+                                                            <i class="fa-solid fa-circle-check me-2"></i> Approve Proposal
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="mb-3 text-muted">
+                                <i class="fa-solid fa-circle-check fs-1 text-success"></i>
+                            </div>
+                            <h5 class="fw-bold text-dark">All Approvals Cleared!</h5>
+                            <p class="text-secondary small max-width-300 mx-auto">There are no pending gate approvals waiting for authorization right now.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- TAB 2: ARCHIVE / HISTORY -->
+            <div class="tab-pane fade" id="archive-queue" role="tabpanel" aria-labelledby="archive-queue-tab">
+                <div class="card-body p-0">
+                    {% if completed_approvals %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light text-uppercase tracking-wider small">
+                                    <tr>
+                                        <th class="ps-4 py-3 text-secondary">Program Details</th>
+                                        <th class="py-3 text-secondary">Hosting Institute</th>
+                                        <th class="py-3 text-secondary">Authorized Status</th>
+                                        <th class="py-3 text-secondary">Authorized By</th>
+                                        <th class="py-3 text-secondary">Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for approval in completed_approvals %}
+                                    <tr>
+                                        <td class="ps-4 py-4">
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar rounded-3 bg-secondary bg-opacity-10 text-secondary p-2.5 me-3">
+                                                    <i class="fa-solid fa-graduation-cap fs-5"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="fw-bold mb-0 text-dark">{{ approval.proposal.program_name }}</h6>
+                                                    <small class="text-muted">Reviewed on: {{ approval.updated_at|date:"M d, Y" }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="py-4">
+                                            <span class="fw-semibold text-secondary">
+                                                <i class="fa-solid fa-school text-muted me-1"></i>
+                                                {{ approval.proposal.institute_name }}
+                                            </span>
+                                        </td>
+                                        <td class="py-4">
+                                            {% if approval.status == 'Approved' %}
+                                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-20 px-3 py-1.5 rounded-pill">
+                                                    <i class="fa-solid fa-circle-check me-1"></i> Approved
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-20 px-3 py-1.5 rounded-pill">
+                                                    <i class="fa-solid fa-circle-xmark me-1"></i> Rejected
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="py-4">
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary border-0 px-2.5 py-1">
+                                                <i class="fa-solid fa-user-shield me-1 text-muted"></i>
+                                                {{ approval.reviewed_by.username|default:"Marketing User" }}
+                                            </span>
+                                        </td>
+                                        <td class="py-4 text-secondary small">
+                                            {{ approval.marketing_remarks }}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="mb-3 text-muted">
+                                <i class="fa-solid fa-folder-open fs-1"></i>
+                            </div>
+                            <h5 class="fw-bold text-dark">No Authorization Logs Found</h5>
+                            <p class="text-secondary small max-width-300 mx-auto">There are no records of previously approved or rejected gate checklists.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<style>
+    #marketingQueueTabs .nav-link {
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s ease-in-out;
+    }
+    #marketingQueueTabs .nav-link.active {
+        border-bottom: 3px solid #6f42c1 !important;
+        background-color: transparent !important;
+    }
+    #marketingQueueTabs .nav-link:hover:not(.active) {
+        color: #6f42c1 !important;
+        opacity: 0.8;
+    }
+</style>
 {% endblock %}

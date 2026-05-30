@@ -128,6 +128,25 @@ def send_password_reset_otp_email(user, reset_page_url):
     return otp
 
 
+
+# ==========================================
+# -  Student Management Notification Triggers
+# ==========================================
+def send_student_registration_confirmation_email(user, host):
+    """Dispatches a confirmation email upon successful student registration."""
+    return send_email_notification(
+        module_name='STUDENT_MANAGEMENT',
+        event_type='REGISTRATION_SUCCESS',
+        recipient_email=user.email,
+        subject=REGISTRATION_SUCCESS_SUBJECT,
+        template_name='emails/student_management/registration_confirmation.html',
+        context={
+            'first_name': user.first_name,
+            'username': user.username,
+        }
+    )
+
+
 # ==========================================
 # 3. Trainer Management Notification Triggers
 # ==========================================

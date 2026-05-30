@@ -2,6 +2,7 @@
 VERIFY_EMAIL_SUBJECT = "Verify Your Account - PRAVAAH"
 VERIFY_CONFIRMATION_SUBJECT = "Account Verified Successfully - PRAVAAH"
 PASSWORD_RESET_OTP_SUBJECT = "Password Reset Verification Code - PRAVAAH"
+REGISTRATION_SUCCESS_SUBJECT = "Registration Successful - PRAVAAH"
 
 # Trainer Management Email Subjects
 BATCH_ASSIGNMENT_SUBJECT = "New Batch Assignment - PRAVAAH"

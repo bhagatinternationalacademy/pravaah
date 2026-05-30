@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from .models import EmailNotificationLog
 from .services import (
     send_account_verification_email,
+    send_student_registration_confirmation_email,
     send_verification_confirmation_email,
     send_password_reset_otp_email
 )
@@ -43,6 +44,9 @@ def send_test_email(request):
                 reset_page = f"http://{host}/reset-password/"
                 send_password_reset_otp_email(user, reset_page)
                 messages.success(request, f'Password reset OTP email sent to {email} successfully!')
+            elif event_type == 'REGISTRATION_SUCCESS':
+                send_student_registration_confirmation_email(user, host)
+                messages.success(request, f'registration Confirmation email sent to {email} successfully!')
             else:
                 messages.error(request, 'Unsupported email event type selected.')
         except Exception as error:

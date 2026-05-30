@@ -34,8 +34,16 @@ class ProgramTrainerForm(BootstrapModelForm):
         model = ProgramTrainer
         fields = ["trainer", "program", "specialization", "is_active"]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["trainer"].queryset = Trainer.objects.filter(status__iexact="Active", availability__iexact="Available")
+
 
 class CourseTrainerForm(BootstrapModelForm):
     class Meta:
         model = CourseTrainer
         fields = ["trainer", "course", "is_active"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["trainer"].queryset = Trainer.objects.filter(status__iexact="Active", availability__iexact="Available")

@@ -59,13 +59,32 @@ class VisitorAdmin(admin.ModelAdmin):
     date_hierarchy = 'checkin'
 
 
+
 @admin.register(Complaint)
 class ComplaintAdmin(admin.ModelAdmin):
-    list_display = ['student_id', 'room', 'complaint_type', 'complaint_date', 'status']
-    list_filter = ['status', 'complaint_type', 'complaint_date']
-    search_fields = ['student_id']
-    list_editable = ['status']
-    date_hierarchy = 'complaint_date'
+
+    list_display = (
+        'id',
+        'student_name',
+        'complaint_type',
+        'created_at',
+        'status',
+        'priority',
+    )
+
+    list_filter = (
+        'status',
+        'priority',
+        'created_at',
+    )
+
+    search_fields = (
+        'student_name',
+        'student_id',
+        'description',
+    )
+
+    date_hierarchy = 'created_at'
 
 
 @admin.register(MaintenanceRequest)

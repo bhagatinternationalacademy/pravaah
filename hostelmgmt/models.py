@@ -18,6 +18,7 @@ class Hostel(models.Model):
         return self.hostel_name
 
     class Meta:
+        managed = False
         db_table = 'hostels'
 
 
@@ -187,14 +188,37 @@ class RoomTransfer(models.Model):
         db_table = 'room_transfers'
 
 
+# class Visitor(models.Model):
+#     visitor_id   = models.AutoField(primary_key=True)
+#     student_id   = models.CharField(max_length=20)
+#     visitor_name = models.CharField(max_length=100)
+#     relationship = models.CharField(max_length=50)
+#     mobile       = models.CharField(max_length=15)
+#     checkin      = models.DateTimeField()
+#     checkout     = models.DateTimeField(null=True, blank=True)
+
+#     def __str__(self):
+#         return f"{self.visitor_name} visiting {self.student_id}"
+
+#     class Meta:
+#         db_table = 'visitors'
+
 class Visitor(models.Model):
-    visitor_id   = models.AutoField(primary_key=True)
-    student_id   = models.CharField(max_length=20)
-    visitor_name = models.CharField(max_length=100)
-    relationship = models.CharField(max_length=50)
-    mobile       = models.CharField(max_length=15)
-    checkin      = models.DateTimeField()
-    checkout     = models.DateTimeField(null=True, blank=True)
+    visitor_id    = models.AutoField(primary_key=True)
+    student_id    = models.CharField(max_length=20)
+    student_name  = models.CharField(max_length=100, blank=True, default='')
+    visitor_name  = models.CharField(max_length=100)
+    visitor_email = models.EmailField(max_length=150, blank=True, default='')
+    relationship  = models.CharField(max_length=50)
+    mobile        = models.CharField(max_length=15)
+    purpose       = models.TextField(blank=True, default='')
+    visit_date    = models.DateField(null=True, blank=True)
+    checkin       = models.DateTimeField()
+    checkout      = models.DateTimeField(null=True, blank=True)
+
+    def gate_pass_id(self):
+        """Returns formatted ID like GP-2026-1001"""
+        return f"GP-{self.checkin.year}-{1000 + self.visitor_id}"
 
     def __str__(self):
         return f"{self.visitor_name} visiting {self.student_id}"
@@ -203,58 +227,95 @@ class Visitor(models.Model):
         db_table = 'visitors'
 
 
+# ─────────────────────────────────────────
+#  COMPLAINT  ← updated with admin_notes + updated_at
+# ─────────────────────────────────────────
 class Complaint(models.Model):
-    COMPLAINT_TYPES = [
-        ('electrical', 'Electrical'),
+    STATUS_CHOICES = [
+        ('open',        'Open'),          # newly submitted, needs attention
+        ('in_progress', 'In Progress'),   # admin acknowledged, work started
+        ('resolved',    'Resolved'),      # fully fixed
+        ('closed',      'Closed'),        # acknowledged but won't be fixed / duplicate
+    ]
+    TYPE_CHOICES = [
         ('plumbing',   'Plumbing'),
+        ('electrical', 'Electrical'),
+        ('wifi',       'Wi-Fi / Network'),
+        ('cleaning',   'Cleaning'),
         ('furniture',  'Furniture'),
-        ('cleanliness','Cleanliness'),
+        ('pest',       'Pest Control'),
         ('other',      'Other'),
     ]
-    STATUS_CHOICES = [
-        ('open',        'Open'),
-        ('in_progress', 'In Progress'),
-        ('resolved',    'Resolved'),
+    PRIORITY_CHOICES = [
+        ('low',    'Low'),
+        ('medium', 'Medium'),
+        ('high',   'High'),
     ]
-
-    complaint_id   = models.AutoField(primary_key=True)
-    student_id     = models.CharField(max_length=20)
-    room           = models.ForeignKey(Room, on_delete=models.CASCADE)
-    complaint_type = models.CharField(max_length=30, choices=COMPLAINT_TYPES)
+ 
+    student_name   = models.CharField(max_length=150)
+    student_id     = models.CharField(max_length=50, blank=True, null=True)  # string e.g. STU001
+    room           = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, blank=True,
+                                       related_name='complaints')
+    complaint_type = models.CharField(max_length=30, choices=TYPE_CHOICES)
     description    = models.TextField()
-    complaint_date = models.DateField(auto_now_add=True)
+    priority       = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
+ 
+    # Admin fields
     status         = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
-
+    admin_notes    = models.TextField(blank=True, null=True,
+                                      help_text="Admin remarks / action taken")
+    assigned_to    = models.CharField(max_length=150, blank=True, null=True,
+                                      help_text="Name of staff member handling this")
+ 
+    created_at     = models.DateTimeField(auto_now_add=True)
+    updated_at     = models.DateTimeField(auto_now=True)          # ← auto-updates on every save
+    resolved_at    = models.DateTimeField(null=True, blank=True)  # ← set when status=resolved
+ 
+    def save(self, *args, **kwargs):
+        # Auto-stamp resolved_at when moving to resolved/closed
+        if self.status in ('resolved', 'closed') and not self.resolved_at:
+            self.resolved_at = timezone.now()
+        elif self.status in ('open', 'in_progress'):
+            self.resolved_at = None          # reset if re-opened
+        super().save(*args, **kwargs)
+ 
+    @property
+    def days_open(self):
+        end = self.resolved_at or timezone.now()
+        return (end - self.created_at).days
+ 
     def __str__(self):
-        return f"{self.get_complaint_type_display()} – {self.student_id}"
-
+        return f"CMP-{self.pk:04d} | {self.get_complaint_type_display()} | {self.get_status_display()}"
+ 
     class Meta:
         db_table = 'complaints'
-
-
+        ordering = ['-created_at']
+ 
+ 
+# ─────────────────────────────────────────
+#  MAINTENANCE REQUEST
+# ─────────────────────────────────────────
 class MaintenanceRequest(models.Model):
     STATUS_CHOICES = [
         ('pending',     'Pending'),
         ('in_progress', 'In Progress'),
         ('resolved',    'Resolved'),
     ]
-
-    request_id   = models.AutoField(primary_key=True)
-    room         = models.ForeignKey(Room, on_delete=models.CASCADE)
-    requested_by = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, blank=True
-    )
+ 
+    room         = models.ForeignKey(Room, on_delete=models.CASCADE,
+                                     related_name='maintenance_requests')
+    requested_by = models.CharField(max_length=150)
     request_date = models.DateField(auto_now_add=True)
     description  = models.TextField()
     status       = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     resolved_on  = models.DateField(null=True, blank=True)
-
+ 
     def __str__(self):
-        return f"Maintenance – Room {self.room.room_number}"
-
+        return f"MNT-{self.pk:04d} | Room {self.room.room_number}"
+ 
     class Meta:
         db_table = 'maintenance_requests'
-
+        ordering = ['-request_date']
 
 class FeePayment(models.Model):
     PAYMENT_MODE_CHOICES = [

@@ -1,24 +1,27 @@
+from django.conf import settings
 from django.db import models
 
-from programs.models import City, Gender
+from programs.models import Course
 from training_management.codegen import generate_unique_code
 
 
 class Student(models.Model):
-    student_id = models.BigAutoField(primary_key=True, db_column="student_id")
-    student_code = models.CharField(max_length=30, unique=True, blank=True)
-    first_name = models.CharField(max_length=80)
-    last_name = models.CharField(max_length=80)
-    gender = models.ForeignKey(Gender, on_delete=models.PROTECT, db_column="gender", related_name="students")
+    student_id = models.BigAutoField(primary_key=True, db_column="participant_id")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, db_column="user_id", related_name="student_profile")
+    student_code = models.CharField(max_length=64, unique=True, blank=True, db_column="admission_no")
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=150, null=True, blank=True)
+    gender = models.CharField(max_length=20, null=True, blank=True)
     dob = models.DateField(null=True, blank=True)
-    mobile = models.CharField(max_length=20, blank=True)
-    email = models.EmailField(unique=True)
-    city = models.ForeignKey(City, on_delete=models.PROTECT, db_column="city_id", null=True, blank=True, related_name="students")
-    join_date = models.DateField()
-    status = models.CharField(max_length=20, default="Active")
+    mobile = models.CharField(max_length=15, null=True, blank=True)
+    email = models.EmailField(max_length=254, null=True, blank=True)
+    course = models.ForeignKey(Course, on_delete=models.PROTECT, db_column="course_id", null=True, blank=True, related_name="participants")
+    academic_year_id = models.IntegerField(null=True, blank=True)
+    join_date = models.DateField(null=True, blank=True, db_column="created_at")
+    status = models.CharField(max_length=20, null=True, blank=True)
 
     class Meta:
-        db_table = "students"
+        db_table = "participants"
         ordering = ["first_name", "last_name"]
 
     def __str__(self):
@@ -36,15 +39,15 @@ class Student(models.Model):
 
 class StudentGuardian(models.Model):
     guardian_id = models.BigAutoField(primary_key=True, db_column="guardian_id")
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, db_column="student_id", related_name="guardians")
-    guardian_name = models.CharField(max_length=150)
-    relation = models.CharField(max_length=60)
-    mobile = models.CharField(max_length=20, blank=True)
-    email = models.EmailField(blank=True)
-    occupation = models.CharField(max_length=120, blank=True)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, db_column="participant_id", related_name="guardians")
+    guardian_name = models.CharField(max_length=200)
+    relation = models.CharField(max_length=50, null=True, blank=True, db_column="relationship")
+    mobile = models.CharField(max_length=15, null=True, blank=True)
+    email = models.EmailField(max_length=254, null=True, blank=True)
+    occupation = models.TextField(null=True, blank=True, db_column="address")
 
     class Meta:
-        db_table = "student_guardians"
+        db_table = "participant_guardians"
         ordering = ["guardian_name"]
 
     def __str__(self):

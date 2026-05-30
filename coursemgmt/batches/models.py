@@ -21,6 +21,7 @@ class Batch(models.Model):
     end_date = models.DateField()
     mode = models.CharField(max_length=30, default="Offline")
     status = models.CharField(max_length=20, default="Planned")
+    enrollment_open = models.BooleanField(default=True)
 
     class Meta:
         db_table = "batches"
@@ -41,6 +42,10 @@ class Batch(models.Model):
             subject_code = (self.subject_short_name or self.program.program_name.replace(" ", "")[:4]).upper()[:4] or "SUB"
             self.batch_code = generate_batch_code(Batch, program_initials, client_code, year, subject_code)
         return super().save(*args, **kwargs)
+
+    @property
+    def is_expired(self):
+        return self.end_date < datetime.now().date() if self.end_date else False
 
     @property
     def next_session(self):
@@ -76,7 +81,7 @@ class Enrollment(models.Model):
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, db_column="batch_id", related_name="enrollments")
     student = models.ForeignKey(Student, on_delete=models.PROTECT, db_column="student_id", related_name="enrollments")
     enrollment_date = models.DateField()
-    status = models.CharField(max_length=20, default="Pending")
+    status = models.CharField(max_length=20, default="Approved")
     fee_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     payment_status = models.CharField(max_length=20, default="Pending")

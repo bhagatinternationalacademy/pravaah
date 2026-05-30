@@ -48,16 +48,16 @@ def _sync_batch_participants(batch, students, course):
         )
         if not created:
             updates = []
-            if enrollment.status != "Approved":
-                enrollment.status = "Approved"
+            if enrollment.status == "Rejected":
+                enrollment.status = "Pending"
                 updates.append("status")
             if not enrollment.enrollment_date:
                 enrollment.enrollment_date = today
                 updates.append("enrollment_date")
-            if enrollment.fee_amount != fee_amount:
+            if fee_amount and (not enrollment.fee_amount or enrollment.fee_amount == 0):
                 enrollment.fee_amount = fee_amount
                 updates.append("fee_amount")
-            if enrollment.payment_status != "Pending":
+            if not enrollment.payment_status:
                 enrollment.payment_status = "Pending"
                 updates.append("payment_status")
             if updates:
@@ -98,6 +98,11 @@ def _generate_session_plan(batch, course):
 
 def _selected_enrollment_ids(request):
     values = request.POST.getlist("selected_enrollments")
+    return [int(value) for value in values if str(value).isdigit()]
+
+
+def _selected_student_ids(request):
+    values = request.POST.getlist("selected_students")
     return [int(value) for value in values if str(value).isdigit()]
 
 
@@ -267,53 +272,114 @@ class EnrollmentDeleteView(RoleRequiredMixin, DeleteView):
 @role_required("Admin")
 def enrollment_review(request):
     enrollments = Enrollment.objects.select_related("batch__program", "student").order_by("-enrollment_date", "-enrollment_id")
+    pending_enrollments = enrollments.filter(status__iexact="Pending")
+    approved_enrollments = enrollments.filter(status__iexact="Approved")
+    pending_participants = (
+        Student.objects.filter(status__iexact="Pending")
+        .exclude(enrollments__status__in=["Pending", "Approved"])
+        .distinct()
+        .order_by("first_name", "last_name")
+    )
+    approved_participants = (
+        Student.objects.filter(status__iexact="Approved")
+        .exclude(enrollments__status__in=["Pending", "Approved"])
+        .distinct()
+        .order_by("first_name", "last_name")
+    )
     batch_form = BatchFormationForm(prefix="batch")
+    show_batch_form = request.GET.get("show_batch") == "1"
 
     if request.method == "POST":
         action = request.POST.get("action")
         selected_ids = _selected_enrollment_ids(request)
-        selected_qs = enrollments.filter(pk__in=selected_ids, status__iexact="Pending")
+        selected_student_ids = _selected_student_ids(request)
+        pending_selected_qs = enrollments.filter(pk__in=selected_ids, status__iexact="Pending")
+        pending_selected_students = Student.objects.filter(pk__in=selected_student_ids, status__iexact="Pending")
+        approved_selected_qs = enrollments.filter(pk__in=selected_ids, status__iexact="Approved")
+        approved_selected_students = Student.objects.filter(pk__in=selected_student_ids, status__iexact="Approved")
 
-        if action in {"approve", "reject"}:
-            new_status = "Approved" if action == "approve" else "Rejected"
-            updated = selected_qs.update(status=new_status)
-            messages.success(request, f"{updated} enrollment(s) {new_status.lower()}.")
+        if action == "approve":
+            updated_enrollments = pending_selected_qs.update(status="Approved")
+            updated_students = pending_selected_students.update(status="Approved")
+            updated_total = updated_enrollments + updated_students
+            messages.success(request, f"{updated_total} applicant(s) approved.")
+            return HttpResponseRedirect(reverse_lazy("batches:enrollment-review"))
+
+        if action == "reject":
+            from django.db import transaction
+
+            with transaction.atomic():
+                selected_enrollments = list(pending_selected_qs.select_related("student"))
+                enrollment_count = len(selected_enrollments)
+                pending_student_ids = [
+                    enrollment.student_id
+                    for enrollment in selected_enrollments
+                    if enrollment.student and (enrollment.student.status or "").lower() == "pending"
+                ]
+                if pending_student_ids:
+                    Student.objects.filter(pk__in=pending_student_ids).update(status="Rejected")
+                if enrollment_count:
+                    Enrollment.objects.filter(pk__in=[enrollment.pk for enrollment in selected_enrollments]).delete()
+                updated_students = pending_selected_students.update(status="Rejected")
+            updated_total = enrollment_count + updated_students
+            messages.success(request, f"{updated_total} applicant(s) rejected.")
             return HttpResponseRedirect(reverse_lazy("batches:enrollment-review"))
 
         if action == "create_batch":
+            show_batch_form = True
             batch_form = BatchFormationForm(request.POST, prefix="batch")
-            if not selected_ids:
-                messages.error(request, "Select at least one applicant before creating a batch.")
+            if not selected_ids and not selected_student_ids:
+                messages.error(request, "Select at least one approved applicant before creating a batch.")
             elif not batch_form.is_valid():
                 messages.error(request, "Please fix the batch details and try again.")
             else:
                 from django.db import transaction
                 with transaction.atomic():
                     batch = batch_form.save()
-                    selected_enrollments = list(selected_qs.select_related("student", "batch"))
-                    if not selected_enrollments:
-                        messages.error(request, "No pending applicants were selected.")
+                    selected_enrollments = list(approved_selected_qs.select_related("student", "batch"))
+                    selected_students = list(approved_selected_students)
+                    total_selected = len(selected_enrollments) + len(selected_students)
+                    if not total_selected:
+                        messages.error(request, "No approved applicants were selected.")
                         return HttpResponseRedirect(reverse_lazy("batches:enrollment-review"))
                     for enrollment in selected_enrollments:
                         enrollment.batch = batch
-                        enrollment.status = "Approved"
                         enrollment.enrollment_date = enrollment.enrollment_date or datetime.now().date()
-                        enrollment.payment_status = "Pending"
-                        enrollment.fee_amount = batch.primary_course.fees if batch.primary_course else enrollment.fee_amount
-                        enrollment.save()
+                        if not enrollment.payment_status:
+                            enrollment.payment_status = "Pending"
+                        if batch.primary_course and (not enrollment.fee_amount or enrollment.fee_amount == 0):
+                            enrollment.fee_amount = batch.primary_course.fees
+                        enrollment.save(update_fields=["batch", "enrollment_date", "payment_status", "fee_amount"])
+                    for student in selected_students:
+                        Enrollment.objects.update_or_create(
+                            batch=batch,
+                            student=student,
+                            defaults={
+                                "enrollment_date": datetime.now().date(),
+                                "status": "Approved",
+                                "fee_amount": batch.primary_course.fees if batch.primary_course else 0,
+                                "discount": 0,
+                                "payment_status": "Pending",
+                            },
+                        )
                     if batch_form.cleaned_data.get("generate_session_plan"):
                         _generate_session_plan(batch, batch_form.cleaned_data.get("course") or batch.primary_course)
-                messages.success(request, f"Batch {batch.batch_code} created with {len(selected_enrollments)} student(s).")
+                messages.success(request, f"Batch {batch.batch_code} created with {total_selected} student(s).")
                 return HttpResponseRedirect(reverse_lazy("batches:detail", args=[batch.pk]))
 
     return render(
         request,
         "batches/enrollment_review.html",
         {
-            "pending": enrollments.filter(status__iexact="Pending"),
-            "approved": enrollments.filter(status__iexact="Approved"),
+            "pending_enrollments": pending_enrollments,
+            "pending_participants": pending_participants,
+            "pending_total": pending_enrollments.count() + pending_participants.count(),
+            "approved_enrollments": approved_enrollments,
+            "approved_participants": approved_participants,
+            "approved_total": approved_enrollments.count() + approved_participants.count(),
             "rejected": enrollments.filter(status__iexact="Rejected"),
             "batch_form": batch_form,
+            "show_batch_form": show_batch_form,
         },
     )
 
@@ -323,10 +389,42 @@ def enrollment_action(request, pk, action):
     enrollment = Enrollment.objects.select_related("batch", "student").get(pk=pk)
     if action not in {"approve", "reject"}:
         raise ValueError("Invalid enrollment action")
-    enrollment.status = "Approved" if action == "approve" else "Rejected"
-    enrollment.save(update_fields=["status"])
-    messages.success(request, f"Enrollment {enrollment.status.lower()}.")
-    return render(request, "batches/enrollment_action_done.html", {"enrollment": enrollment})
+    if action == "approve":
+        enrollment.status = "Approved"
+        enrollment.save(update_fields=["status"])
+        messages.success(request, "Enrollment approved.")
+        return render(request, "batches/enrollment_action_done.html", {"enrollment": enrollment})
+
+    if enrollment.student and (enrollment.student.status or "").lower() == "pending":
+        enrollment.student.status = "Rejected"
+        enrollment.student.save(update_fields=["status"])
+    enrollment.delete()
+    messages.success(request, "Enrollment rejected.")
+    return HttpResponseRedirect(reverse_lazy("batches:enrollment-review"))
+
+
+@role_required("Admin")
+def enrollment_update_status(request, pk):
+    if request.method == "POST":
+        enrollment = Enrollment.objects.get(pk=pk)
+        new_status = request.POST.get("status")
+        if new_status in ["Approved", "Rejected"]:
+            enrollment.status = new_status
+            enrollment.save(update_fields=["status"])
+            messages.success(request, f"Status for {enrollment.student.full_name} updated to {new_status}.")
+    return HttpResponseRedirect(request.META.get("HTTP_REFERER") or reverse_lazy("batches:list"))
+
+
+@role_required("Admin")
+def enrollment_update_payment(request, pk):
+    if request.method == "POST":
+        enrollment = Enrollment.objects.get(pk=pk)
+        new_status = request.POST.get("payment_status")
+        if new_status in ["Pending", "Paid"]:
+            enrollment.payment_status = new_status
+            enrollment.save(update_fields=["payment_status"])
+            messages.success(request, f"Payment status for {enrollment.student.full_name} updated to {new_status}.")
+    return HttpResponseRedirect(request.META.get("HTTP_REFERER") or reverse_lazy("batches:list"))
 
 
 class SessionCreateView(CrudFormMixin, RoleRequiredMixin, CreateView):
@@ -485,3 +583,5 @@ session_create = SessionCreateView.as_view()
 session_update = SessionUpdateView.as_view()
 session_delete = SessionDeleteView.as_view()
 session_move_view = session_move
+enrollment_update_status_view = enrollment_update_status
+enrollment_update_payment_view = enrollment_update_payment

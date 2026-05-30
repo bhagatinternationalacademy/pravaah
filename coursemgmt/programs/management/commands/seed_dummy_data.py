@@ -116,7 +116,7 @@ class Command(BaseCommand):
         TrainerSkill.objects.get_or_create(trainer=trainer, skill_id=1, defaults={"proficiency_level": "Advanced"})
         Certification.objects.get_or_create(trainer=trainer, certification_name="Data Trainer Cert", defaults={"issuing_authority": "Training Board", "certificate_no": "TC-001", "issue_date": date(2025, 2, 1), "expiry_date": date(2027, 2, 1), "status": "Active"})
 
-        student, _ = Student.objects.get_or_create(student_code="STD001", defaults={"first_name": "Rahul", "last_name": "Verma", "gender": male, "dob": date(2002, 8, 12), "mobile": "9000000002", "email": "student1@example.com", "city": city, "join_date": date(2026, 5, 1), "status": "Active"})
+        student, _ = Student.objects.get_or_create(student_code="STD001", defaults={"first_name": "Rahul", "last_name": "Verma", "gender": male.gender_name, "dob": date(2002, 8, 12), "mobile": "9000000002", "email": "student1@example.com", "join_date": date(2026, 5, 1), "status": "Active"})
         StudentGuardian.objects.get_or_create(student=student, guardian_name="Suresh Verma", defaults={"relation": "Father", "mobile": "9000000003", "email": "suresh@example.com", "occupation": "Engineer"})
 
         batch, _ = Batch.objects.get_or_create(

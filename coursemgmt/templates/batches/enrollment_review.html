@@ -6,7 +6,7 @@
     <div>
       <div class="text-uppercase small fw-semibold text-muted mb-2">Enrollments</div>
       <h2 class="mb-1">Applicant intake & batch formation</h2>
-      <div class="text-muted">Select pending students, approve/reject them, or form a batch from the checked applicants.</div>
+      <div class="text-muted">Approve or reject pending applicants. After approval, you can create a batch from approved students.</div>
     </div>
     <div class="d-flex gap-2 flex-wrap">
       <a class="btn btn-outline-primary" href="{% url 'batches:list' %}">Batches</a>
@@ -16,15 +16,15 @@
 </div>
 
 <div class="row g-3 mb-4">
-  <div class="col-md-4"><div class="card card-stat"><div class="card-body"><div class="text-muted">Pending</div><div class="fs-3 fw-bold">{{ pending|length }}</div></div></div></div>
-  <div class="col-md-4"><div class="card card-stat"><div class="card-body"><div class="text-muted">Approved</div><div class="fs-3 fw-bold">{{ approved|length }}</div></div></div></div>
+  <div class="col-md-4"><div class="card card-stat"><div class="card-body"><div class="text-muted">Pending</div><div class="fs-3 fw-bold">{{ pending_total }}</div></div></div></div>
+  <div class="col-md-4"><div class="card card-stat"><div class="card-body"><div class="text-muted">Approved</div><div class="fs-3 fw-bold">{{ approved_total }}</div></div></div></div>
   <div class="col-md-4"><div class="card card-stat"><div class="card-body"><div class="text-muted">Rejected</div><div class="fs-3 fw-bold">{{ rejected|length }}</div></div></div></div>
 </div>
 
-<form method="post" id="enrollment-board-form">
-  {% csrf_token %}
-  <div class="row g-3">
-    <div class="col-lg-7">
+<div class="row g-3">
+  <div class="col-lg-7">
+    <form method="post" id="pending-form">
+      {% csrf_token %}
       <div class="card page-card h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
@@ -41,37 +41,108 @@
           <div class="d-flex flex-wrap gap-2 mb-3">
             <button class="btn btn-success" type="submit" name="action" value="approve">Approve Selected</button>
             <button class="btn btn-outline-danger" type="submit" name="action" value="reject">Reject Selected</button>
-            <button class="btn btn-primary" type="submit" name="action" value="create_batch">Create Batch From Selected</button>
           </div>
 
           <div class="row g-2">
-            {% for enrollment in pending %}
+            {% for enrollment in pending_enrollments %}
               <div class="col-12">
                 <div class="mini-material d-flex justify-content-between align-items-center gap-3">
                   <div>
-                    <div class="fw-semibold">{{ enrollment.student.full_name }}</div>
+                    <div class="fw-semibold"><a href="{% url 'students:detail' enrollment.student.pk %}">{{ enrollment.student.full_name }}</a></div>
                     <div class="text-muted small">{{ enrollment.student.email }}</div>
                     <div class="text-muted small">{{ enrollment.batch.batch_name }} • {{ enrollment.batch.program.program_name }}</div>
                   </div>
                   <div class="text-end">
                     <div class="badge text-bg-light mb-2">{{ enrollment.status }}</div>
-                    <input class="form-check-input enrollment-check" type="checkbox" name="selected_enrollments" value="{{ enrollment.pk }}">
+                    <input class="form-check-input enrollment-check pending-check" type="checkbox" name="selected_enrollments" value="{{ enrollment.pk }}">
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+            {% for participant in pending_participants %}
+              <div class="col-12">
+                <div class="mini-material d-flex justify-content-between align-items-center gap-3">
+                  <div>
+                    <div class="fw-semibold"><a href="{% url 'students:detail' participant.pk %}">{{ participant.full_name }}</a></div>
+                    <div class="text-muted small">{{ participant.email|default:"-" }}</div>
+                    <div class="text-muted small">Unassigned • {{ participant.course.course_name|default:"No course" }}</div>
+                  </div>
+                  <div class="text-end">
+                    <div class="badge text-bg-light mb-2">Pending</div>
+                    <input class="form-check-input enrollment-check pending-check" type="checkbox" name="selected_students" value="{{ participant.pk }}">
                   </div>
                 </div>
               </div>
             {% empty %}
-              <div class="col-12 text-muted">No pending enrollment requests.</div>
+              {% if not pending_enrollments %}
+                <div class="col-12 text-muted">No pending enrollment requests.</div>
+              {% endif %}
             {% endfor %}
           </div>
         </div>
       </div>
-    </div>
+    </form>
+  </div>
 
-    <div class="col-lg-5">
-      <div class="card page-card h-100">
+  <div class="col-lg-5">
+    <form method="post" id="batch-form">
+      {% csrf_token %}
+      <div class="card page-card mb-3">
         <div class="card-body">
-          <h5 class="mb-3">Create batch from selected applicants</h5>
-          <p class="text-muted small mb-4">This batch form uses the applicants you checked on the left.</p>
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <div>
+              <h5 class="mb-1">Approved applicants</h5>
+              <div class="text-muted small">Select approved students to form a batch.</div>
+            </div>
+          </div>
+
+          <div class="row g-2 mb-3">
+            {% for enrollment in approved_enrollments %}
+              <div class="col-12">
+                <div class="mini-material d-flex justify-content-between align-items-center gap-3">
+                  <div>
+                    <div class="fw-semibold"><a href="{% url 'students:detail' enrollment.student.pk %}">{{ enrollment.student.full_name }}</a></div>
+                    <div class="text-muted small">{{ enrollment.student.email }}</div>
+                    <div class="text-muted small">{{ enrollment.batch.batch_name }} • {{ enrollment.batch.program.program_name }}</div>
+                  </div>
+                  <div class="text-end">
+                    <div class="badge text-bg-light mb-2">{{ enrollment.status }}</div>
+                    <input class="form-check-input enrollment-check approved-check" type="checkbox" name="selected_enrollments" value="{{ enrollment.pk }}">
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+            {% for participant in approved_participants %}
+              <div class="col-12">
+                <div class="mini-material d-flex justify-content-between align-items-center gap-3">
+                  <div>
+                    <div class="fw-semibold"><a href="{% url 'students:detail' participant.pk %}">{{ participant.full_name }}</a></div>
+                    <div class="text-muted small">{{ participant.email|default:"-" }}</div>
+                    <div class="text-muted small">Unassigned • {{ participant.course.course_name|default:"No course" }}</div>
+                  </div>
+                  <div class="text-end">
+                    <div class="badge text-bg-light mb-2">Approved</div>
+                    <input class="form-check-input enrollment-check approved-check" type="checkbox" name="selected_students" value="{{ participant.pk }}">
+                  </div>
+                </div>
+              </div>
+            {% empty %}
+              {% if not approved_enrollments %}
+                <div class="col-12 text-muted">No approved applicants yet.</div>
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-primary" type="button" id="open-batch-form" {% if not approved_total %}disabled{% endif %}>Make Batch</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card page-card h-100 {% if not show_batch_form %}d-none{% endif %}" id="batch-form-panel">
+        <div class="card-body">
+          <h5 class="mb-3">Create batch from approved applicants</h5>
+          <p class="text-muted small mb-4">This batch form uses the approved applicants you checked above.</p>
 
           <div class="row g-3">
             <div class="col-12">
@@ -118,15 +189,15 @@
           </div>
         </div>
       </div>
-    </div>
+    </form>
   </div>
-</form>
+</div>
 
 <div class="row g-3 mt-2">
   <div class="col-lg-4">
     <div class="card page-card h-100"><div class="card-body">
       <h5 class="mb-3">Approved</h5>
-      <div class="text-muted small">{{ approved|length }} approved enrollment(s).</div>
+      <div class="text-muted small">{{ approved_total }} approved applicant(s).</div>
     </div></div>
   </div>
   <div class="col-lg-4">
@@ -138,7 +209,7 @@
   <div class="col-lg-4">
     <div class="card page-card h-100"><div class="card-body">
       <h5 class="mb-3">Workflow</h5>
-      <div class="text-muted small">Checked applicants can be approved, rejected, or used to form a new batch.</div>
+      <div class="text-muted small">Approve pending applicants first, then form a batch from approved students.</div>
     </div></div>
   </div>
 </div>
@@ -147,7 +218,9 @@
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const selectAll = document.getElementById("select-all");
-  const items = () => Array.from(document.querySelectorAll(".enrollment-check"));
+  const pendingItems = () => Array.from(document.querySelectorAll(".pending-check"));
+  const batchPanel = document.getElementById("batch-form-panel");
+  const openBatchButton = document.getElementById("open-batch-form");
   const programSelect = document.getElementById("id_batch-program");
   const courseSelect = document.getElementById("id_batch-course");
   const trainerSelect = document.getElementById("id_batch-trainer");
@@ -156,7 +229,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
   if (selectAll) {
     selectAll.addEventListener("change", function () {
-      items().forEach(cb => cb.checked = selectAll.checked);
+      pendingItems().forEach(cb => cb.checked = selectAll.checked);
+    });
+  }
+
+  if (openBatchButton && batchPanel) {
+    openBatchButton.addEventListener("click", function () {
+      batchPanel.classList.remove("d-none");
+      batchPanel.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   }
 

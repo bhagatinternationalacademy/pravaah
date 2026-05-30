@@ -4,7 +4,6 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2 class="mb-0">Trainers</h2>
   <div class="d-flex gap-2">
-    {% if user.is_staff %}<a class="btn btn-success" href="{% url 'trainers:create' %}">Add Trainer</a>{% endif %}
     <form class="d-flex gap-2" method="get">
       <input class="form-control" name="q" value="{{ query }}" placeholder="Search">
       <button class="btn btn-primary">Search</button>
@@ -15,14 +14,29 @@
   <div class="card-body">
     <div class="table-responsive">
       <table class="table align-middle">
-        <thead><tr><th>Code</th><th>Name</th><th>Email</th><th>Status</th></tr></thead>
+        <thead><tr><th>Code</th><th>Name</th><th>Email</th><th>Mobile</th><th>Gender</th><th>Availability</th><th>Status</th></tr></thead>
         <tbody>
           {% for trainer in page_obj %}
             <tr>
               <td><a href="{% url 'trainers:detail' trainer.pk %}">{{ trainer.trainer_code }}</a></td>
               <td>{{ trainer.full_name }}</td>
               <td>{{ trainer.email }}</td>
-              <td>{{ trainer.status }}</td>
+              <td>{{ trainer.mobile|default:"-" }}</td>
+              <td>{{ trainer.gender.gender_name|default:"-" }}</td>
+              <td>
+                {% if trainer.availability == 'Available' %}
+                  <span class="badge bg-success">Available</span>
+                {% else %}
+                  <span class="badge bg-secondary">{{ trainer.availability }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if trainer.status == 'Active' %}
+                  <span class="badge bg-success">Active</span>
+                {% else %}
+                  <span class="badge bg-danger">{{ trainer.status }}</span>
+                {% endif %}
+              </td>
             </tr>
           {% empty %}
             <tr><td colspan="4" class="text-muted">No trainers found.</td></tr>

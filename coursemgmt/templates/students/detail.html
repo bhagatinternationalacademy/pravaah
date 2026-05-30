@@ -29,8 +29,9 @@
   <div class="col-lg-4">
     <div class="card page-card h-100"><div class="card-body">
       <p class="mb-1"><strong>Email:</strong> {{ student.email }}</p>
-      <p class="mb-1"><strong>City:</strong> {{ student.city.city_name|default:"-" }}</p>
-      <p class="mb-1"><strong>Gender:</strong> {{ student.gender.gender_name|default:"-" }}</p>
+      <p class="mb-1"><strong>Course:</strong> {{ student.course.course_name|default:"-" }}</p>
+      <p class="mb-1"><strong>Academic Year:</strong> {{ student.academic_year_id|default:"-" }}</p>
+      <p class="mb-1"><strong>Gender:</strong> {{ student.gender|default:"-" }}</p>
       <p class="mb-1"><strong>Join Date:</strong> {{ student.join_date }}</p>
       <p class="mb-0"><strong>Status:</strong> {{ student.status }}</p>
     </div></div>

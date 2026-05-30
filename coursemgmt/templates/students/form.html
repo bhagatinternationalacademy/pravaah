@@ -20,17 +20,20 @@
           {% csrf_token %}
           {{ form.non_field_errors }}
           <div class="row g-3">
-            <div class="col-md-6">
+            <div class="col-md-4">
+              {{ form.student_code.label_tag }}{{ form.student_code }}{{ form.student_code.errors }}
+            </div>
+            <div class="col-md-4">
               {{ form.first_name.label_tag }}{{ form.first_name }}{{ form.first_name.errors }}
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
               {{ form.last_name.label_tag }}{{ form.last_name }}{{ form.last_name.errors }}
             </div>
             <div class="col-md-6">
               {{ form.gender.label_tag }}{{ form.gender }}{{ form.gender.errors }}
             </div>
             <div class="col-md-6">
-              {{ form.city.label_tag }}{{ form.city }}{{ form.city.errors }}
+              {{ form.course.label_tag }}{{ form.course }}{{ form.course.errors }}
             </div>
             <div class="col-md-4">
               {{ form.dob.label_tag }}{{ form.dob }}{{ form.dob.errors }}

@@ -100,12 +100,15 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function refreshCourses() {
-    if (!programSelect.value) return;
+    if (!programSelect.value) {
+      courseSelect.innerHTML = '<option value="">---------</option>';
+      return;
+    }
     fetch("{% url 'programs:program-courses-api' 0 %}".replace("/0/", "/" + programSelect.value + "/"))
       .then(response => response.json())
       .then(items => {
         const current = courseSelect.value;
-        courseSelect.innerHTML = '<option value="">Select course</option>';
+        courseSelect.innerHTML = '<option value="">---------</option>';
         items.forEach(item => {
           const option = document.createElement("option");
           option.value = item.id;

@@ -1,269 +1,352 @@
 {% extends 'hostelmgmt/base.html' %}
 {% block title %}Reports{% endblock %}
-{% block page_title %}Reports & Analytics{% endblock %}
-
-{% block extra_css %}
-<style>
-    .report-card {
-        border-radius: 16px;
-        padding: 25px;
-        color: white;
-        position: relative;
-        overflow: hidden;
-    }
-    .report-card::before {
-        content: '';
-        position: absolute;
-        top: -30px; right: -30px;
-        width: 100px; height: 100px;
-        background: rgba(255,255,255,0.1);
-        border-radius: 50%;
-    }
-    .report-card::after {
-        content: '';
-        position: absolute;
-        bottom: -40px; right: 20px;
-        width: 120px; height: 120px;
-        background: rgba(255,255,255,0.07);
-        border-radius: 50%;
-    }
-    .chart-bar {
-        display: flex;
-        align-items: flex-end;
-        gap: 6px;
-        height: 80px;
-    }
-    .chart-bar .bar {
-        flex: 1;
-        border-radius: 4px 4px 0 0;
-        transition: height 0.5s ease;
-        min-width: 20px;
-    }
-</style>
-{% endblock %}
+{% block breadcrumb %}Reports{% endblock %}
 
 {% block content %}
-<div class="page-header" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb);">
-    <div class="d-flex align-items-center justify-content-between">
-        <div>
-            <h4 class="mb-1"><i class="fas fa-chart-bar me-2"></i>Reports & Analytics</h4>
-            <p class="mb-0 opacity-75">Comprehensive overview of hostel operations</p>
-        </div>
-        <button onclick="window.print()" class="btn btn-white btn-sm fw-semibold"
-                style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);">
-            <i class="fas fa-print me-1"></i> Print Report
-        </button>
-    </div>
+<div class="prv-page-header">
+  <div><h1>Reports &amp; Analytics</h1><p>Live hostel data across all modules</p></div>
+  <div class="d-flex gap-2">
+    <button onclick="window.print()" class="prv-btn prv-btn-outline prv-btn-sm">
+      <i class="bi bi-printer"></i> Print
+    </button>
+  </div>
 </div>
 
-<!-- Summary Cards Row -->
+<!-- ── OVERVIEW STATS ── -->
 <div class="row g-3 mb-4">
-    <div class="col-md-4 col-lg-2">
-        <div class="report-card" style="background:linear-gradient(135deg,#667eea,#764ba2);">
-            <i class="fas fa-users fa-2x mb-2 opacity-75"></i>
-            <h2 class="fw-bold mb-0">{{ total_allocated }}</h2>
-            <small class="opacity-75">Students Allocated</small>
-        </div>
+  <div class="col-6 col-md-3">
+    <div class="prv-stat" style="--stat-accent:#0D2847">
+      <div class="prv-stat-icon"><i class="bi bi-people"></i></div>
+      <div class="prv-stat-label">Total Allocated</div>
+      <div class="prv-stat-value">{{ total_allocated }}</div>
     </div>
-    <div class="col-md-4 col-lg-2">
-        <div class="report-card" style="background:linear-gradient(135deg,#43e97b,#38f9d7);">
-            <i class="fas fa-door-open fa-2x mb-2 opacity-75"></i>
-            <h2 class="fw-bold mb-0">{{ available_rooms }}</h2>
-            <small class="opacity-75">Available Rooms</small>
-        </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="prv-stat" style="--stat-accent:#20C474">
+      <div class="prv-stat-icon"><i class="bi bi-door-open"></i></div>
+      <div class="prv-stat-label">Available Rooms</div>
+      <div class="prv-stat-value">{{ available_rooms }}</div>
     </div>
-    <div class="col-md-4 col-lg-2">
-        <div class="report-card" style="background:linear-gradient(135deg,#fa709a,#fee140);">
-            <i class="fas fa-door-closed fa-2x mb-2 opacity-75"></i>
-            <h2 class="fw-bold mb-0">{{ full_rooms }}</h2>
-            <small class="opacity-75">Full Rooms</small>
-        </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="prv-stat" style="--stat-accent:#3b82f6">
+      <div class="prv-stat-icon"><i class="bi bi-ticket-perforated"></i></div>
+      <div class="prv-stat-label">Total Visitors</div>
+      <div class="prv-stat-value">{{ total_visitors }}</div>
     </div>
-    <div class="col-md-4 col-lg-2">
-        <div class="report-card" style="background:linear-gradient(135deg,#4facfe,#00f2fe);">
-            <i class="fas fa-user-friends fa-2x mb-2 opacity-75"></i>
-            <h2 class="fw-bold mb-0">{{ total_visitors }}</h2>
-            <small class="opacity-75">Total Visitors</small>
-        </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="prv-stat" style="--stat-accent:#f59e0b">
+      <div class="prv-stat-icon"><i class="bi bi-hourglass-split"></i></div>
+      <div class="prv-stat-label">Waiting List</div>
+      <div class="prv-stat-value">{{ waiting_count }}</div>
     </div>
-    <div class="col-md-4 col-lg-2">
-        <div class="report-card" style="background:linear-gradient(135deg,#f093fb,#f5576c);">
-            <i class="fas fa-exclamation-circle fa-2x mb-2 opacity-75"></i>
-            <h2 class="fw-bold mb-0">{{ open_complaints }}</h2>
-            <small class="opacity-75">Open Complaints</small>
-        </div>
-    </div>
-    <div class="col-md-4 col-lg-2">
-        <div class="report-card" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb);">
-            <i class="fas fa-check-circle fa-2x mb-2 opacity-75"></i>
-            <h2 class="fw-bold mb-0">{{ resolved_complaints }}</h2>
-            <small class="opacity-75">Resolved</small>
-        </div>
-    </div>
+  </div>
 </div>
 
-<div class="row g-4 mb-4">
-    <!-- Room Occupancy Report Table -->
-    <div class="col-lg-8">
-        <div class="form-card h-100">
-            <div class="d-flex align-items-center gap-2 mb-4">
-                <div style="background:linear-gradient(135deg,#a18cd1,#fbc2eb);border-radius:10px;padding:10px 14px;">
-                    <i class="fas fa-table text-white"></i>
-                </div>
-                <h5 class="fw-semibold mb-0">Room-wise Occupancy Report</h5>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle" style="font-size:0.88rem;">
-                    <thead>
-                        <tr style="background:#f8f7ff;">
-                            <th class="text-muted fw-500">ROOM NO.</th>
-                            <th class="text-muted fw-500">FLOOR</th>
-                            <th class="text-muted fw-500">OCCUPANCY</th>
-                            <th class="text-muted fw-500">FILL RATE</th>
-                            <th class="text-muted fw-500">GENDER</th>
-                            <th class="text-muted fw-500">STATUS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for room in room_wise %}
-                        <tr>
-                            <td><strong>{{ room.room_number }}</strong></td>
-                            <td>Floor {{ room.floor.floor_no }}</td>
-                            <td>{{ room.occupied }} / {{ room.capacity }}</td>
-                            <td>
-                                {% if room.capacity > 0 %}
-                                    {% widthratio room.occupied room.capacity 100 as pct %}
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="progress flex-grow-1" style="height:6px;border-radius:3px;">
-                                            <div class="progress-bar
-                                                {% if pct == '100' %}bg-danger
-                                                {% elif pct != '0' %}bg-warning
-                                                {% else %}bg-success{% endif %}"
-                                                style="width:{{ pct }}%">
-                                            </div>
-                                        </div>
-                                        <small>{{ pct }}%</small>
-                                    </div>
-                                {% endif %}
-                            </td>
-                            <td>{{ room.gender|default:"—"|capfirst }}</td>
-                            <td>
-                                {% if room.status == 'available' %}
-                                    <span class="badge" style="background:#d1fae5;color:#065f46;">Available</span>
-                                {% elif room.status == 'full' %}
-                                    <span class="badge" style="background:#fee2e2;color:#991b1b;">Full</span>
-                                {% else %}
-                                    <span class="badge" style="background:#fef3c7;color:#92400e;">Maintenance</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr><td colspan="6" class="text-center text-muted py-4">No room data available.</td></tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Visual Summary Panel -->
-    <div class="col-lg-4">
-        <!-- Complaints Breakdown -->
-        <div class="form-card mb-4">
-            <h6 class="fw-semibold mb-3">Complaints Summary</h6>
-            <div class="d-flex flex-column gap-3">
-                <div>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span style="font-size:0.85rem;">Open</span>
-                        <strong class="text-danger">{{ open_complaints }}</strong>
-                    </div>
-                    <div class="progress" style="height:8px;border-radius:4px;">
-                        {% if open_complaints or resolved_complaints %}
-                            {% with total_c=open_complaints|add:resolved_complaints %}
-                                {% if total_c > 0 %}
-                                    <div class="progress-bar bg-danger"
-                                         style="width:{% widthratio open_complaints total_c 100 %}%">
-                                    </div>
-                                {% endif %}
-                            {% endwith %}
-                        {% endif %}
-                    </div>
-                </div>
-                <div>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span style="font-size:0.85rem;">Resolved</span>
-                        <strong class="text-success">{{ resolved_complaints }}</strong>
-                    </div>
-                    <div class="progress" style="height:8px;border-radius:4px;">
-                        {% with total_c=open_complaints|add:resolved_complaints %}
-                            {% if total_c > 0 %}
-                                <div class="progress-bar bg-success"
-                                     style="width:{% widthratio resolved_complaints total_c 100 %}%">
-                                </div>
-                            {% endif %}
-                        {% endwith %}
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Room Availability Donut-style -->
-        <div class="form-card">
-            <h6 class="fw-semibold mb-3">Room Availability</h6>
-
-            <div class="d-flex align-items-center gap-3 mb-2">
-                <div style="width:14px;height:14px;background:#10b981;border-radius:3px;"></div>
-                <span style="font-size:0.85rem;">Available Rooms</span>
-                <strong class="ms-auto text-success">{{ available_rooms }}</strong>
-            </div>
-            <div class="d-flex align-items-center gap-3 mb-2">
-                <div style="width:14px;height:14px;background:#ef4444;border-radius:3px;"></div>
-                <span style="font-size:0.85rem;">Full Rooms</span>
-                <strong class="ms-auto text-danger">{{ full_rooms }}</strong>
-            </div>
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <div style="width:14px;height:14px;background:#6366f1;border-radius:3px;"></div>
-                <span style="font-size:0.85rem;">Students Housed</span>
-                <strong class="ms-auto text-primary">{{ total_allocated }}</strong>
-            </div>
-
-            <!-- Simple visual bar chart -->
-            <div class="chart-bar mt-3">
-                {% if available_rooms > 0 %}
-                    <div class="bar bg-success"
-                         style="height:{% widthratio available_rooms 40 80 %}px;"
-                         title="Available: {{ available_rooms }}">
-                    </div>
-                {% endif %}
-                {% if full_rooms > 0 %}
-                    <div class="bar bg-danger"
-                         style="height:{% widthratio full_rooms 40 80 %}px;"
-                         title="Full: {{ full_rooms }}">
-                    </div>
-                {% endif %}
-                <div class="bar bg-primary"
-                     style="height:{% widthratio total_allocated 80 80 %}px;"
-                     title="Students: {{ total_allocated }}">
-                </div>
-                <div class="bar" style="background:#a5b4fc;height:{% widthratio total_visitors 200 80 %}px;"
-                     title="Visitors: {{ total_visitors }}">
-                </div>
-            </div>
-            <div class="d-flex gap-1 mt-1" style="font-size:0.7rem;color:#94a3b8;">
-                <span style="flex:1;text-align:center;">Avail</span>
-                <span style="flex:1;text-align:center;">Full</span>
-                <span style="flex:1;text-align:center;">Students</span>
-                <span style="flex:1;text-align:center;">Visitors</span>
-            </div>
-        </div>
-    </div>
+<!-- ── COMPLAINT REPORTS ── -->
+<div class="mb-3" style="font-size:11px;text-transform:uppercase;letter-spacing:.1em;
+                         color:var(--gray-400);font-weight:700">
+  Complaint Summary
 </div>
 
-<!-- Footer note -->
-<div class="text-center py-3">
-    <small class="text-muted">
-        <i class="fas fa-clock me-1"></i>
-        Report generated on: {% now "d M Y, H:i" %} &nbsp;|&nbsp; PRAVAAH Hostel Management System
-    </small>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="prv-stat" style="--stat-accent:#ef4444">
+      <div class="prv-stat-icon"><i class="bi bi-exclamation-circle"></i></div>
+      <div class="prv-stat-label">Open</div>
+      <div class="prv-stat-value">{{ open_complaints }}</div>
+      <div class="prv-stat-sub">Needs attention</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="prv-stat" style="--stat-accent:#3b82f6">
+      <div class="prv-stat-icon"><i class="bi bi-gear-wide-connected"></i></div>
+      <div class="prv-stat-label">In Progress</div>
+      <div class="prv-stat-value">{{ inprogress_complaints }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="prv-stat" style="--stat-accent:#22c55e">
+      <div class="prv-stat-icon"><i class="bi bi-check-circle"></i></div>
+      <div class="prv-stat-label">Resolved</div>
+      <div class="prv-stat-value">{{ resolved_complaints }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="prv-stat" style="--stat-accent:#94a3b8">
+      <div class="prv-stat-icon"><i class="bi bi-x-circle"></i></div>
+      <div class="prv-stat-label">Closed</div>
+      <div class="prv-stat-value">{{ closed_complaints }}</div>
+    </div>
+  </div>
 </div>
+
+<!-- COMPLAINT DETAIL TABLE + TYPE BREAKDOWN side by side -->
+<div class="row g-3 mb-4">
+
+  <!-- Type breakdown mini chart -->
+  <div class="col-md-4">
+    <div class="prv-card h-100">
+      <div class="prv-card-header">
+        <span><i class="bi bi-pie-chart me-2" style="color:var(--emerald)"></i>By Type</span>
+      </div>
+      <div class="prv-card-body">
+        {% if total_complaints %}
+        {% for row in type_breakdown %}
+        <div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;
+                      margin-bottom:4px;font-weight:500">
+            <span>{{ row.label }}</span>
+            <span style="font-family:var(--mono);font-weight:700">{{ row.total }}</span>
+          </div>
+          <div class="prv-progress">
+            <div class="prv-progress-bar"
+                 style="width:{% widthratio row.total total_complaints 100 %}%;
+                        background:{% cycle '#ef4444' '#3b82f6' '#f59e0b' '#22c55e' '#a855f7' '#ec4899' '#94a3b8' %}">
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div style="text-align:center;padding:24px;color:var(--gray-400);font-size:13px">No data yet</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Status breakdown mini donut (CSS-only) -->
+  <div class="col-md-4">
+    <div class="prv-card h-100">
+      <div class="prv-card-header">
+        <span><i class="bi bi-bar-chart me-2" style="color:var(--emerald)"></i>Resolution Rate</span>
+      </div>
+      <div class="prv-card-body">
+        {% if total_complaints %}
+        {% with resolved_pct=resolved_complaints|default:0 %}
+        <div style="text-align:center;padding:10px 0">
+          <!-- Simple ring visual using inline SVG -->
+          <svg viewBox="0 0 80 80" width="110" height="110">
+            <circle cx="40" cy="40" r="30" fill="none" stroke="#f1f5f9" stroke-width="10"/>
+            {% with pct=resolved_complaints %}
+            <circle cx="40" cy="40" r="30" fill="none" stroke="#22c55e" stroke-width="10"
+              stroke-dasharray="{% widthratio pct total_complaints 188 %} 188"
+              stroke-dashoffset="47"
+              transform="rotate(-90 40 40)"
+              style="transition:stroke-dasharray .5s ease"/>
+            {% endwith %}
+            <text x="40" y="38" text-anchor="middle" font-size="11" font-weight="700" fill="#0D2847">
+              {% widthratio resolved_complaints total_complaints 100 %}%
+            </text>
+            <text x="40" y="51" text-anchor="middle" font-size="7" fill="#94a3b8">resolved</text>
+          </svg>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+          <!-- manual because template tags can't split strings -->
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px">
+            <span style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0"></span>
+            Open: <strong>{{ open_complaints }}</strong>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px">
+            <span style="width:8px;height:8px;border-radius:50%;background:#3b82f6;flex-shrink:0"></span>
+            In Progress: <strong>{{ inprogress_complaints }}</strong>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px">
+            <span style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0"></span>
+            Resolved: <strong>{{ resolved_complaints }}</strong>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px">
+            <span style="width:8px;height:8px;border-radius:50%;background:#94a3b8;flex-shrink:0"></span>
+            Closed: <strong>{{ closed_complaints }}</strong>
+          </div>
+        </div>
+        {% endwith %}
+        {% else %}
+        <div style="text-align:center;padding:24px;color:var(--gray-400);font-size:13px">No complaints yet</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Maintenance summary -->
+  <div class="col-md-4">
+    <div class="prv-card h-100">
+      <div class="prv-card-header">
+        <span><i class="bi bi-tools me-2" style="color:var(--emerald)"></i>Maintenance</span>
+      </div>
+      <div class="prv-card-body">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;
+                      padding:10px 14px;background:#fef3c7;border-radius:8px">
+            <span style="font-size:13px;font-weight:600;color:#92400e">Pending</span>
+            <span style="font-family:var(--mono);font-weight:700;font-size:20px;color:#92400e">{{ mnt_pending }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;
+                      padding:10px 14px;background:#dbeafe;border-radius:8px">
+            <span style="font-size:13px;font-weight:600;color:#1d4ed8">In Progress</span>
+            <span style="font-family:var(--mono);font-weight:700;font-size:20px;color:#1d4ed8">{{ mnt_inprogress }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;
+                      padding:10px 14px;background:#dcfce7;border-radius:8px">
+            <span style="font-size:13px;font-weight:600;color:#15803d">Resolved</span>
+            <span style="font-family:var(--mono);font-weight:700;font-size:20px;color:#15803d">{{ mnt_resolved }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ALL COMPLAINTS TABLE ── -->
+<div class="prv-card mb-4">
+  <div class="prv-card-header">
+    <span><i class="bi bi-list-ul me-2" style="color:var(--emerald)"></i>All Complaints ({{ total_complaints }})</span>
+    <div class="d-flex gap-2">
+      <select class="prv-select" style="width:140px;font-size:12px" id="rptStatusFilter" onchange="filterRptTable()">
+        <option value="">All Status</option>
+        <option value="open">Open</option>
+        <option value="in_progress">In Progress</option>
+        <option value="resolved">Resolved</option>
+        <option value="closed">Closed</option>
+      </select>
+      <button onclick="window.print()" class="prv-btn prv-btn-outline prv-btn-sm">
+        <i class="bi bi-printer"></i> Print
+      </button>
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="prv-table" id="rptTable">
+      <thead>
+        <tr>
+          <th>Ref</th><th>Student</th><th>Room</th><th>Type</th><th>Priority</th>
+          <th>Status</th><th>Assigned To</th><th>Submitted</th><th>Resolved On</th><th>Days Open</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in complaint_list %}
+        <tr data-status="{{ c.status }}">
+          <td style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--navy)">
+            CMP-{{ c.pk|stringformat:"04d" }}
+          </td>
+          <td>
+            <div style="font-weight:600;font-size:13px">{{ c.student_name }}</div>
+            <div style="font-size:11px;color:var(--gray-400)">{{ c.student_id }}</div>
+          </td>
+          <td>{{ c.room|default:"—" }}</td>
+          <td style="font-size:12px">{{ c.get_complaint_type_display }}</td>
+          <td>
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700">
+              <span style="width:7px;height:7px;border-radius:50%;
+                background:{% if c.priority == 'high' %}#ef4444{% elif c.priority == 'medium' %}#f59e0b{% else %}#22c55e{% endif %}">
+              </span>
+              {{ c.get_priority_display }}
+            </span>
+          </td>
+          <td>
+            <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;
+                         border-radius:20px;font-size:11px;font-weight:700;
+              {% if c.status == 'open' %}background:#fee2e2;color:#ef4444
+              {% elif c.status == 'in_progress' %}background:#dbeafe;color:#3b82f6
+              {% elif c.status == 'resolved' %}background:#dcfce7;color:#15803d
+              {% else %}background:#f1f5f9;color:#64748b{% endif %}">
+              {{ c.get_status_display }}
+            </span>
+          </td>
+          <td style="font-size:12px">{{ c.assigned_to|default:"—" }}</td>
+          <td style="font-size:12px">{{ c.created_at|date:"d M Y" }}</td>
+          <td style="font-size:12px">{{ c.resolved_at|date:"d M Y"|default:"—" }}</td>
+          <td style="font-family:var(--mono);font-size:12px;font-weight:700">{{ c.days_open }}d</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="10" style="text-align:center;padding:32px;color:var(--gray-400)">No complaints</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── ROOM OCCUPANCY TABLE ── -->
+<div class="prv-card mb-4">
+  <div class="prv-card-header">
+    <span><i class="bi bi-grid-3x3-gap me-2" style="color:var(--emerald)"></i>Room Occupancy</span>
+  </div>
+  <div class="table-responsive">
+    <table class="prv-table">
+      <thead><tr><th>Room</th><th>Capacity</th><th>Occupied</th><th>Available</th><th>Status</th><th>Occupancy %</th></tr></thead>
+      <tbody>
+        {% for r in room_wise %}
+        <tr>
+          <td style="font-family:var(--mono);font-weight:700">{{ r.room_number }}</td>
+          <td>{{ r.capacity }}</td>
+          <td style="font-family:var(--mono)">{{ r.occupied_count }}</td>
+          <td style="font-family:var(--mono)">{{ r.available_beds }}</td>
+          <td>
+            <span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;
+                         border-radius:20px;font-size:11px;font-weight:700;
+              {% with s=r.computed_status %}
+              {% if s == 'available' %}background:#dcfce7;color:#15803d
+              {% elif s == 'partial' %}background:#fef3c7;color:#92400e
+              {% elif s == 'full' %}background:#fee2e2;color:#ef4444
+              {% else %}background:#f1f5f9;color:#64748b{% endif %}
+              {% endwith %}">
+              {{ r.get_status_display }}
+            </span>
+          </td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="prv-progress" style="flex:1">
+                <div class="prv-progress-bar"
+                     style="width:{% if r.capacity %}{% widthratio r.occupied_count r.capacity 100 %}{% else %}0{% endif %}%;
+                     background:{% if r.occupied_count == r.capacity %}#ef4444{% elif r.occupied_count > 0 %}#f59e0b{% else %}#22c55e{% endif %}">
+                </div>
+              </div>
+              <span style="font-family:var(--mono);font-size:11px;font-weight:700;min-width:30px">
+                {% if r.capacity %}{% widthratio r.occupied_count r.capacity 100 %}{% else %}0{% endif %}%
+              </span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── ACTIVE ALLOCATIONS TABLE ── -->
+<div class="prv-card">
+  <div class="prv-card-header">
+    <span><i class="bi bi-person-check me-2" style="color:var(--emerald)"></i>Active Allocations</span>
+  </div>
+  <div class="table-responsive">
+    <table class="prv-table">
+      <thead><tr><th>Name</th><th>Type</th><th>Room</th><th>Bed</th><th>Check-in</th><th>Check-out</th></tr></thead>
+      <tbody>
+        {% for a in allocations %}
+        <tr>
+          <td><div style="font-weight:600">{{ a.person_name }}</div></td>
+          <td><span class="prv-badge {% if a.person_type == 'student' %}prv-badge-navy{% else %}prv-badge-blue{% endif %}">{{ a.person_type|title }}</span></td>
+          <td style="font-family:var(--mono);font-weight:700">{{ a.room.room_number }}</td>
+          <td style="font-family:var(--mono)">B{{ a.bed_number }}</td>
+          <td style="font-size:12px">{{ a.course_checkin }}</td>
+          <td style="font-size:12px">{{ a.course_checkout }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--gray-400)">No active allocations</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterRptTable() {
+  const val = document.getElementById('rptStatusFilter').value;
+  document.querySelectorAll('#rptTable tbody tr[data-status]').forEach(row => {
+    row.style.display = (!val || row.dataset.status === val) ? '' : 'none';
+  });
+}
+</script>
 {% endblock %}

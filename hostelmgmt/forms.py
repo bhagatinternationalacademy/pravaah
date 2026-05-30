@@ -4,25 +4,57 @@ from .models import Visitor, Complaint
 
 class VisitorForm(forms.ModelForm):
     class Meta:
-        model = Visitor
-        fields = ['student_id', 'visitor_name', 'relationship', 'mobile', 'checkin', 'checkout']
+        model  = Visitor
+        fields = [
+            'student_id',    'student_name',
+            'visitor_name',  'visitor_email',
+            'relationship',  'mobile',
+            'purpose',       'visit_date',
+            'checkin',       'checkout',
+        ]
         widgets = {
             'student_id': forms.TextInput(attrs={
                 'class': 'form-control form-control-lg',
                 'placeholder': 'e.g. STU2024001',
             }),
+            'student_name': forms.TextInput(attrs={
+                'class': 'form-control form-control-lg',
+                'placeholder': 'Full name of the student being visited',
+            }),
             'visitor_name': forms.TextInput(attrs={
                 'class': 'form-control form-control-lg',
-                'placeholder': 'Visitor full name',
+                'placeholder': 'Full name of visitor',
             }),
-            'relationship': forms.TextInput(attrs={
+            'visitor_email': forms.EmailInput(attrs={
                 'class': 'form-control form-control-lg',
-                'placeholder': 'e.g. Father, Mother, Friend',
+                'placeholder': 'visitor@example.com',
             }),
+            'relationship': forms.Select(
+                attrs={'class': 'form-select form-select-lg'},
+                choices=[
+                    ('',         '-- Select Relationship --'),
+                    ('Father',   'Father'),
+                    ('Mother',   'Mother'),
+                    ('Brother',  'Brother'),
+                    ('Sister',   'Sister'),
+                    ('Guardian', 'Guardian'),
+                    ('Friend',   'Friend'),
+                    ('Other',    'Other'),
+                ],
+            ),
             'mobile': forms.TextInput(attrs={
                 'class': 'form-control form-control-lg',
                 'placeholder': '10-digit mobile number',
                 'maxlength': '15',
+            }),
+            'purpose': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'e.g. Family visit, Birthday celebration, Medical visit…',
+            }),
+            'visit_date': forms.DateInput(attrs={
+                'class': 'form-control form-control-lg',
+                'type': 'date',
             }),
             'checkin': forms.DateTimeInput(attrs={
                 'class': 'form-control form-control-lg',
@@ -33,7 +65,6 @@ class VisitorForm(forms.ModelForm):
                 'type': 'datetime-local',
             }),
         }
-
 
 class ComplaintForm(forms.ModelForm):
     class Meta:

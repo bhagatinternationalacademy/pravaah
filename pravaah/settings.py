@@ -140,6 +140,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 
+
 # Media files configurations (Uploads)      #added by commonservices -gc
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -153,3 +154,13 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'gayatrichand08@gmail.com'
 EMAIL_HOST_PASSWORD = 'dbagisbolgnyxrra'  # Secure Google App Password
+
+EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST          = 'smtp.gmail.com'
+EMAIL_PORT          = 587
+EMAIL_USE_TLS       = True
+EMAIL_HOST_USER     = 'shreyamurkar39@gmail.com'       # ← REPLACE
+EMAIL_HOST_PASSWORD = 'trqpzssezmpvcjob'     # ← REPLACE (Gmail App Password)
+DEFAULT_FROM_EMAIL  = 'PRAVAAH Hostel <shreyamurkar39@gmail.com>'  # ← REPLACE
+
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

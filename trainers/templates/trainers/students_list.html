@@ -1,0 +1,41 @@
+{% load static %}
+{% if participants %}
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Students</h5>
+    {% if batch_id %}
+      <a class="btn btn-sm btn-primary" href="{% url 'trainers:attendance' batch_id %}">Mark Attendance</a>
+    {% endif %}
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-striped mb-0">
+        <thead>
+          <tr>
+            <th>Student ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Mobile</th>
+            <th>Batch</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in participants %}
+          <tr>
+            <td>{{ p.id }}</td>
+            <td>{{ p.name }}</td>
+            <td>{{ p.email }}</td>
+            <td>{{ p.mobile }}</td>
+            <td>{{ p.batch_id }}</td>
+            <td><span class="badge bg-secondary">Enrolled</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info">No students found.</div>
+{% endif %}

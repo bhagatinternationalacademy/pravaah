@@ -160,7 +160,7 @@ def trainer_profile(request):
 
     # availability entries (if available app present)
     try:
-        from pravaah.available.models import Availability as AvailabilityModel
+        from pravaah.availability.models import Availability as AvailabilityModel
         availability_entries = AvailabilityModel.objects.filter(trainer=trainer).order_by('-date')
     except Exception:
         availability_entries = []

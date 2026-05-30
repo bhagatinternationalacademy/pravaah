@@ -33,3 +33,39 @@ class Trainer(models.Model):
     
     class Meta:
         ordering = ['-joining_date']
+
+
+class Participant(models.Model):
+    """Unmanaged model mapping to existing participants table."""
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255)
+    email = models.EmailField(blank=True, null=True)
+    mobile = models.CharField(max_length=20, blank=True, null=True)
+    batch_id = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'participants'
+
+
+class Attendance(models.Model):
+    STATUS_CHOICES = [
+        ('Present', 'Present'),
+        ('Absent', 'Absent'),
+        ('Late', 'Late'),
+    ]
+
+    id = models.AutoField(primary_key=True)
+    participant_id = models.IntegerField()
+    batch_id = models.IntegerField(blank=True, null=True)
+    session_date = models.DateField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES)
+    marked_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    marked_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'attendance'
+        ordering = ['-session_date']
+        constraints = [
+            models.UniqueConstraint(fields=['participant_id', 'session_date'], name='unique_attendance_per_session')
+        ]

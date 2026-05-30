@@ -1,0 +1,42 @@
+{% load static %}
+<div class="card">
+  <div class="card-header">
+    <h5 class="mb-0">Attendance for Batch {{ batch_id }}</h5>
+  </div>
+  <div class="card-body">
+    {% if participants %}
+    <form method="post">
+      {% csrf_token %}
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Mark</th>
+            <th>Student ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Mobile</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in participants %}
+          <tr>
+            <td><input type="checkbox" name="present_{{ p.id }}" aria-label="Present {{ p.name }}"></td>
+            <td>{{ p.id }}</td>
+            <td>{{ p.name }}</td>
+            <td>{{ p.email }}</td>
+            <td>{{ p.mobile }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="mb-2">
+        <label for="session_date">Session date</label>
+        <input type="date" id="session_date" name="session_date" class="form-control" />
+      </div>
+      <button class="btn btn-success" type="submit">Save Attendance</button>
+    </form>
+    {% else %}
+    <div class="alert alert-warning">No participants found for this batch.</div>
+    {% endif %}
+  </div>
+</div>

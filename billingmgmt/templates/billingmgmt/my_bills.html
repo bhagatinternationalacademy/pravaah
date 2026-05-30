@@ -1,0 +1,162 @@
+{% extends 'billingmgmt/base.html' %}
+
+{% block title %}My Bills{% endblock %}
+{% block nav_mybills %}active{% endblock %}
+{% block topbar_title %}My Bills{% endblock %}
+
+{% block content %}
+<div class="animate-in">
+    <!-- Page Header -->
+    <div class="page-header d-flex align-items-center gap-3">
+        <h2>
+            <i class="fas fa-file-invoice me-2" style="color:var(--primary);"></i>My Bills
+        </h2>
+        <span class="badge bg-primary rounded-pill fs-6">{{ bills|length }}</span>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card" style="background:linear-gradient(135deg,var(--primary),#7c3aed);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="mb-1">Total Bills</p>
+                        <h3>{{ bills|length }}</h3>
+                    </div>
+                    <i class="fas fa-file-invoice-dollar" style="font-size:2rem;opacity:.3;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card" style="background:linear-gradient(135deg,var(--success),#0d9488);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="mb-1">Payment Cleared</p>
+                        <h3>
+                            {% with cleared=0 %}
+                                {% for bill in bills %}
+                                    {% if bill.status == 'PAYMENT_CLEARED' %}
+                                        {% with cleared=cleared|add:1 %}{% endwith %}
+                                    {% endif %}
+                                {% endfor %}
+                                {{ cleared }}
+                            {% endwith %}
+                        </h3>
+                    </div>
+                    <i class="fas fa-check-double" style="font-size:2rem;opacity:.3;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card" style="background:linear-gradient(135deg,var(--warning),#f59e0b);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="mb-1">Pending Review</p>
+                        <h3>
+                            {% with pending=0 %}
+                                {% for bill in bills %}
+                                    {% if bill.status == 'SUBMITTED' or bill.status == 'UNDER_ACCOUNTS_REVIEW' or bill.status == 'UNDER_TRAINER_ADMIN_REVIEW' %}
+                                        {% with pending=pending|add:1 %}{% endwith %}
+                                    {% endif %}
+                                {% endfor %}
+                                {{ pending }}
+                            {% endwith %}
+                        </h3>
+                    </div>
+                    <i class="fas fa-hourglass-half" style="font-size:2rem;opacity:.3;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bills Table -->
+    <div class="card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fas fa-list text-muted"></i>
+                <span>All Bills</span>
+            </div>
+            <a href="{% url 'billing:upload_bill' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus me-1"></i>New Bill
+            </a>
+        </div>
+        <div class="card-body p-0">
+            {% if bills %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="billsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Bill Number</th>
+                                <th>Bill Title</th>
+                                <th>Amount</th>
+                                <th>Training Program</th>
+                                <th>Upload Date</th>
+                                <th>Status</th>
+                                <th>Remarks</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for bill in bills %}
+                            <tr>
+                                <td class="fw-medium text-muted">{{ forloop.counter }}</td>
+                                <td>
+                                    <span class="fw-semibold">{{ bill.bill_number }}</span>
+                                </td>
+                                <td>{{ bill.bill_title }}</td>
+                                <td class="fw-semibold" style="color:var(--primary);">₹{{ bill.bill_amount }}</td>
+                                <td>{{ bill.training_program }}</td>
+                                <td style="white-space:nowrap;">{{ bill.uploaded_at|date:'d M Y' }}</td>
+                                <td>
+                                    {% if bill.status == 'SUBMITTED' %}
+                                        <span class="badge bg-secondary rounded-pill">Submitted</span>
+                                    {% elif bill.status == 'UNDER_ACCOUNTS_REVIEW' %}
+                                        <span class="badge bg-warning text-dark rounded-pill">Accounts Review</span>
+                                    {% elif bill.status == 'APPROVED_BY_ACCOUNTS' %}
+                                        <span class="badge bg-info rounded-pill">Approved by Accounts</span>
+                                    {% elif bill.status == 'REJECTED_BY_ACCOUNTS' %}
+                                        <span class="badge bg-danger rounded-pill">Rejected by Accounts</span>
+                                    {% elif bill.status == 'UNDER_TRAINER_ADMIN_REVIEW' %}
+                                        <span class="badge bg-warning text-dark rounded-pill">Admin Review</span>
+                                    {% elif bill.status == 'PAYMENT_CLEARED' %}
+                                        <span class="badge bg-primary rounded-pill">Payment Cleared</span>
+                                    {% elif bill.status == 'REJECTED_BY_TRAINER_ADMIN' %}
+                                        <span class="badge bg-danger rounded-pill">Rejected by Admin</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary rounded-pill">{{ bill.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if bill.remarks %}
+                                        <span class="text-muted" style="font-size:.8rem;" title="{{ bill.remarks }}">
+                                            {{ bill.remarks|truncatewords:6 }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted" style="font-size:.8rem;">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'billing:bill_pdf_preview' bill.pk %}" class="btn btn-outline-primary btn-sm" title="View PDF">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <h5>No bills yet</h5>
+                    <p>You haven't submitted any bills. Click the button below to upload your first bill.</p>
+                    <a href="{% url 'billing:upload_bill' %}" class="btn btn-primary mt-2">
+                        <i class="fas fa-plus me-1"></i>Upload Bill
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

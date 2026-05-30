@@ -24,6 +24,12 @@ def _redirect_if_session_expired(request):
         return redirect('usermgmt:session_expired')
     return None
 
+def public_landing_view(request):
+    # If the user is already authenticated, redirect them to their dashboard
+    if request.user.is_authenticated:
+        return redirect('usermgmt:user_home')
+    return render(request, 'public_landing.html')
+
 
 # =========================================================================
 # 1. AUTHENTICATION & ACCESSIBILITY WORKFLOWS (Person 1)
@@ -68,7 +74,7 @@ def login_view(request):
             if remember:
                 request.session.set_expiry(1209600)  # 2 weeks
             else:
-                request.session.set_expiry(0)  # Browser close
+                request.session.set_expiry(86400)    # 1 day (instead of browser close which drops easily)
 
             # Audit log
             AuditLog.objects.create(
@@ -369,7 +375,7 @@ def verify_email_view(request, uidb64=None, token=None):
 
 @login_required
 def home(request):
-    return redirect('pravaah_landing')
+    return render(request, 'profile/user_dashboard.html')
 
 
 @login_required

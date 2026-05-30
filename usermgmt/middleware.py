@@ -16,16 +16,7 @@ class RoleBasedAccessControlMiddleware:
         # Whitelist of public routes accessible without login
         PUBLIC_ROUTES = {
             'login',
-            'pravaah_landing',
-            'pravaah_future_proposals',
-            'pravaah_add_proposal',
-            'pravaah_gate_zero',
-            'pravaah_gate_zero_proposal',
-            'pravaah_gate_approval',
-            'pravaah_gate_approval_proposal',
-            'pravaah_marketing_queue',
-            'pravaah_approve_gate_approval',
-            'pravaah_reject_gate_approval',
+            'home',
             'forgot_password',
             'reset_password',
             'reset_password_confirm',

@@ -3,6 +3,7 @@
 {% block title %} PRAVAAH ERP - Main Dashboard {% endblock %}
 
 {% block content %}
+{% load auth_extras %}
 <div class="container py-4">
     <!-- Welcome Header / Hero Banner -->
     <div class="p-5 mb-4 rounded-4 shadow-sm text-white" style="background: linear-gradient(135deg, #3a1616 0%, #682323 100%);">
@@ -37,6 +38,27 @@
     </h3>
 
     <div class="row g-4 mb-5">
+        {% if user|has_group:"Trainer" or user|has_group:"Accounts" or user|has_group:"TrainerAdmin" or user.is_superuser %}
+        <!-- Billing System Card -->
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden card-hover">
+                <div class="card-body p-4 d-flex flex-column" style="border-top: 5px solid #6f42c1;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-dark mb-0">Billing Module</h5>
+                        <span class="badge bg-purple bg-opacity-10 text-purple px-3 py-1 rounded-pill" style="color: #6f42c1; background-color: rgba(111, 66, 193, 0.1);">Finance</span>
+                    </div>
+                    <p class="text-secondary small flex-grow-1">
+                        Access your billing dashboard, upload bills, and review payment status and history.
+                    </p>
+                    <a href="{% url 'billing:dashboard' %}" class="btn btn-outline-primary w-100 fw-bold rounded-3 mt-3" style="border-color: #6f42c1; color: #6f42c1;">
+                        <i class="fa-solid fa-file-invoice me-1"></i> Open Billing
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if user.is_superuser or not user|has_group:"Trainer" %}
         <!-- User Registry Module Card -->
         <div class="col-md-4">
             <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden card-hover">
@@ -92,11 +114,11 @@
         </div>
 
         <!-- Analytical Dashboards Module Card -->
-        <div class="col-md-4">
+        <div class="col-md-6">
             <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden card-hover">
                 <div class="card-body p-4 d-flex flex-column" style="border-top: 5px solid #0dcaf0;">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold text-dark mb-0">Analytics &amp; Activity</h5>
+                        <h5 class="fw-bold text-dark mb-0">Analytics & Activity</h5>
                         <span class="badge bg-info bg-opacity-10 text-dark px-3 py-1 rounded-pill">Analytics</span>
                     </div>
                     <p class="text-secondary small flex-grow-1">
@@ -110,7 +132,7 @@
         </div>
 
         <!-- Reports Module Card -->
-        <div class="col-md-4">
+        <div class="col-md-6">
             <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden card-hover">
                 <div class="card-body p-4 d-flex flex-column" style="border-top: 5px solid #ffc107;">
                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -126,24 +148,25 @@
                 </div>
             </div>
         </div>
-
-        <!-- Pravaah Workflow Portal Card -->
-        <div class="col-md-4">
-            <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden card-hover" style="background-color: rgba(111, 66, 193, 0.01);">
-                <div class="card-body p-4 d-flex flex-column" style="border-top: 5px solid #6f42c1;">
+        
+        <!-- Proposals & Marketing Module Card -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden card-hover">
+                <div class="card-body p-4 d-flex flex-column" style="border-top: 5px solid #6610f2;">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold text-dark mb-0">Pravaah Portal</h5>
-                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-1 rounded-pill" style="color: #6f42c1 !important; background-color: rgba(111, 66, 193, 0.1) !important;">Workflow</span>
+                        <h5 class="fw-bold text-dark mb-0">Proposals & Marketing</h5>
+                        <span class="badge bg-purple bg-opacity-10 px-3 py-1 rounded-pill" style="color: #6610f2; background-color: rgba(102, 16, 242, 0.1);">Pipeline</span>
                     </div>
                     <p class="text-secondary small flex-grow-1">
-                        Manage course proposals, execute quick Gate 0 checks, and route technical approvals to Marketing.
+                        Track Future Proposals, submit Gate 0 feasibility checks, and monitor Marketing Gate Approvals.
                     </p>
-                    <a href="{% url 'pravaah_landing' %}" class="btn btn-outline-primary w-100 fw-bold rounded-3 mt-3" style="color: #6f42c1; border-color: #6f42c1;">
-                        <i class="fa-solid fa-water me-1"></i> Enter Portal
+                    <a href="{% url 'pravaah_landing' %}" class="btn btn-outline-primary w-100 fw-bold rounded-3 mt-3" style="border-color: #6610f2; color: #6610f2;">
+                        <i class="fa-solid fa-bullseye me-1"></i> Open Proposals Pipeline
                     </a>
                 </div>
             </div>
         </div>
+        {% endif %}
     </div>
 </div>
 

@@ -1,0 +1,139 @@
+{% extends 'billingmgmt/base.html' %}
+
+{% block title %}Upload Bill{% endblock %}
+{% block nav_upload %}active{% endblock %}
+{% block topbar_title %}Upload New Bill{% endblock %}
+
+{% block content %}
+<div class="animate-in">
+    <!-- Page Header -->
+    <div class="page-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="#" class="text-decoration-none" style="color:var(--primary);">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Upload Bill</li>
+            </ol>
+        </nav>
+        <h2><i class="fas fa-cloud-upload-alt me-2" style="color:var(--primary);"></i>Upload New Bill</h2>
+    </div>
+
+    <!-- Form Card -->
+    <div class="card shadow-sm" style="max-width:780px;">
+        <div class="card-header d-flex align-items-center gap-2">
+            <i class="fas fa-file-invoice" style="color:var(--primary);"></i>
+            <span>Bill Details</span>
+        </div>
+        <div class="card-body p-4">
+            <!-- Non-field Errors -->
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="POST" enctype="multipart/form-data" id="uploadBillForm">
+                {% csrf_token %}
+
+                <!-- Bill Title -->
+                <div class="mb-4">
+                    <label for="{{ form.bill_title.id_for_label }}" class="form-label fw-semibold">
+                        <i class="fas fa-heading me-1 text-muted"></i> Bill Title
+                    </label>
+                    {{ form.bill_title }}
+                    {% if form.bill_title.errors %}
+                        <div class="text-danger mt-1" style="font-size:.8rem;">
+                            {% for error in form.bill_title.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Bill Number -->
+                <div class="mb-4">
+                    <label for="{{ form.bill_number.id_for_label }}" class="form-label fw-semibold">
+                        <i class="fas fa-hashtag me-1 text-muted"></i> Bill Number
+                    </label>
+                    {{ form.bill_number }}
+                    {% if form.bill_number.errors %}
+                        <div class="text-danger mt-1" style="font-size:.8rem;">
+                            {% for error in form.bill_number.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Bill Amount -->
+                <div class="mb-4">
+                    <label for="{{ form.bill_amount.id_for_label }}" class="form-label fw-semibold">
+                        <i class="fas fa-coins me-1 text-muted"></i> Bill Amount
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text fw-semibold" style="background:#f8f9fb;border-color:#dee2e6;">₹</span>
+                        {{ form.bill_amount }}
+                    </div>
+                    {% if form.bill_amount.errors %}
+                        <div class="text-danger mt-1" style="font-size:.8rem;">
+                            {% for error in form.bill_amount.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Training Program -->
+                <div class="mb-4">
+                    <label for="{{ form.training_program.id_for_label }}" class="form-label fw-semibold">
+                        <i class="fas fa-chalkboard-teacher me-1 text-muted"></i> Training Program
+                    </label>
+                    {{ form.training_program }}
+                    {% if form.training_program.errors %}
+                        <div class="text-danger mt-1" style="font-size:.8rem;">
+                            {% for error in form.training_program.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Bill PDF -->
+                <div class="mb-4">
+                    <label for="{{ form.bill_pdf.id_for_label }}" class="form-label fw-semibold">
+                        <i class="fas fa-file-pdf me-1 text-muted"></i> Bill PDF
+                    </label>
+                    <div class="border rounded-3 p-3" style="background:#f8f9fb;border-style:dashed !important;">
+                        {{ form.bill_pdf }}
+                        <div class="mt-2" style="font-size:.75rem;color:#636e72;">
+                            <i class="fas fa-info-circle me-1"></i> .pdf only, max 10MB
+                        </div>
+                    </div>
+                    {% if form.bill_pdf.errors %}
+                        <div class="text-danger mt-1" style="font-size:.8rem;">
+                            {% for error in form.bill_pdf.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Submit -->
+                <div class="pt-2">
+                    <button type="submit" class="btn btn-primary btn-lg px-4">
+                        <i class="fas fa-paper-plane me-2"></i>Submit Bill
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    #uploadBillForm .form-control,
+    #uploadBillForm .form-select {
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: .9rem;
+        border-color: #dee2e6;
+        transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+    }
+    #uploadBillForm .form-control:focus,
+    #uploadBillForm .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67,97,238,.15);
+    }
+</style>
+{% endblock %}

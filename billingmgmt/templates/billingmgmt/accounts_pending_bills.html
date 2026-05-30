@@ -1,0 +1,128 @@
+{% extends 'billingmgmt/base.html' %}
+
+{% block title %}Accounts - Pending Bills{% endblock %}
+{% block nav_accounts %}active{% endblock %}
+{% block topbar_title %}Accounts Review{% endblock %}
+
+{% block content %}
+<div class="animate-in">
+    <!-- Page Header -->
+    <div class="page-header d-flex align-items-center gap-3">
+        <h2>
+            <i class="fas fa-calculator me-2" style="color:var(--primary);"></i>Bills Pending Review
+        </h2>
+        <span class="badge bg-warning text-dark rounded-pill fs-6">{{ bills|length }}</span>
+    </div>
+
+    {% if bills %}
+        {% for bill in bills %}
+        <div class="card mb-4" style="border-left:4px solid var(--primary);">
+            <div class="card-body p-4">
+                <div class="row">
+                    <!-- Bill Details -->
+                    <div class="col-md-7">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="badge bg-primary rounded-pill" style="font-size:.7rem;">{{ bill.bill_number }}</span>
+                            {% if bill.status == 'SUBMITTED' %}
+                                <span class="badge bg-secondary rounded-pill">Submitted</span>
+                            {% elif bill.status == 'UNDER_ACCOUNTS_REVIEW' %}
+                                <span class="badge bg-warning text-dark rounded-pill">Under Review</span>
+                            {% elif bill.status == 'APPROVED_BY_ACCOUNTS' %}
+                                <span class="badge bg-info rounded-pill">Approved</span>
+                            {% elif bill.status == 'REJECTED_BY_ACCOUNTS' %}
+                                <span class="badge bg-danger rounded-pill">Rejected</span>
+                            {% elif bill.status == 'UNDER_TRAINER_ADMIN_REVIEW' %}
+                                <span class="badge bg-warning text-dark rounded-pill">Admin Review</span>
+                            {% elif bill.status == 'PAYMENT_CLEARED' %}
+                                <span class="badge bg-primary rounded-pill">Payment Cleared</span>
+                            {% elif bill.status == 'REJECTED_BY_TRAINER_ADMIN' %}
+                                <span class="badge bg-danger rounded-pill">Rejected by Admin</span>
+                            {% endif %}
+                        </div>
+
+                        <h5 class="fw-bold mb-3">{{ bill.bill_title }}</h5>
+
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <div class="text-muted" style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Trainer</div>
+                                <div class="fw-semibold">
+                                    <i class="fas fa-user-circle me-1 text-muted"></i>
+                                    {{ bill.trainer.get_full_name }}
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="text-muted" style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Amount</div>
+                                <div class="fw-bold" style="font-size:1.15rem;color:var(--primary);">₹{{ bill.bill_amount }}</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="text-muted" style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Training Program</div>
+                                <div class="fw-medium">{{ bill.training_program }}</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="text-muted" style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Upload Date</div>
+                                <div class="fw-medium">{{ bill.uploaded_at|date:'d M Y, h:i A' }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PDF Preview -->
+                    <div class="col-md-5 mt-3 mt-md-0">
+                        <div class="text-muted mb-2" style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">
+                            <i class="fas fa-file-pdf me-1"></i> Bill PDF Preview
+                        </div>
+                        <div class="border rounded-3 overflow-hidden" style="height:300px;background:#f8f9fb;">
+                            <iframe src="{{ bill.bill_pdf.url }}" width="100%" height="100%" style="border:none;"></iframe>
+                        </div>
+                        <div class="mt-2 text-end">
+                            <a href="{{ bill.bill_pdf.url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-external-link-alt me-1"></i>Open in New Tab
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Footer: Actions -->
+            <div class="card-footer bg-white p-3" style="border-top:1px solid #f0f2f5;">
+                <div class="d-flex align-items-start gap-2 flex-wrap">
+                    <!-- Approve Form -->
+                    <form method="POST" action="{% url 'billing:accounts_approve' bill.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check-circle me-1"></i>Approve &amp; Forward
+                        </button>
+                    </form>
+
+                    <!-- Reject Toggle -->
+                    <button class="btn btn-outline-danger" type="button" data-bs-toggle="collapse" data-bs-target="#rejectForm{{ bill.pk }}" aria-expanded="false">
+                        <i class="fas fa-times-circle me-1"></i>Reject
+                    </button>
+                </div>
+
+                <!-- Collapsible Reject Form -->
+                <div class="collapse mt-3" id="rejectForm{{ bill.pk }}">
+                    <form method="POST" action="{% url 'billing:accounts_reject' bill.pk %}">
+                        {% csrf_token %}
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold" style="font-size:.85rem;">Rejection Remarks</label>
+                            <textarea name="remarks" class="form-control" rows="3" required placeholder="Please provide a reason for rejection..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="fas fa-paper-plane me-1"></i>Submit Rejection
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="card">
+            <div class="empty-state">
+                <i class="fas fa-clipboard-check"></i>
+                <h5>All caught up!</h5>
+                <p>There are no bills pending your review right now.</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

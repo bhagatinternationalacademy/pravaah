@@ -1,0 +1,98 @@
+{% extends 'billingmgmt/base.html' %}
+
+{% block title %}PDF Preview{% endblock %}
+{% block topbar_title %}Bill Preview{% endblock %}
+
+{% block content %}
+<div class="animate-in">
+    <!-- Page Header -->
+    <div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{% url 'billing:my_bills' %}" class="text-decoration-none" style="color:var(--primary);">My Bills</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ bill.bill_number }}</li>
+                </ol>
+            </nav>
+            <h2>
+                <i class="fas fa-file-pdf me-2" style="color:var(--danger);"></i>{{ bill.bill_number }}
+            </h2>
+        </div>
+        <a href="{% url 'billing:my_bills' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Back to Bills
+        </a>
+    </div>
+
+    <!-- Bill Details Summary -->
+    <div class="card mb-4">
+        <div class="card-body p-4">
+            <div class="row g-4">
+                <div class="col-sm-6 col-lg-3">
+                    <div class="text-muted" style="font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Bill Number</div>
+                    <div class="fw-bold">{{ bill.bill_number }}</div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="text-muted" style="font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Bill Title</div>
+                    <div class="fw-semibold">{{ bill.bill_title }}</div>
+                </div>
+                <div class="col-sm-6 col-lg-2">
+                    <div class="text-muted" style="font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Trainer</div>
+                    <div class="fw-medium">{{ bill.trainer.get_full_name }}</div>
+                </div>
+                <div class="col-sm-6 col-lg-2">
+                    <div class="text-muted" style="font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Amount</div>
+                    <div class="fw-bold" style="color:var(--primary);font-size:1.1rem;">₹{{ bill.bill_amount }}</div>
+                </div>
+                <div class="col-sm-6 col-lg-2">
+                    <div class="text-muted" style="font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Status</div>
+                    <div class="mt-1">
+                        {% if bill.status == 'SUBMITTED' %}
+                            <span class="badge bg-secondary rounded-pill">Submitted</span>
+                        {% elif bill.status == 'UNDER_ACCOUNTS_REVIEW' %}
+                            <span class="badge bg-warning text-dark rounded-pill">Accounts Review</span>
+                        {% elif bill.status == 'APPROVED_BY_ACCOUNTS' %}
+                            <span class="badge bg-info rounded-pill">Approved by Accounts</span>
+                        {% elif bill.status == 'REJECTED_BY_ACCOUNTS' %}
+                            <span class="badge bg-danger rounded-pill">Rejected by Accounts</span>
+                        {% elif bill.status == 'UNDER_TRAINER_ADMIN_REVIEW' %}
+                            <span class="badge bg-warning text-dark rounded-pill">Admin Review</span>
+                        {% elif bill.status == 'PAYMENT_CLEARED' %}
+                            <span class="badge bg-primary rounded-pill">Payment Cleared</span>
+                        {% elif bill.status == 'REJECTED_BY_TRAINER_ADMIN' %}
+                            <span class="badge bg-danger rounded-pill">Rejected by Admin</span>
+                        {% else %}
+                            <span class="badge bg-secondary rounded-pill">{{ bill.status }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF Viewer -->
+    <div class="card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fas fa-file-pdf" style="color:var(--danger);"></i>
+                <span>PDF Preview</span>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ bill.bill_pdf.url }}" download class="btn btn-primary btn-sm">
+                    <i class="fas fa-download me-1"></i>Download PDF
+                </a>
+                <a href="{{ bill.bill_pdf.url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-external-link-alt me-1"></i>Open in New Tab
+                </a>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <iframe
+                src="{{ bill.bill_pdf.url }}"
+                width="100%"
+                style="height:80vh;border:none;border-radius:0 0 var(--card-radius) var(--card-radius);"
+                title="PDF Preview - {{ bill.bill_number }}">
+            </iframe>
+        </div>
+    </div>
+</div>
+{% endblock %}

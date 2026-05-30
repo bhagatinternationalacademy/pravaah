@@ -5,6 +5,7 @@ app_name = 'usermgmt'
 
 urlpatterns = [
     # --- Authentication & Registration Routes (Person 1) ---
+    path('', views.public_landing_view, name='public_home'),
     path('login/', views.login_view, name='login'),
     path('register/', views.register_view, name='register'),
     path('logout/', views.logout_view, name='logout'),

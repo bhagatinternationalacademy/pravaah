@@ -1,0 +1,85 @@
+{% extends 'billingmgmt/base.html' %}
+
+{% block title %}Notifications{% endblock %}
+{% block nav_notifications %}active{% endblock %}
+{% block topbar_title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="animate-in">
+    <!-- Page Header -->
+    <div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <h2>
+                <i class="fas fa-bell me-2" style="color:var(--primary);"></i>Notifications
+            </h2>
+            {% if unread_count %}
+                <span class="badge bg-danger rounded-pill fs-6">{{ unread_count }} unread</span>
+            {% endif %}
+        </div>
+
+        {% if unread_count %}
+            <form method="POST" action="{% url 'billing:mark_all_read' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-check-double me-1"></i>Mark All as Read
+                </button>
+            </form>
+        {% endif %}
+    </div>
+
+    {% if notifications %}
+        <div class="d-flex flex-column gap-3">
+            {% for notification in notifications %}
+            <div class="card {% if not notification.is_read %}border-start border-primary border-3{% endif %}"
+                 style="{% if not notification.is_read %}background:linear-gradient(135deg,#eff6ff,#f0f5ff);{% endif %}">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-start justify-content-between gap-3">
+                        <div class="d-flex gap-3 flex-grow-1">
+                            <!-- Indicator -->
+                            <div class="mt-1">
+                                {% if not notification.is_read %}
+                                    <div style="width:10px;height:10px;border-radius:50%;background:var(--primary);box-shadow:0 0 0 3px rgba(67,97,238,.2);"></div>
+                                {% else %}
+                                    <div style="width:10px;height:10px;border-radius:50%;background:#d1d5db;"></div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Content -->
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1 {% if not notification.is_read %}fw-bold{% else %}fw-semibold text-muted{% endif %}" style="font-size:.95rem;">
+                                    {{ notification.title }}
+                                </h6>
+                                <p class="mb-2 {% if not notification.is_read %}{% else %}text-muted{% endif %}" style="font-size:.875rem;line-height:1.5;">
+                                    {{ notification.message }}
+                                </p>
+                                <div class="text-muted" style="font-size:.75rem;">
+                                    <i class="fas fa-clock me-1"></i>{{ notification.created_at|timesince }} ago
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mark as Read -->
+                        {% if not notification.is_read %}
+                            <form method="POST" action="{% url 'billing:mark_notification_read' notification.pk %}" class="flex-shrink-0">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-primary btn-sm" title="Mark as read">
+                                    <i class="fas fa-check me-1"></i>Read
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card">
+            <div class="empty-state">
+                <i class="fas fa-bell-slash"></i>
+                <h5>No notifications</h5>
+                <p>You're all caught up! No notifications to show.</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

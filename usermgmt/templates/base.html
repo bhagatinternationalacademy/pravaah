@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     {% load static %}
+    {% load auth_extras %}
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -46,6 +47,7 @@
               <a class="nav-link active" href="{% url 'usermgmt:user_home' %}"> Dashboard </a>
             </li>
 
+            {% if user.is_superuser or not user|has_group:"Trainer" %}
             <li class="nav-item dropdown">
               <a
                 class="nav-link dropdown-toggle"
@@ -87,6 +89,7 @@
             <li class="nav-item">
               <a class="nav-link" href="#"> Participants </a>
             </li>
+            {% endif %}
 
             <li class="nav-item dropdown">
               <a
@@ -99,19 +102,31 @@
                 Trainers
               </a>
               <ul class="dropdown-menu shadow border-0 mt-2">
+                {% if user|has_group:"Trainer" %}
                 <li>
-                  <a class="dropdown-item" href="{% url 'trainermgmt:accounts_dashboard' %}">
+                  <a class="dropdown-item" href="{% url 'billing:dashboard' %}">
+                    <i class="fa-solid fa-file-invoice me-2 text-muted"></i>My Billing Dashboard
+                  </a>
+                </li>
+                {% endif %}
+                {% if user|has_group:"Accounts" or user.is_superuser %}
+                <li>
+                  <a class="dropdown-item" href="{% url 'billing:accounts_pending' %}">
                     <i class="fa-solid fa-wallet me-2 text-muted"></i>Accounts Ledger
                   </a>
                 </li>
+                {% endif %}
+                {% if user|has_group:"TrainerAdmin" or user.is_superuser %}
                 <li>
-                  <a class="dropdown-item" href="{% url 'trainermgmt:payment_history' %}">
+                  <a class="dropdown-item" href="{% url 'billing:trainer_admin_bills' %}">
                     <i class="fa-solid fa-clock-rotate-left me-2 text-muted"></i>Disbursal Logs
                   </a>
                 </li>
+                {% endif %}
               </ul>
             </li>
 
+            {% if user.is_superuser or not user|has_group:"Trainer" %}
             <li class="nav-item">
               <a class="nav-link" href="#"> Courses </a>
             </li>
@@ -124,11 +139,42 @@
               <a class="nav-link" href="{% url 'usermgmt:reports' %}"> Reports </a>
             </li>
 
-            <li class="nav-item">
-              <a class="nav-link text-info fw-bold" href="{% url 'pravaah_landing' %}">
-                <i class="fa-solid fa-water me-1"></i> Pravaah Portal
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Proposals & Marketing
               </a>
+              <ul class="dropdown-menu shadow border-0 mt-2">
+                <li>
+                  <a class="dropdown-item" href="{% url 'pravaah_landing' %}">
+                    <i class="fa-solid fa-chart-line me-2 text-muted"></i>Proposals Dashboard
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item" href="{% url 'pravaah_add_proposal' %}">
+                    <i class="fa-solid fa-plus me-2 text-muted"></i>Create Proposal
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item" href="{% url 'pravaah_gate_zero' %}">
+                    <i class="fa-solid fa-list-check me-2 text-muted"></i>Gate 0 Feasibility
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item" href="{% url 'pravaah_gate_approval' %}">
+                    <i class="fa-solid fa-clipboard-check me-2 text-muted"></i>Gate Approvals
+                  </a>
+                </li>
+                {% if user|has_group:"Marketing" or user.is_superuser %}
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                  <a class="dropdown-item" href="{% url 'pravaah_marketing_queue' %}">
+                    <i class="fa-solid fa-bullseye me-2 text-muted"></i>Marketing Queue
+                  </a>
+                </li>
+                {% endif %}
+              </ul>
             </li>
+            {% endif %}
           </ul>
 
           <form class="d-flex gap-2" role="search">

@@ -14,6 +14,7 @@ def is_marketing(user):
         return True
     return user.groups.filter(name='Marketing').exists()
 
+@login_required
 def landing_page(request):
     # Ensure the Marketing role is created in the system
     Group.objects.get_or_create(name='Marketing')
@@ -71,7 +72,7 @@ def landing_page(request):
     }
     return render(request, 'landing.html', context)
 
-
+@login_required
 def future_proposals_list(request):
     search_query = request.GET.get('search', '').strip()
     proposals = FutureProposal.objects.all()
@@ -88,7 +89,7 @@ def future_proposals_list(request):
     }
     return render(request, 'future_proposals.html', context)
 
-
+@login_required
 def add_proposal(request):
     if request.method == 'POST':
         program_name = request.POST.get('program_name', '').strip()
@@ -112,7 +113,7 @@ def add_proposal(request):
         
     return render(request, 'create_proposal.html')
 
-
+@login_required
 def gate_zero_form(request, proposal_id=None):
     selected_proposal = None
     if proposal_id:
@@ -172,7 +173,7 @@ def gate_zero_form(request, proposal_id=None):
     }
     return render(request, 'gate_zero.html', context)
 
-
+@login_required
 def gate_approval_form(request, proposal_id=None):
     selected_proposal = None
     if proposal_id:
@@ -271,7 +272,7 @@ def gate_approval_form(request, proposal_id=None):
     }
     return render(request, 'gate_approval.html', context)
 
-
+@login_required
 def marketing_queue(request):
     if not is_marketing(request.user):
         messages.error(request, "Access Denied: You do not have the required permissions to view the Marketing Approvals board.")
@@ -286,7 +287,7 @@ def marketing_queue(request):
     }
     return render(request, 'marketing_queue.html', context)
 
-
+@login_required
 def approve_gate_approval(request, approval_id):
     if not is_marketing(request.user):
         messages.error(request, "Access Denied: You do not have permission to approve proposals.")
@@ -302,9 +303,9 @@ def approve_gate_approval(request, approval_id):
     approval.save()
     
     messages.success(request, f"Gate Approval for '{approval.proposal.program_name}' has been Approved.")
-    return redirect('pravaah_marketing_queue' if request.path.startswith('/pravaah/marketing/') else 'pravaah_landing')
+    return redirect('pravaah_marketing_queue')
 
-
+@login_required
 def reject_gate_approval(request, approval_id):
     if not is_marketing(request.user):
         messages.error(request, "Access Denied: You do not have permission to reject proposals.")

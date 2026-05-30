@@ -5,7 +5,11 @@ from .models import UserProfile
 
 class SidebarPrefAPITest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='prefuser', password='pass')
+        existing = User.objects.filter(username='prefuser').first()
+        if existing:
+            self.user = existing
+        else:
+            self.user = User.objects.create_user(username='prefuser', password='pass')
         self.client = Client()
         self.client.login(username='prefuser', password='pass')
 

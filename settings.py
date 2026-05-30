@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_bootstrap5',
 
+
     # Project Apps
     'pravaah.accounts',
     'pravaah.dashboard',
@@ -73,9 +74,9 @@ DATABASES = {
     'default': {
         'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.mysql'),
         'NAME': os.environ.get('DB_NAME', 'pravaah'),
-        'USER': os.environ.get('DB_USER', 'test'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'Laptop@123'),
-        'HOST': os.environ.get('DB_HOST', '192.168.0.95'),
+        'USER': os.environ.get('DB_USER', 'root'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'shravani@04'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
         'PORT': os.environ.get('DB_PORT', '3306'),
     }
 }

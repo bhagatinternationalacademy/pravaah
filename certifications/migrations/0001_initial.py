@@ -13,16 +13,35 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='Certification',
-            fields=[
-                ('certification_id', models.AutoField(primary_key=True, serialize=False)),
-                ('certification_name', models.CharField(max_length=255)),
-                ('issuing_organization', models.CharField(blank=True, max_length=255, null=True)),
-                ('issue_date', models.DateField(blank=True, null=True)),
-                ('expiry_date', models.DateField(blank=True, null=True)),
-                ('certificate_file', models.FileField(blank=True, null=True, upload_to='certificates/')),
-                ('trainer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='trainers.trainer')),
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS certifications_certification (
+                        certification_id int AUTO_INCREMENT PRIMARY KEY,
+                        certification_name varchar(255) NOT NULL,
+                        issuing_organization varchar(255) NULL,
+                        issue_date date NULL,
+                        expiry_date date NULL,
+                        certificate_file varchar(100) NULL,
+                        trainer_id int NOT NULL
+                    ) ENGINE=InnoDB;
+                    """
+                ),
+            ],
+            state_operations=[
+                migrations.CreateModel(
+                    name='Certification',
+                    fields=[
+                        ('certification_id', models.AutoField(primary_key=True, serialize=False)),
+                        ('certification_name', models.CharField(max_length=255)),
+                        ('issuing_organization', models.CharField(blank=True, max_length=255, null=True)),
+                        ('issue_date', models.DateField(blank=True, null=True)),
+                        ('expiry_date', models.DateField(blank=True, null=True)),
+                        ('certificate_file', models.FileField(blank=True, null=True, upload_to='certificates/')),
+                        ('trainer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='trainers.trainer')),
+                    ],
+                ),
             ],
         ),
     ]
